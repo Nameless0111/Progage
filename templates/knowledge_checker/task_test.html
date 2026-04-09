@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Тестирование - {{ test.title }} - Progage{% endblock %}
+
+{% block extra_css %}
+<style>
+    .question-card {
+        border-left: 4px solid #0d6efd;
+        margin-bottom: 1.5rem;
+    }
+    .option-label {
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .option-label:hover {
+        background-color: #f8f9fa;
+    }
+    .timer {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-6 fw-bold">{{ test.title }}</h1>
+            <p class="text-muted">{{ test.description }}</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <div class="card border-danger">
+                <div class="card-body text-center">
+                    <small class="text-muted d-block">Осталось времени</small>
+                    <div class="timer" id="timer">{{ test.duration }}:00</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" id="testForm">
+        {% csrf_token %}
+        
+        <div class="progress mb-4" style="height: 10px;">
+            <div class="progress-bar" id="progressBar" role="progressbar" style="width: 0%"></div>
+        </div>
+
+        {% for question in questions %}
+        <div class="card question-card shadow-sm" id="question{{ forloop.counter }}">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h5 class="card-title mb-0">
+                        <span class="badge bg-primary me-2">{{ forloop.counter }}</span>
+                        {{ question.text }}
+                    </h5>
+                    <span class="badge bg-secondary">{{ question.points }} баллов</span>
+                </div>
+
+                {% if question.question_type == 'single' %}
+                <div class="list-group">
+                    {% for option in question.options.all %}
+                    <label class="list-group-item option-label">
+                        <div class="d-flex align-items-center">
+                            <input class="form-check-input me-3" type="radio" name="question_{{ question.id }}" value="{{ option.id }}">
+                            <span>{{ option.text }}</span>
+                        </div>
+                    </label>
+                    {% endfor %}
+                </div>
+                {% elif question.question_type == 'multiple' %}
+                <div class="list-group">
+                    {% for option in question.options.all %}
+                    <label class="list-group-item option-label">
+                        <div class="d-flex align-items-center">
+                            <input class="form-check-input me-3" type="checkbox" name="question_{{ question.id }}" value="{{ option.id }}">
+                            <span>{{ option.text }}</span>
+                        </div>
+                    </label>
+                    {% endfor %}
+                </div>
+                {% elif question.question_type == 'text' %}
+                <textarea class="form-control" name="question_{{ question.id }}" rows="4" placeholder="Введите ваш ответ..."></textarea>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+
+        <div class="d-flex justify-content-between mt-4">
+            <button type="button" class="btn btn-outline-secondary" onclick="history.back()">
+                <i class="fas fa-arrow-left me-2"></i>Назад
+            </button>
+            <button type="submit" class="btn btn-success btn-lg">
+                <i class="fas fa-check-circle me-2"></i>Завершить тест
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Timer functionality
+    let timeLeft = {{ test.duration }} * 60;
+    const timerElement = document.getElementById('timer');
+    const form = document.getElementById('testForm');
+    
+    function updateTimer() {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        
+        if (timeLeft <= 0) {
+            form.submit();
+        }
+        timeLeft--;
+    }
+    
+    setInterval(updateTimer, 1000);
+    updateTimer();
+
+    // Progress bar
+    const totalQuestions = {{ questions|length }};
+    const progressBar = document.getElementById('progressBar');
+    
+    document.querySelectorAll('input').forEach(input => {
+        input.addEventListener('change', () => {
+            const answered = document.querySelectorAll('.question-card input:checked').length;
+            const progress = (answered / totalQuestions) * 100;
+            progressBar.style.width = progress + '%';
+        });
+    });
+</script>
+{% endblock %}

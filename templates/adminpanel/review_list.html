@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Progage{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold"><i class="fas fa-star text-warning me-3"></i>{{ title }}</h1>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3"><h5 class="mb-0">Отзывы</h5></div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Пользователь</th>
+                            <th>Курс</th>
+                            <th>Рейтинг</th>
+                            <th>Дата</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in reviews %}
+                        <tr>
+                            <td>{{ r.user.username }}</td>
+                            <td>{{ r.course.title }}</td>
+                            <td>{{ r.rating }}</td>
+                            <td>{{ r.created_at|date:"d.m.Y H:i" }}</td>
+                            <td class="text-end"><a class="btn btn-sm btn-outline-danger" href="{% url 'adminpanel:review_delete' r.id %}"><i class="fas fa-trash"></i></a></td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5" class="text-center py-4 text-muted">Отзывов нет</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

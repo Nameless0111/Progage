@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Progage{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold"><i class="fas fa-fire text-primary me-3"></i>{{ title }}</h1>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Популярные курсы</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Курс</th>
+                            <th>Записей</th>
+                            <th>Лайков</th>
+                            <th>Скор</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for course in page_obj %}
+                        <tr>
+                            <td>
+                                <a class="text-decoration-none" href="{% url 'courses:course_detail' course.id %}">{{ course.title }}</a>
+                            </td>
+                            <td><span class="badge bg-primary">{{ course.enrollments_total|default:0 }}</span></td>
+                            <td><span class="badge bg-danger">{{ course.like_count|default:0 }}</span></td>
+                            <td>{{ course.popularity_score|default:0 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center py-4 text-muted">Нет данных</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <nav class="mt-4" aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Предыдущая</a></li>
+            {% endif %}
+            <li class="page-item active"><span class="page-link">{{ page_obj.number }}</span></li>
+            {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Следующая</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

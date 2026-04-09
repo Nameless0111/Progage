@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Progage{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <h1 class="display-5 fw-bold mb-0"><i class="fas fa-user-graduate text-primary me-3"></i>{{ title }}</h1>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Список записей</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Пользователь</th>
+                            <th>Курс</th>
+                            <th>Дата</th>
+                            <th>Прогресс</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for e in enrollments %}
+                        <tr>
+                            <td>{{ e.user.username }}</td>
+                            <td>{{ e.course.title }}</td>
+                            <td>{{ e.enrolled_at|date:"d.m.Y H:i" }}</td>
+                            <td>{{ e.progress }}%</td>
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-outline-danger" href="{% url 'adminpanel:enrollment_delete' e.id %}"><i class="fas fa-trash"></i></a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5" class="text-center py-4 text-muted">Записей нет</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

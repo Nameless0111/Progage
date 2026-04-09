@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Двухфакторная аутентификация{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow">
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-shield-alt fa-3x text-primary mb-3"></i>
+                        <h2>Двухфакторная аутентификация</h2>
+                        <p class="text-muted">Введите код из приложения аутентификатора</p>
+                    </div>
+                    
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="{{ form.code.id_for_label }}" class="form-label">{{ form.code.label }}</label>
+                            {{ form.code }}
+                            {% if form.code.help_text %}
+                                <div class="form-text">{{ form.code.help_text }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.backup_code.id_for_label }}" class="form-label">{{ form.backup_code.label }}</label>
+                            {{ form.backup_code }}
+                            {% if form.backup_code.help_text %}
+                                <div class="form-text">{{ form.backup_code.help_text }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-check me-2"></i>Подтвердить
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <hr class="my-4">
+                    <div class="text-center">
+                        <p class="mb-0">
+                            <a href="{% url 'accounts:login' %}" class="text-decoration-none">
+                                <i class="fas fa-arrow-left me-1"></i>Вернуться к входу
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

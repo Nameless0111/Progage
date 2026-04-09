@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Новый чат - Progage{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold"><i class="fas fa-plus-circle text-primary me-3"></i>Новый чат с поддержкой</h1>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="id_subject" class="form-label">Тема обращения</label>
+                            <input type="text" class="form-control form-control-lg" id="id_subject" name="subject" placeholder="Например: Проблема с доступом к курсу" required>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Категория</label>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button type="button" class="btn btn-outline-primary category-btn" data-category="technical">
+                                    <i class="fas fa-cog me-2"></i>Техническая проблема
+                                </button>
+                                <button type="button" class="btn btn-outline-primary category-btn" data-category="course">
+                                    <i class="fas fa-book me-2"></i>Вопрос по курсу
+                                </button>
+                                <button type="button" class="btn btn-outline-primary category-btn" data-category="payment">
+                                    <i class="fas fa-credit-card me-2"></i>Оплата
+                                </button>
+                                <button type="button" class="btn btn-outline-primary category-btn" data-category="other">
+                                    <i class="fas fa-question me-2"></i>Другое
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'chat:chat_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Назад
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-paper-plane me-2"></i>Создать чат
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

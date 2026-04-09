@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Progage{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    .stat-card.success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+    .stat-card.info { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    .stat-card.warning { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .chart-container {
+        height: 300px;
+        position: relative;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold"><i class="fas fa-chart-line text-primary me-3"></i>{{ title }}</h1>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-2">
+            <div class="stat-card text-center">
+                <h4 class="mb-0">{{ stats.users|default:0 }}</h4>
+                <small>Пользователей</small>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card success text-center">
+                <h4 class="mb-0">{{ stats.courses|default:0 }}</h4>
+                <small>Курсов</small>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card info text-center">
+                <h4 class="mb-0">{{ stats.lessons|default:0 }}</h4>
+                <small>Уроков</small>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card warning text-center">
+                <h4 class="mb-0">{{ stats.enrollment_count|default:0 }}</h4>
+                <small>Записей</small>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card text-center" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                <h4 class="mb-0">{{ stats.likes|default:0 }}</h4>
+                <small>Лайков</small>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card text-center" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333;">
+                <h4 class="mb-0">{{ stats.reviews|default:0 }}</h4>
+                <small>Отзывов</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="fas fa-users text-primary me-2"></i>Пользователи по ролям</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="p-3 bg-success bg-opacity-10 rounded">
+                                <h4 class="text-success">{{ stats.students_count|default:0 }}</h4>
+                                <small class="text-muted">Студентов</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-3 bg-info bg-opacity-10 rounded">
+                                <h4 class="text-info">{{ stats.authors_count|default:0 }}</h4>
+                                <small class="text-muted">Преподавателей</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-3 bg-danger bg-opacity-10 rounded">
+                                <h4 class="text-danger">{{ stats.admins_count|default:0 }}</h4>
+                                <small class="text-muted">Админов</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="fas fa-layer-group text-primary me-2"></i>Курсы по уровням</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="p-3 bg-success bg-opacity-10 rounded">
+                                <h4 class="text-success">{{ stats.beginner_courses|default:0 }}</h4>
+                                <small class="text-muted">Начальный</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-3 bg-warning bg-opacity-10 rounded">
+                                <h4 class="text-warning">{{ stats.intermediate_courses|default:0 }}</h4>
+                                <small class="text-muted">Средний</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-3 bg-danger bg-opacity-10 rounded">
+                                <h4 class="text-danger">{{ stats.advanced_courses|default:0 }}</h4>
+                                <small class="text-muted">Продвинутый</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0"><i class="fas fa-fire text-primary me-2"></i>Топ-10 популярных курсов</h5>
+        </div>
+        <div class="card-body">
+            {% if top_courses %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>№</th>
+                            <th>Курс</th>
+                            <th>Автор</th>
+                            <th>Записей</th>
+                            <th>Лайков</th>
+                            <th>Популярность</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for course in top_courses %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>
+                                <a href="{% url 'courses:course_detail' course.id %}" class="text-decoration-none fw-medium">{{ course.title }}</a>
+                            </td>
+                            <td>{{ course.instructor.get_full_name|default:course.instructor.username }}</td>
+                            <td><span class="badge bg-primary">{{ course.enrollment_count }}</span></td>
+                            <td><span class="badge bg-danger">{{ course.like_count }}</span></td>
+                            <td>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ course.popularity_score|div:10|default:0 }}%"></div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted text-center py-4">Нет данных о популярных курсах</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0"><i class="fas fa-code text-primary me-2"></i>Курсы по языкам программирования</h5>
+        </div>
+        <div class="card-body">
+            {% if programming_languages %}
+            <div class="row">
+                {% for lang in programming_languages %}
+                <div class="col-md-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                        <span class="fw-medium">{{ lang.programming_language|default:"Другие"|title }}</span>
+                        <span class="badge bg-primary">{{ lang.count }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted text-center py-4">Нет данных</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

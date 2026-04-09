@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Progage{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold"><i class="fas fa-bug text-danger me-3"></i>{{ title }}</h1>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Логи ошибок</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <select class="form-select" name="error_type">
+                        <option value="">Все типы ошибок</option>
+                        {% for type_code, type_name in error_types %}
+                        <option value="{{ type_code }}" {% if request.GET.error_type == type_code %}selected{% endif %}>{{ type_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select" name="resolved">
+                        <option value="">Все статусы</option>
+                        <option value="true" {% if request.GET.resolved == 'true' %}selected{% endif %}>Решено</option>
+                        <option value="false" {% if request.GET.resolved == 'false' %}selected{% endif %}>Не решено</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <input type="date" class="form-control" name="date_from" value="{{ request.GET.date_from }}">
+                </div>
+                <div class="col-md-2">
+                    <input type="date" class="form-control" name="date_to" value="{{ request.GET.date_to }}">
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter me-2"></i>Фильтр
+                    </button>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Время</th>
+                            <th>Тип</th>
+                            <th>Сообщение</th>
+                            <th>Пользователь</th>
+                            <th>Статус</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in page_obj %}
+                        <tr>
+                            <td>{{ log.timestamp|date:"d.m.Y H:i:s" }}</td>
+                            <td><span class="badge bg-danger">{{ log.get_error_type_display }}</span></td>
+                            <td>{{ log.message|truncatechars:80 }}</td>
+                            <td>{{ log.user.get_full_name|default:log.user.username|default:"-" }}</td>
+                            <td>
+                                {% if log.resolved %}
+                                    <span class="badge bg-success">Решено</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">В работе</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if not log.resolved %}
+                                <a href="{% url 'adminpanel:resolve_error' log.id %}" class="btn btn-sm btn-success">
+                                    <i class="fas fa-check"></i>
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                <i class="fas fa-check-circle fa-2x mb-2 text-success"></i>
+                                <p>Ошибок не найдено. Отлично!</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if page_obj.has_other_pages %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Предыдущая</a>
+                    </li>
+                    {% endif %}
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% else %}
+                        <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Следующая</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

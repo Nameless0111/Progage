@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+
+{% block title %}Чат поддержки{% endblock %}
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb mb-0">
+    <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home me-1"></i>Главная</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'chat:chat_list' %}"><i class="fas fa-comments me-1"></i>Поддержка</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Чат {{ chat.id }}</li>
+  </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h4 mb-1">{{ chat.user.username }} - Чат с поддержкой</h1>
+                            <small>Статус: <span id="chat-status" class="badge {% if chat.status == 'open' %}bg-success{% else %}bg-secondary{% endif %}">{{ chat.get_status_display }}</span></small>
+                        </div>
+                        {% if user.role == 'admin' and chat.status == 'open' %}
+                            <button id="close-chat-btn" class="btn btn-danger btn-sm">
+                                <i class="fas fa-times me-1"></i>Закрыть чат
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body" id="chat-messages" style="height: 400px; overflow-y: auto;">
+                    {% for message in messages %}
+                        {% if 'from' not in message.text %}
+                        <div class="message mb-2 {% if message.sender == user %}text-end{% endif %}">
+                            <div class="d-inline-block p-2 rounded {% if message.sender == user %}bg-primary text-white{% else %}bg-light{% endif %}">
+                                <strong>{{ message.sender.username }}:</strong> {{ message.text }}
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <div class="card-footer">
+                    {% if user.role != 'admin' %}
+                    <div class="mb-3 quick-questions">
+                        <button class="btn btn-outline-primary btn-sm me-2 quick-btn" data-msg="Как выбрать подходящий курс?">Как выбрать курс?</button>
+                        <button class="btn btn-outline-primary btn-sm me-2 quick-btn" data-msg="Проблема с оплатой">Проблема с оплатой</button>
+                        <button class="btn btn-outline-danger btn-sm me-2 quick-btn" data-msg="Другая проблема">Другая проблема</button>
+                    </div>
+                    {% endif %}
+                    <form id="chat-form">
+                        {% csrf_token %}
+                        <div class="input-group">
+                            <input type="text" id="chat-message-input" class="form-control" placeholder="Введите сообщение..." required>
+                            <button type="submit" class="btn btn-primary">Отправить</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
+const chatSocket = new WebSocket(
+    wsScheme + '://' + window.location.host + '/ws/chat/{{ chat.id }}/'
+);
+
+chatSocket.onmessage = function(e) {
+    const data = JSON.parse(e.data);
+    if (data.message.includes('from')) return;
+    const messagesDiv = document.getElementById('chat-messages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message mb-2';
+    if (data.sender_id == {{ user.id }}) {
+        messageDiv.className += ' text-end';
+    }
+    messageDiv.innerHTML = `
+        <div class="d-inline-block p-2 rounded ${data.sender_id == {{ user.id }} ? 'bg-primary text-white' : 'bg-light'}">
+            <strong>${data.sender}:</strong> ${data.message}
+        </div>
+    `;
+    messagesDiv.appendChild(messageDiv);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+};
+
+chatSocket.onclose = function(e) {
+};
+
+function sendMessage(message) {
+    if (chatSocket.readyState === WebSocket.OPEN) {
+        chatSocket.send(JSON.stringify({'message': message}));
+    } else {
+        // Fallback AJAX
+        fetch('/chat/{{ chat.id }}/send/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'message=' + encodeURIComponent(message)
+        }).then(response => response.json()).then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    }
+}
+
+document.getElementById('chat-form').onsubmit = function(e) {
+    e.preventDefault();
+    const messageInput = document.getElementById('chat-message-input');
+    const message = messageInput.value.trim();
+    if (message) {
+        sendMessage(message);
+        messageInput.value = '';
+    }
+};
+
+document.querySelectorAll('.quick-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const msg = this.dataset.msg;
+        sendMessage(msg);
+    });
+});
+
+// Закрытие чата
+{% if user.role == 'admin' %}
+document.getElementById('close-chat-btn').addEventListener('click', function() {
+    if (confirm('Вы уверены, что хотите закрыть этот чат?')) {
+        fetch('/chat/{{ chat.id }}/close/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Обновляем статус на странице
+                const statusElement = document.getElementById('chat-status');
+                statusElement.textContent = 'Closed';
+                statusElement.className = 'badge bg-secondary';
+                
+                // Убираем кнопку закрытия
+                document.getElementById('close-chat-btn').style.display = 'none';
+                
+                // Показываем уведомление
+                alert('Чат успешно закрыт!');
+            } else {
+                alert('Ошибка: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Произошла ошибка при закрытии чата');
+        });
+    }
+});
+{% endif %}
+
+document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
+</script>
+
+{% endblock %}

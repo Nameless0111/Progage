@@ -1,0 +1,71 @@
+
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: progage_db
+      POSTGRES_USER: progage_user
+      POSTGRES_PASSWORD: 1111
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - C:\Progage/backups:/backups
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  web:
+    build: .
+    command: gunicorn --workers 3 --bind 0.0.0.0:8000 progage.wsgi:application
+    volumes:
+      - C:\Progage/staticfiles:/app/staticfiles
+      - C:\Progage/mediafiles:/app/mediafiles
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    environment:
+      - DJANGO_SETTINGS_MODULE=progage.settings
+      - DATABASE_URL=postgresql://progage_user:1111@db:5432/progage_db
+    restart: unless-stopped
+
+  daphne:
+    build: .
+    command: daphne -b 0.0.0.0 -p 8001 progage.asgi:application
+    volumes:
+      - C:\Progage/staticfiles:/app/staticfiles
+      - C:\Progage/mediafiles:/app/mediafiles
+    ports:
+      - "8001:8001"
+    depends_on:
+      - db
+      - redis
+    environment:
+      - DJANGO_SETTINGS_MODULE=progage.settings
+      - DATABASE_URL=postgresql://progage_user:1111@db:5432/progage_db
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - C:\Progage/nginx.conf:/etc/nginx/nginx.conf
+      - C:\Progage/staticfiles:/app/staticfiles
+      - C:\Progage/mediafiles:/app/mediafiles
+    depends_on:
+      - web
+      - daphne
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

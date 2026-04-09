@@ -1,0 +1,18 @@
+
+[Unit]
+Description=Progage Django Site
+After=network.target
+
+[Service]
+Type=exec
+User=www-data
+WorkingDirectory=C:\Progage
+Environment=DJANGO_SETTINGS_MODULE=progage.settings
+Environment=PATH=C:\Progage/venv/bin
+ExecStart=C:\Progage/venv/bin/gunicorn --workers 3 --bind 127.0.0.1:8000 progage.wsgi:application
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

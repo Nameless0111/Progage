@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Чаты поддержки - Progage{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold"><i class="fas fa-comments text-primary me-3"></i>Чаты поддержки</h1>
+            <p class="lead text-muted">Общайтесь с поддержкой или студентами</p>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">{% if user.role == 'admin' %}Все чаты{% else %}Мои чаты{% endif %}</h5>
+            {% if user.role != 'admin' %}
+            <a href="{% url 'chat:start_chat' %}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus me-2"></i>Новый чат
+            </a>
+            {% endif %}
+        </div>
+        <div class="card-body p-0">
+            {% if chats %}
+            <div class="list-group list-group-flush">
+                {% for chat in chats %}
+                <a href="{% url 'chat:chat_detail' chat.id %}" class="list-group-item list-group-item-action p-4">
+                    <div class="d-flex w-100 justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                {% if chat.user.avatar %}
+                                <img src="{{ chat.user.avatar_url }}" alt="" class="rounded-circle" style="width: 50px; height: 50px; object-fit: cover;">
+                                {% else %}
+                                <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                    <i class="fas fa-user text-primary"></i>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h5 class="mb-1">
+                                    {{ chat.subject }}
+                                    {% if chat.status == 'open' %}
+                                        <span class="badge bg-success ms-2">Открыт</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary ms-2">Закрыт</span>
+                                    {% endif %}
+                                </h5>
+                                <p class="mb-1 text-muted">
+                                    {% if user.role == 'admin' %}
+                                        {{ chat.user.get_full_name|default:chat.user.username }}
+                                    {% else %}
+                                        Поддержка
+                                    {% endif %}
+                                    • {{ chat.messages.count }} сообщений
+                                </p>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <small class="text-muted d-block">{{ chat.updated_at|timesince }} назад</small>
+                            {% if chat.unread_count > 0 %}
+                                <span class="badge bg-danger mt-1">{{ chat.unread_count }} новых</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                <h5>Нет активных чатов</h5>
+                <p class="text-muted">{% if user.role == 'admin' %}Чаты появятся здесь, когда пользователи обратятся в поддержку{% else %}Начните диалог с поддержкой!{% endif %}</p>
+                {% if user.role != 'admin' %}
+                <a href="{% url 'chat:start_chat' %}" class="btn btn-primary">Создать чат</a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

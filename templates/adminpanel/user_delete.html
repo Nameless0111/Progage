@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Progage{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold"><i class="fas fa-exclamation-triangle text-danger me-3"></i>Удаление пользователя</h1>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center p-5">
+                    <div class="mb-4">
+                        <i class="fas fa-user-times fa-4x text-danger"></i>
+                    </div>
+                    <h4 class="mb-3">Вы уверены?</h4>
+                    <p class="text-muted mb-4">
+                        Вы собираетесь удалить пользователя <strong>{{ user.username }}</strong>.
+                        <br>Это действие нельзя отменить.
+                    </p>
+                    
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="{% url 'adminpanel:user_list' %}" class="btn btn-outline-secondary btn-lg">
+                            <i class="fas fa-times me-2"></i>Отмена
+                        </a>
+                        <form method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-lg">
+                                <i class="fas fa-trash me-2"></i>Удалить
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

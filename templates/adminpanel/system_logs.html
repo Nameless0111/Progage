@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Progage{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold"><i class="fas fa-terminal text-primary me-3"></i>{{ title }}</h1>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-2">
+            <div class="card border-0 shadow-sm bg-danger text-white">
+                <div class="card-body text-center">
+                    <h4 class="mb-0">{{ log_counts.error|default:0 }}</h4>
+                    <small>Ошибок</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-0 shadow-sm bg-warning text-dark">
+                <div class="card-body text-center">
+                    <h4 class="mb-0">{{ log_counts.warning|default:0 }}</h4>
+                    <small>Предупреждений</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-0 shadow-sm bg-info text-white">
+                <div class="card-body text-center">
+                    <h4 class="mb-0">{{ log_counts.info|default:0 }}</h4>
+                    <small>Информации</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-0 shadow-sm bg-secondary text-white">
+                <div class="card-body text-center">
+                    <h4 class="mb-0">{{ log_counts.debug|default:0 }}</h4>
+                    <small>Debug</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-0 shadow-sm bg-dark text-white">
+                <div class="card-body text-center">
+                    <h4 class="mb-0">{{ log_counts.critical|default:0 }}</h4>
+                    <small>Критических</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Системные логи</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <select class="form-select" name="level">
+                        <option value="">Все уровни</option>
+                        {% for level_code, level_name in log_levels %}
+                        <option value="{{ level_code }}" {% if request.GET.level == level_code %}selected{% endif %}>{{ level_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <input type="text" class="form-control" name="module" placeholder="Модуль" value="{{ request.GET.module }}">
+                </div>
+                <div class="col-md-2">
+                    <input type="date" class="form-control" name="date_from" value="{{ request.GET.date_from }}">
+                </div>
+                <div class="col-md-2">
+                    <input type="date" class="form-control" name="date_to" value="{{ request.GET.date_to }}">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter me-2"></i>Фильтр
+                    </button>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Время</th>
+                            <th>Уровень</th>
+                            <th>Модуль</th>
+                            <th>Сообщение</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in page_obj %}
+                        <tr>
+                            <td>{{ log.timestamp|date:"d.m.Y H:i:s" }}</td>
+                            <td>
+                                {% if log.level == 'ERROR' %}
+                                    <span class="badge bg-danger">{{ log.level }}</span>
+                                {% elif log.level == 'WARNING' %}
+                                    <span class="badge bg-warning text-dark">{{ log.level }}</span>
+                                {% elif log.level == 'INFO' %}
+                                    <span class="badge bg-info">{{ log.level }}</span>
+                                {% elif log.level == 'DEBUG' %}
+                                    <span class="badge bg-secondary">{{ log.level }}</span>
+                                {% elif log.level == 'CRITICAL' %}
+                                    <span class="badge bg-dark">{{ log.level }}</span>
+                                {% endif %}
+                            </td>
+                            <td><code>{{ log.module }}</code></td>
+                            <td>{{ log.message|truncatechars:100 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center py-4 text-muted">
+                                <i class="fas fa-inbox fa-2x mb-2"></i>
+                                <p>Логи не найдены</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if page_obj.has_other_pages %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.level %}&level={{ request.GET.level }}{% endif %}">Предыдущая</a>
+                    </li>
+                    {% endif %}
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% else %}
+                        <li class="page-item"><a class="page-link" href="?page={{ num }}{% if request.GET.level %}&level={{ request.GET.level }}{% endif %}">{{ num }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.level %}&level={{ request.GET.level }}{% endif %}">Следующая</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

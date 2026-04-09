@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ chat.subject }} - Чат - Progage{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-container {
+        height: calc(100vh - 300px);
+        overflow-y: auto;
+    }
+    .chat-message {
+        max-width: 70%;
+        border-radius: 15px;
+        padding: 12px 16px;
+        margin-bottom: 10px;
+    }
+    .chat-message.sent {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        margin-left: auto;
+        border-bottom-right-radius: 4px;
+    }
+    .chat-message.received {
+        background-color: #f0f2f5;
+        color: #212529;
+        margin-right: auto;
+        border-bottom-left-radius: 4px;
+    }
+    .chat-avatar {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-3">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'home' %}">Главная</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'chat:chat_list' %}">Чаты</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ chat.subject }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                {% if chat.user.avatar %}
+                <img src="{{ chat.user.avatar_url }}" alt="" class="chat-avatar me-3">
+                {% else %}
+                <div class="bg-primary bg-opacity-10 rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+                    <i class="fas fa-user text-primary"></i>
+                </div>
+                {% endif %}
+                <div>
+                    <h5 class="mb-0">{{ chat.subject }}</h5>
+                    <small class="text-muted">
+                        {% if user.role == 'admin' %}
+                            {{ chat.user.get_full_name|default:chat.user.username }}
+                        {% else %}
+                            Поддержка
+                        {% endif %}
+                        • 
+                        {% if chat.status == 'open' %}
+                            <span class="text-success">Открыт</span>
+                        {% else %}
+                            <span class="text-secondary">Закрыт</span>
+                        {% endif %}
+                    </small>
+                </div>
+            </div>
+            {% if user.role == 'admin' and chat.status == 'open' %}
+            <form method="post" action="{% url 'chat:close_chat' chat.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger btn-sm">
+                    <i class="fas fa-lock me-2"></i>Закрыть чат
+                </button>
+            </form>
+            {% endif %}
+        </div>
+        
+        <div class="card-body p-0">
+            <div class="chat-container p-4" id="chatMessages">
+                {% if messages %}
+                    {% for message in messages %}
+                    <div class="d-flex {% if message.sender == user %}justify-content-end{% else %}justify-content-start{% endif %} mb-3">
+                        {% if message.sender != user %}
+                        <div class="flex-shrink-0 me-2">
+                            {% if message.sender.avatar %}
+                            <img src="{{ message.sender.avatar_url }}" alt="" class="chat-avatar">
+                            {% else %}
+                            <div class="bg-secondary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+                                <i class="fas fa-user text-secondary small"></i>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="chat-message {% if message.sender == user %}sent{% else %}received{% endif %}">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <small class="{% if message.sender == user %}text-white-50{% else %}text-muted{% endif %}">
+                                    {{ message.sender.get_full_name|default:message.sender.username }}
+                                </small>
+                                <small class="{% if message.sender == user %}text-white-50{% else %}text-muted{% endif %} ms-2">
+                                    {{ message.timestamp|time:"H:i" }}
+                                </small>
+                            </div>
+                            <p class="mb-0">{{ message.content|linebreaksbr }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-comments fa-2x mb-2"></i>
+                        <p>Начните общение</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if chat.status == 'open' %}
+        <div class="card-footer bg-white py-3">
+            <form method="post" action="{% url 'chat:send_message' chat.id %}" class="d-flex gap-2">
+                {% csrf_token %}
+                <input type="text" class="form-control" name="content" placeholder="Введите сообщение..." required autocomplete="off">
+                <button type="submit" class="btn btn-primary px-4">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+        {% else %}
+        <div class="card-footer bg-light py-3 text-center text-muted">
+            <i class="fas fa-lock me-2"></i>Чат закрыт
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Scroll to bottom of chat
+    document.addEventListener('DOMContentLoaded', function() {
+        const chatContainer = document.getElementById('chatMessages');
+        if (chatContainer) {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    });
+</script>
+{% endblock %}

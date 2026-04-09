@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Курсы - Progage{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold"><i class="fas fa-book text-primary me-3"></i>Курсы</h1>
+            <p class="lead text-muted">Выберите курс для обучения</p>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-3"><i class="fas fa-filter text-primary me-2"></i>Фильтры</h5>
+                    <form method="get">
+                        <div class="mb-3">
+                            <label for="category" class="form-label">Категория</label>
+                            <select class="form-select" id="category" name="category">
+                                <option value="">Все категории</option>
+                                {% for category in categories %}
+                                <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="level" class="form-label">Уровень</label>
+                            <select class="form-select" id="level" name="level">
+                                <option value="">Все уровни</option>
+                                <option value="beginner" {% if request.GET.level == 'beginner' %}selected{% endif %}>Начальный</option>
+                                <option value="intermediate" {% if request.GET.level == 'intermediate' %}selected{% endif %}>Средний</option>
+                                <option value="advanced" {% if request.GET.level == 'advanced' %}selected{% endif %}>Продвинутый</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-filter me-2"></i>Применить
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            {% if courses %}
+            <div class="row g-4">
+                {% for course in courses %}
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="row g-0">
+                            <div class="col-md-4">
+                                {% if course.thumbnail %}
+                                <img src="{{ course.thumbnail_url }}" class="img-fluid rounded-start" alt="{{ course.title }}" style="height: 100%; object-fit: cover;">
+                                {% else %}
+                                <div class="bg-primary bg-opacity-10 h-100 d-flex align-items-center justify-content-center rounded-start" style="min-height: 200px;">
+                                    <i class="fas fa-book text-primary fa-4x"></i>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-8">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <span class="badge bg-{{ course.level }}">{{ course.get_level_display }}</span>
+                                        <span class="text-muted small"><i class="fas fa-users me-1"></i>{{ course.enrollment_count }}</span>
+                                    </div>
+                                    <h5 class="card-title">{{ course.title }}</h5>
+                                    <p class="card-text text-muted">{{ course.description|truncatechars:150 }}</p>
+                                    <div class="d-flex justify-content-between align-items-center mt-3">
+                                        <div class="d-flex align-items-center">
+                                            {% if course.instructor.avatar %}
+                                            <img src="{{ course.instructor.avatar_url }}" alt="" class="rounded-circle me-2" style="width: 30px; height: 30px; object-fit: cover;">
+                                            {% else %}
+                                            <div class="bg-secondary bg-opacity-10 rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 30px; height: 30px;">
+                                                <i class="fas fa-user text-secondary small"></i>
+                                            </div>
+                                            {% endif %}
+                                            <span class="text-muted small">{{ course.instructor.get_full_name|default:course.instructor.username }}</span>
+                                        </div>
+                                        <a href="{% url 'courses:course_detail' course.id %}" class="btn btn-outline-primary">
+                                            <i class="fas fa-info-circle me-2"></i>Подробнее
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <h5>Курсы не найдены</h5>
+                <p class="text-muted">Попробуйте изменить параметры фильтрации</p>
+                <a href="{% url 'courses:course_list' %}" class="btn btn-outline-primary">Сбросить фильтры</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

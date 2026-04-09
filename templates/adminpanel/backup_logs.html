@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Progage{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12 d-flex align-items-center justify-content-between">
+            <h1 class="display-5 fw-bold mb-0"><i class="fas fa-database text-primary me-3"></i>{{ title }}</h1>
+            <a href="{% url 'adminpanel:create_backup' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Создать бэкап
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Логи</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Время</th>
+                                    <th>Тип</th>
+                                    <th>Статус</th>
+                                    <th>Создал</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in page_obj %}
+                                <tr>
+                                    <td>{{ log.started_at|date:"d.m.Y H:i" }}</td>
+                                    <td>{{ log.backup_type }}</td>
+                                    <td>{{ log.status }}</td>
+                                    <td>{{ log.created_by.username|default:"-" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="4" class="text-center py-4 text-muted">Логов нет</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Файлы бэкапов</h5>
+                </div>
+                <div class="card-body">
+                    {% if backup_files %}
+                        <ul class="list-group">
+                            {% for f in backup_files %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div class="text-truncate" style="max-width: 220px;">{{ f }}</div>
+                                <div class="btn-group btn-group-sm">
+                                    <a class="btn btn-outline-primary" href="{% url 'adminpanel:download_backup' f %}"><i class="fas fa-download"></i></a>
+                                    <form method="post" action="{% url 'adminpanel:delete_backup' f %}" style="display:inline;">
+                                        {% csrf_token %}
+                                        <button class="btn btn-outline-danger" type="submit"><i class="fas fa-trash"></i></button>
+                                    </form>
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted mb-0">Файлы не найдены</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Информация</h5>
+                </div>
+                <div class="card-body">
+                    <pre class="mb-0" style="white-space: pre-wrap;">{{ backup_info|default:"" }}</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

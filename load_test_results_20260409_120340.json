@@ -1,0 +1,496 @@
+{
+  "timestamp": "2026-04-09T12:03:40.154372",
+  "config": {
+    "base_url": "https://9b4bccd6be5656.lhr.life",
+    "concurrent_users": 60,
+    "total_requests": 60
+  },
+  "results": [
+    {
+      "request_id": 38,
+      "url": "https://9b4bccd6be5656.lhr.life/accounts/login/",
+      "status_code": 200,
+      "response_time": 6.267225742340088,
+      "content_length": 7574,
+      "success": true
+    },
+    {
+      "request_id": 50,
+      "url": "https://9b4bccd6be5656.lhr.life/accounts/login/",
+      "status_code": 200,
+      "response_time": 6.267300367355347,
+      "content_length": 7574,
+      "success": true
+    },
+    {
+      "request_id": 34,
+      "url": "https://9b4bccd6be5656.lhr.life/accounts/login/",
+      "status_code": 200,
+      "response_time": 6.267133712768555,
+      "content_length": 7574,
+      "success": true
+    },
+    {
+      "request_id": 16,
+      "url": "https://9b4bccd6be5656.lhr.life/",
+      "status_code": 200,
+      "response_time": 6.268293619155884,
+      "content_length": 10134,
+      "success": true
+    },
+    {
+      "request_id": 25,
+      "url": "https://9b4bccd6be5656.lhr.life/courses/",
+      "status_code": 200,
+      "response_time": 6.864570140838623,
+      "content_length": 145341,
+      "success": true
+    },
+    {
+      "request_id": 57,
+      "url": "https://9b4bccd6be5656.lhr.life/courses/",
+      "status_code": 200,
+      "response_time": 7.9431233406066895,
+      "content_length": 145341,
+      "success": true
+    },
+    {
+      "request_id": 48,
+      "url": "https://9b4bccd6be5656.lhr.life/",
+      "status_code": 200,
+      "response_time": 7.390785455703735,
+      "content_length": 10134,
+      "success": true
+    },
+    {
+      "request_id": 27,
+      "url": "https://9b4bccd6be5656.lhr.life/accounts/profile/",
+      "status_code": 200,
+      "response_time": 10.19328236579895,
+      "content_length": 7574,
+      "success": true
+    },
+    {
+      "request_id": 39,
+      "url": "https://9b4bccd6be5656.lhr.life/accounts/profile/",
+      "status_code": 200,
+      "response_time": 10.16554880142212,
+      "content_length": 7574,
+      "success": true
+    },
+    {
+      "request_id": 33,
+      "url": "https://9b4bccd6be5656.lhr.life/courses/",
+      "status_code": 200,
+      "response_time": 10.063591003417969,
+      "content_length": 145341,
+      "success": true
+    },
+    {
+      "request_id": 58,
+      "url": "https://9b4bccd6be5656.lhr.life/accounts/login/",
+      "status_code": 200,
+      "response_time": 7.341115474700928,
+      "content_length": 7574,
+      "success": true
+    },
+    {
+      "request_id": 49,
+      "url": "https://9b4bccd6be5656.lhr.life/courses/",
+      "status_code": 200,
+      "response_time": 8.075270414352417,
+      "content_length": 145341,
+      "success": true
+    },
+    {
+      "request_id": 40,
+      "url": "https://9b4bccd6be5656.lhr.life/",
+      "status_code": 200,
+      "response_time": 7.390718936920166,
+      "content_length": 10134,
+      "success": true
+    },
+    {
+      "request_id": 30,
+      "url": "https://9b4bccd6be5656.lhr.life/accounts/login/",
+      "status_code": 200,
+      "response_time": 7.3403401374816895,
+      "content_length": 7574,
+      "success": true
+    },
+    {
+      "request_id": 1,
+      "url": "https://9b4bccd6be5656.lhr.life/courses/",
+      "status_code": 200,
+      "response_time": 7.227179527282715,
+      "content_length": 145341,
+      "success": true
+    },
+    {
+      "request_id": 22,
+      "url": "https://9b4bccd6be5656.lhr.life/accounts/login/",
+      "status_code": 200,
+      "response_time": 7.34209680557251,
+      "content_length": 7574,
+      "success": true
+    },
+    {
+      "request_id": 59,
+      "url": "https://9b4bccd6be5656.lhr.life/accounts/profile/",
+      "status_code": 200,
+      "response_time": 10.192482709884644,
+      "content_length": 7574,
+      "success": true
+    },
+    {
+      "request_id": 11,
+      "url": "https://9b4bccd6be5656.lhr.life/accounts/profile/",
+      "status_code": 200,
+      "response_time": 10.193781614303589,
+      "content_length": 7574,
+      "success": true
+    },
+    {
+      "request_id": 41,
+      "url": "https://9b4bccd6be5656.lhr.life/courses/",
+      "status_code": 200,
+      "response_time": 10.193422555923462,
+      "content_length": 145341,
+      "success": true
+    },
+    {
+      "request_id": 5,
+      "url": "https://9b4bccd6be5656.lhr.life/courses/",
+      "status_code": 200,
+      "response_time": 7.809716463088989,
+      "content_length": 145341,
+      "success": true
+    },
+    {
+      "request_id": 19,
+      "url": "https://9b4bccd6be5656.lhr.life/accounts/profile/",
+      "status_code": 200,
+      "response_time": 10.193243265151978,
+      "content_length": 7574,
+      "success": true
+    },
+    {
+      "request_id": 32,
+      "url": "https://9b4bccd6be5656.lhr.life/",
+      "status_code": 200,
+      "response_time": 7.390436887741089,
+      "content_length": 10134,
+      "success": true
+    },
+    {
+      "request_id": 6,
+      "url": "https://9b4bccd6be5656.lhr.life/accounts/login/",
+      "status_code": 200,
+      "response_time": 7.342370986938477,
+      "content_length": 7574,
+      "success": true
+    },
+    {
+      "request_id": 14,
+      "url": "https://9b4bccd6be5656.lhr.life/accounts/login/",
+      "status_code": 200,
+      "response_time": 7.342006683349609,
+      "content_length": 7574,
+      "success": true
+    },
+    {
+      "request_id": 51,
+      "url": "https://9b4bccd6be5656.lhr.life/accounts/profile/",
+      "status_code": 200,
+      "response_time": 10.192507982254028,
+      "content_length": 7574,
+      "success": true
+    },
+    {
+      "request_id": 42,
+      "url": "https://9b4bccd6be5656.lhr.life/accounts/login/",
+      "status_code": 200,
+      "response_time": 7.341850757598877,
+      "content_length": 7574,
+      "success": true
+    },
+    {
+      "request_id": 3,
+      "url": "https://9b4bccd6be5656.lhr.life/accounts/profile/",
+      "status_code": 200,
+      "response_time": 9.853273391723633,
+      "content_length": 7574,
+      "success": true
+    },
+    {
+      "request_id": 31,
+      "url": "https://9b4bccd6be5656.lhr.life/accounts/profile/",
+      "status_code": 200,
+      "response_time": 10.193121910095215,
+      "content_length": 7574,
+      "success": true
+    },
+    {
+      "request_id": 13,
+      "url": "https://9b4bccd6be5656.lhr.life/courses/",
+      "status_code": 200,
+      "response_time": 7.753196954727173,
+      "content_length": 145341,
+      "success": true
+    },
+    {
+      "request_id": 2,
+      "url": "https://9b4bccd6be5656.lhr.life/accounts/login/",
+      "status_code": 200,
+      "response_time": 7.3509299755096436,
+      "content_length": 7574,
+      "success": true
+    },
+    {
+      "request_id": 8,
+      "url": "https://9b4bccd6be5656.lhr.life/",
+      "status_code": 200,
+      "response_time": 6.864928483963013,
+      "content_length": 10134,
+      "success": true
+    },
+    {
+      "request_id": 0,
+      "url": "https://9b4bccd6be5656.lhr.life/",
+      "status_code": 200,
+      "response_time": 7.39345645904541,
+      "content_length": 10134,
+      "success": true
+    },
+    {
+      "request_id": 23,
+      "url": "https://9b4bccd6be5656.lhr.life/accounts/profile/",
+      "status_code": 200,
+      "response_time": 10.142827272415161,
+      "content_length": 7574,
+      "success": true
+    },
+    {
+      "request_id": 43,
+      "url": "https://9b4bccd6be5656.lhr.life/accounts/profile/",
+      "status_code": 200,
+      "response_time": 10.193199634552002,
+      "content_length": 7574,
+      "success": true
+    },
+    {
+      "request_id": 52,
+      "url": "https://9b4bccd6be5656.lhr.life/",
+      "status_code": 200,
+      "response_time": 6.267537355422974,
+      "content_length": 10134,
+      "success": true
+    },
+    {
+      "request_id": 7,
+      "url": "https://9b4bccd6be5656.lhr.life/accounts/profile/",
+      "status_code": 200,
+      "response_time": 10.192956686019897,
+      "content_length": 7574,
+      "success": true
+    },
+    {
+      "request_id": 29,
+      "url": "https://9b4bccd6be5656.lhr.life/courses/",
+      "status_code": 200,
+      "response_time": 7.699539422988892,
+      "content_length": 145341,
+      "success": true
+    },
+    {
+      "request_id": 53,
+      "url": "https://9b4bccd6be5656.lhr.life/courses/",
+      "status_code": 200,
+      "response_time": 7.74923038482666,
+      "content_length": 145341,
+      "success": true
+    },
+    {
+      "request_id": 12,
+      "url": "https://9b4bccd6be5656.lhr.life/",
+      "status_code": 200,
+      "response_time": 7.390851020812988,
+      "content_length": 10134,
+      "success": true
+    },
+    {
+      "request_id": 44,
+      "url": "https://9b4bccd6be5656.lhr.life/",
+      "status_code": 200,
+      "response_time": 7.389385938644409,
+      "content_length": 10134,
+      "success": true
+    },
+    {
+      "request_id": 4,
+      "url": "https://9b4bccd6be5656.lhr.life/",
+      "status_code": 200,
+      "response_time": 7.391191720962524,
+      "content_length": 10134,
+      "success": true
+    },
+    {
+      "request_id": 36,
+      "url": "https://9b4bccd6be5656.lhr.life/",
+      "status_code": 200,
+      "response_time": 7.3894476890563965,
+      "content_length": 10134,
+      "success": true
+    },
+    {
+      "request_id": 17,
+      "url": "https://9b4bccd6be5656.lhr.life/courses/",
+      "status_code": 200,
+      "response_time": 7.8085925579071045,
+      "content_length": 145341,
+      "success": true
+    },
+    {
+      "request_id": 54,
+      "url": "https://9b4bccd6be5656.lhr.life/accounts/login/",
+      "status_code": 200,
+      "response_time": 7.339302062988281,
+      "content_length": 7574,
+      "success": true
+    },
+    {
+      "request_id": 45,
+      "url": "https://9b4bccd6be5656.lhr.life/courses/",
+      "status_code": 200,
+      "response_time": 7.808797121047974,
+      "content_length": 145341,
+      "success": true
+    },
+    {
+      "request_id": 26,
+      "url": "https://9b4bccd6be5656.lhr.life/accounts/login/",
+      "status_code": 200,
+      "response_time": 7.3403449058532715,
+      "content_length": 7574,
+      "success": true
+    },
+    {
+      "request_id": 35,
+      "url": "https://9b4bccd6be5656.lhr.life/accounts/profile/",
+      "status_code": 200,
+      "response_time": 10.193295955657959,
+      "content_length": 7574,
+      "success": true
+    },
+    {
+      "request_id": 20,
+      "url": "https://9b4bccd6be5656.lhr.life/",
+      "status_code": 200,
+      "response_time": 7.391180753707886,
+      "content_length": 10134,
+      "success": true
+    },
+    {
+      "request_id": 21,
+      "url": "https://9b4bccd6be5656.lhr.life/courses/",
+      "status_code": 200,
+      "response_time": 8.339731931686401,
+      "content_length": 145341,
+      "success": true
+    },
+    {
+      "request_id": 24,
+      "url": "https://9b4bccd6be5656.lhr.life/",
+      "status_code": 200,
+      "response_time": 7.390448093414307,
+      "content_length": 10134,
+      "success": true
+    },
+    {
+      "request_id": 55,
+      "url": "https://9b4bccd6be5656.lhr.life/accounts/profile/",
+      "status_code": 200,
+      "response_time": 10.19295072555542,
+      "content_length": 7574,
+      "success": true
+    },
+    {
+      "request_id": 46,
+      "url": "https://9b4bccd6be5656.lhr.life/accounts/login/",
+      "status_code": 200,
+      "response_time": 7.341399669647217,
+      "content_length": 7574,
+      "success": true
+    },
+    {
+      "request_id": 15,
+      "url": "https://9b4bccd6be5656.lhr.life/accounts/profile/",
+      "status_code": 200,
+      "response_time": 10.192662715911865,
+      "content_length": 7574,
+      "success": true
+    },
+    {
+      "request_id": 37,
+      "url": "https://9b4bccd6be5656.lhr.life/courses/",
+      "status_code": 200,
+      "response_time": 7.826616525650024,
+      "content_length": 145341,
+      "success": true
+    },
+    {
+      "request_id": 28,
+      "url": "https://9b4bccd6be5656.lhr.life/",
+      "status_code": 200,
+      "response_time": 7.391106605529785,
+      "content_length": 10134,
+      "success": true
+    },
+    {
+      "request_id": 9,
+      "url": "https://9b4bccd6be5656.lhr.life/courses/",
+      "status_code": 200,
+      "response_time": 7.809053421020508,
+      "content_length": 145341,
+      "success": true
+    },
+    {
+      "request_id": 10,
+      "url": "https://9b4bccd6be5656.lhr.life/accounts/login/",
+      "status_code": 200,
+      "response_time": 7.342378854751587,
+      "content_length": 7574,
+      "success": true
+    },
+    {
+      "request_id": 18,
+      "url": "https://9b4bccd6be5656.lhr.life/accounts/login/",
+      "status_code": 200,
+      "response_time": 11.000919818878174,
+      "content_length": 7574,
+      "success": true
+    },
+    {
+      "request_id": 56,
+      "url": "https://9b4bccd6be5656.lhr.life/",
+      "status_code": 200,
+      "response_time": 6.267670154571533,
+      "content_length": 10134,
+      "success": true
+    },
+    {
+      "request_id": 47,
+      "url": "https://9b4bccd6be5656.lhr.life/accounts/profile/",
+      "status_code": 200,
+      "response_time": 10.193025588989258,
+      "content_length": 7574,
+      "success": true
+    }
+  ],
+  "summary": {
+    "total_requests": 60,
+    "successful_requests": 60,
+    "failed_requests": 0,
+    "success_rate": 100.0
+  }
+}

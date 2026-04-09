@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ course.title }} - Progage{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Главная</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'courses:course_list' %}">Курсы</a></li>
+            <li class="breadcrumb-item active">{{ course.title|truncatechars:50 }}</li>
+        </ol>
+    </nav>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                {% if course.thumbnail %}
+                <img src="{{ course.thumbnail_url }}" class="card-img-top" alt="{{ course.title }}" style="height: 300px; object-fit: cover;">
+                {% endif %}
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <span class="badge bg-{{ course.level }} fs-6">{{ course.get_level_display }}</span>
+                        <div class="d-flex gap-2">
+                            <span class="badge bg-light text-dark"><i class="fas fa-users me-1"></i>{{ course.enrollment_count }}</span>
+                            <span class="badge bg-light text-dark"><i class="fas fa-heart me-1"></i>{{ course.likes.count }}</span>
+                            <span class="badge bg-warning text-dark"><i class="fas fa-star me-1"></i>{{ course.average_rating|floatformat:1 }}</span>
+                        </div>
+                    </div>
+                    <h1 class="card-title display-6 fw-bold mb-3">{{ course.title }}</h1>
+                    <p class="lead">{{ course.description }}</p>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            {% if course.instructor.avatar %}
+                            <img src="{{ course.instructor.avatar_url }}" alt="" class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                            {% else %}
+                            <div class="bg-primary bg-opacity-10 rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                <i class="fas fa-user text-primary"></i>
+                            </div>
+                            {% endif %}
+                            <div>
+                                <h6 class="mb-0">{{ course.instructor.get_full_name|default:course.instructor.username }}</h6>
+                                <small class="text-muted">Преподаватель</small>
+                            </div>
+                        </div>
+                        <div>
+                            {% if course.price > 0 %}
+                                <h4 class="mb-0 text-primary">{{ course.price }} ₽</h4>
+                            {% else %}
+                                <span class="badge bg-success fs-6">Бесплатно</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="fas fa-list-ul text-primary me-2"></i>Содержание курса</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if lessons %}
+                    <div class="list-group list-group-flush">
+                        {% for lesson in lessons %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center py-3">
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-light text-dark me-3">{{ lesson.order }}</span>
+                                <div>
+                                    <h6 class="mb-0">{{ lesson.title }}</h6>
+                                    <small class="text-muted">
+                                        {% if lesson.video_url %}
+                                            <i class="fas fa-play-circle me-1"></i>Видео
+                                        {% else %}
+                                            <i class="fas fa-file-text me-1"></i>Текст
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                            {% if lesson.is_free %}
+                                <span class="badge bg-success">Бесплатно</span>
+                            {% else %}
+                                <i class="fas fa-lock text-muted"></i>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-4">Уроки пока не добавлены</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="fas fa-comments text-primary me-2"></i>Отзывы</h5>
+                </div>
+                <div class="card-body">
+                    {% if reviews %}
+                    <div class="row">
+                        {% for review in reviews %}
+                        <div class="col-md-6 mb-3">
+                            <div class="border rounded p-3 h-100">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div class="d-flex align-items-center">
+                                        {% if review.user.avatar %}
+                                        <img src="{{ review.user.avatar_url }}" alt="" class="rounded-circle me-2" style="width: 35px; height: 35px; object-fit: cover;">
+                                        {% else %}
+                                        <div class="bg-secondary bg-opacity-10 rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+                                            <i class="fas fa-user text-secondary small"></i>
+                                        </div>
+                                        {% endif %}
+                                        <div>
+                                            <h6 class="mb-0">{{ review.user.get_full_name|default:review.user.username }}</h6>
+                                            <small class="text-muted">{{ review.created_at|timesince }} назад</small>
+                                        </div>
+                                    </div>
+                                    <span class="badge bg-warning text-dark">{{ review.rating }} <i class="fas fa-star"></i></span>
+                                </div>
+                                <p class="mb-0">{{ review.comment }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">Пока нет отзывов. Будьте первым!</p>
+                    {% endif %}
+
+                    {% if user.is_authenticated and is_enrolled %}
+                    <hr class="my-4">
+                    <h6>Оставить отзыв</h6>
+                    <form method="post" action="{% url 'courses:submit_review' course.id %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">Рейтинг</label>
+                            <select class="form-select" name="rating" required>
+                                <option value="5">5 - Отлично</option>
+                                <option value="4">4 - Хорошо</option>
+                                <option value="3">3 - Удовлетворительно</option>
+                                <option value="2">2 - Плохо</option>
+                                <option value="1">1 - Ужасно</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Комментарий</label>
+                            <textarea class="form-control" name="comment" rows="3" placeholder="Поделитесь своим мнением о курсе..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Отправить отзыв</button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm sticky-top" style="top: 20px;">
+                <div class="card-body">
+                    {% if user.is_authenticated %}
+                        {% if is_enrolled %}
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle me-2"></i>Вы записаны на этот курс
+                            </div>
+                            <a href="#lessons" class="btn btn-primary w-100 mb-2">
+                                <i class="fas fa-play-circle me-2"></i>Продолжить обучение
+                            </a>
+                        {% else %}
+                            <form method="post" action="{% url 'courses:enroll_course' course.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary w-100 btn-lg mb-3">
+                                    <i class="fas fa-user-plus me-2"></i>Записаться на курс
+                                </button>
+                            </form>
+                        {% endif %}
+                        
+                        <form method="post" action="{% url 'courses:toggle_like' course.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-danger w-100 {% if has_liked %}active{% endif %}">
+                                <i class="{% if has_liked %}fas{% else %}far{% endif %} fa-heart me-2"></i>
+                                {% if has_liked %}Убрать лайк{% else %}Поставить лайк{% endif %}
+                            </button>
+                        </form>
+                    {% else %}
+                        <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="btn btn-primary w-100 btn-lg">
+                            <i class="fas fa-sign-in-alt me-2"></i>Войти, чтобы записаться
+                        </a>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-light">
+                    <h6 class="mb-2">Этот курс включает:</h6>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2"><i class="fas fa-video text-primary me-2"></i>{{ course.lesson_count }} уроков</li>
+                        <li class="mb-2"><i class="fas fa-infinity text-primary me-2"></i>Пожизненный доступ</li>
+                        <li class="mb-2"><i class="fas fa-mobile-alt text-primary me-2"></i>Мобильная версия</li>
+                        <li class="mb-2"><i class="fas fa-certificate text-primary me-2"></i>Сертификат</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

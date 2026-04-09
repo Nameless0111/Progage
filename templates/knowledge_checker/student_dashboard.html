@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Панель студента - Knowledge Checker{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold"><i class="fas fa-brain text-primary me-3"></i>Панель проверки знаний</h1>
+            <p class="lead text-muted">Проходите тесты и отслеживайте свой прогресс</p>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-primary text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-tasks fa-2x mb-2 opacity-75"></i>
+                    <h4 class="mb-0">{{ completed_tests|default:0 }}</h4>
+                    <small>Пройдено тестов</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-success text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-percentage fa-2x mb-2 opacity-75"></i>
+                    <h4 class="mb-0">{{ average_score|default:0 }}%</h4>
+                    <small>Средний балл</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-info text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock fa-2x mb-2 opacity-75"></i>
+                    <h4 class="mb-0">{{ total_time|default:0 }}ч</h4>
+                    <small>Время обучения</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-warning text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-trophy fa-2x mb-2 opacity-75"></i>
+                    <h4 class="mb-0">{{ achievements|default:0 }}</h4>
+                    <small>Достижений</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="fas fa-clipboard-list text-primary me-2"></i>Доступные тесты</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if available_tests %}
+                    <div class="list-group list-group-flush">
+                        {% for test in available_tests %}
+                        <div class="list-group-item p-4">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h5 class="mb-1">{{ test.title }}</h5>
+                                    <p class="text-muted mb-2">{{ test.description|truncatechars:100 }}</p>
+                                    <div class="d-flex gap-2">
+                                        <span class="badge bg-secondary"><i class="fas fa-question-circle me-1"></i>{{ test.question_count }} вопросов</span>
+                                        <span class="badge bg-info"><i class="fas fa-clock me-1"></i>{{ test.duration }} мин</span>
+                                        <span class="badge bg-{{ test.difficulty }}">{{ test.get_difficulty_display }}</span>
+                                    </div>
+                                </div>
+                                <a href="{% url 'knowledge_checker:start_test' test.id %}" class="btn btn-primary">
+                                    <i class="fas fa-play me-2"></i>Начать
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-clipboard-check fa-3x text-muted mb-3"></i>
+                        <h5>Нет доступных тестов</h5>
+                        <p class="text-muted">Проверьте позже или свяжитесь с преподавателем</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="fas fa-history text-primary me-2"></i>История тестов</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if test_history %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Тест</th>
+                                    <th>Дата</th>
+                                    <th>Результат</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for attempt in test_history %}
+                                <tr>
+                                    <td>{{ attempt.test.title }}</td>
+                                    <td>{{ attempt.completed_at|date:"d.m.Y" }}</td>
+                                    <td>
+                                        {% if attempt.score >= 80 %}
+                                            <span class="badge bg-success">{{ attempt.score }}%</span>
+                                        {% elif attempt.score >= 60 %}
+                                            <span class="badge bg-warning text-dark">{{ attempt.score }}%</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">{{ attempt.score }}%</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'knowledge_checker:test_result' attempt.id %}" class="btn btn-sm btn-outline-primary">Подробнее</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <p>Вы еще не проходили тесты</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie text-primary me-2"></i>Мой прогресс</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Успеваемость</span>
+                            <span class="fw-bold">{{ average_score|default:0 }}%</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ average_score|default:0 }}%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Завершено тестов</span>
+                            <span class="fw-bold">{{ completed_tests|default:0 }}/{{ total_tests|default:0 }}</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: {{ completion_rate|default:0 }}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="fas fa-medal text-primary me-2"></i>Достижения</h5>
+                </div>
+                <div class="card-body">
+                    {% if user_achievements %}
+                    <div class="list-group list-group-flush">
+                        {% for achievement in user_achievements %}
+                        <div class="list-group-item px-0">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-warning bg-opacity-10 rounded-circle p-2">
+                                        <i class="fas fa-trophy text-warning"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="mb-0">{{ achievement.name }}</h6>
+                                    <small class="text-muted">{{ achievement.description }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">Пока нет достижений</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

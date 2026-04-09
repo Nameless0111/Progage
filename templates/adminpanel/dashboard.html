@@ -1,0 +1,281 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Админ-панель - Progage{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold"><i class="fas fa-cog text-primary me-3"></i>Административная панель</h1>
+            <p class="lead text-muted">Управление платформой и мониторинг системы.</p>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-2">
+            <div class="card border-0 shadow-sm bg-primary text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-users fa-2x mb-2 opacity-75"></i>
+                    <h4 class="mb-0">{{ stats.total_users|default:0 }}</h4>
+                    <small>Пользователей</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-0 shadow-sm bg-success text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-user-graduate fa-2x mb-2 opacity-75"></i>
+                    <h4 class="mb-0">{{ stats.students|default:0 }}</h4>
+                    <small>Студентов</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-0 shadow-sm bg-info text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-chalkboard-teacher fa-2x mb-2 opacity-75"></i>
+                    <h4 class="mb-0">{{ stats.authors|default:0 }}</h4>
+                    <small>Преподавателей</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-0 shadow-sm bg-warning text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-book fa-2x mb-2 opacity-75"></i>
+                    <h4 class="mb-0">{{ stats.total_courses|default:0 }}</h4>
+                    <small>Курсов</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-0 shadow-sm bg-danger text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-enrollment fa-2x mb-2 opacity-75"></i>
+                    <h4 class="mb-0">{{ stats.total_enrollments|default:0 }}</h4>
+                    <small>Записей</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-0 shadow-sm bg-secondary text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-heart fa-2x mb-2 opacity-75"></i>
+                    <h4 class="mb-0">{{ stats.total_likes|default:0 }}</h4>
+                    <small>Лайков</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-success bg-opacity-10 rounded-circle p-3">
+                            <i class="fas fa-user-plus text-success fa-2x"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h5 class="mb-0">+{{ recent_stats.new_users|default:0 }}</h5>
+                        <small class="text-muted">Новых пользователей (7 дней)</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-primary bg-opacity-10 rounded-circle p-3">
+                            <i class="fas fa-user-check text-primary fa-2x"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h5 class="mb-0">{{ recent_stats.active_users|default:0 }}</h5>
+                        <small class="text-muted">Активных пользователей</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-info bg-opacity-10 rounded-circle p-3">
+                            <i class="fas fa-plus-circle text-info fa-2x"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h5 class="mb-0">+{{ recent_stats.new_enrollments|default:0 }}</h5>
+                        <small class="text-muted">Новых записей (7 дней)</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-warning bg-opacity-10 rounded-circle p-3">
+                            <i class="fas fa-exclamation-triangle text-warning fa-2x"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h5 class="mb-0">{{ recent_errors|default:0 }}</h5>
+                        <small class="text-muted">Ошибок (24 часа)</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-fire text-primary me-2"></i>Популярные курсы</h5>
+                    <a href="{% url 'adminpanel:popular_content' %}" class="btn btn-sm btn-outline-primary">Подробнее</a>
+                </div>
+                <div class="card-body p-0">
+                    {% if popular_courses %}
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Курс</th>
+                                        <th>Автор</th>
+                                        <th>Записей</th>
+                                        <th>Лайков</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for course in popular_courses %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'courses:course_detail' course.id %}" class="text-decoration-none fw-medium">{{ course.title }}</a>
+                                        </td>
+                                        <td>{{ course.instructor.get_full_name|default:course.instructor.username }}</td>
+                                        <td>
+                                            <span class="badge bg-primary">{{ course.enrollments_total }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-danger">{{ course.like_count }}</span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center py-4">Нет данных о популярных курсах</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-history text-primary me-2"></i>Последние действия</h5>
+                    <a href="{% url 'adminpanel:activity_logs' %}" class="btn btn-sm btn-outline-primary">Все логи</a>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_activities %}
+                        <div class="list-group list-group-flush">
+                            {% for activity in recent_activities %}
+                            <div class="list-group-item py-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        {% if activity.action_type == 'create' %}
+                                            <span class="badge bg-success"><i class="fas fa-plus"></i></span>
+                                        {% elif activity.action_type == 'update' %}
+                                            <span class="badge bg-primary"><i class="fas fa-edit"></i></span>
+                                        {% elif activity.action_type == 'delete' %}
+                                            <span class="badge bg-danger"><i class="fas fa-trash"></i></span>
+                                        {% else %}
+                                            <span class="badge bg-secondary"><i class="fas fa-info"></i></span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="mb-0">{{ activity.get_action_type_display }}</h6>
+                                        <p class="mb-0 text-muted small">{{ activity.user.get_full_name|default:activity.user.username }} - {{ activity.action_time|timesince }} назад</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center py-4">Нет недавней активности</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="fas fa-bolt text-primary me-2"></i>Быстрые действия</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'adminpanel:user_create' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-user-plus me-2"></i>Создать пользователя
+                        </a>
+                        <a href="{% url 'adminpanel:course_create' %}" class="btn btn-outline-success">
+                            <i class="fas fa-book-medical me-2"></i>Создать курс
+                        </a>
+                        <a href="{% url 'adminpanel:backup_logs' %}" class="btn btn-outline-info">
+                            <i class="fas fa-database me-2"></i>Бэкап базы данных
+                        </a>
+                        <a href="{% url 'adminpanel:statistics' %}" class="btn btn-outline-warning">
+                            <i class="fas fa-chart-line me-2"></i>Статистика
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="fas fa-link text-primary me-2"></i>Навигация</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'adminpanel:user_list' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-users me-2 text-primary"></i>Пользователи
+                    </a>
+                    <a href="{% url 'adminpanel:course_list' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-book me-2 text-success"></i>Курсы
+                    </a>
+                    <a href="{% url 'adminpanel:activity_logs' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-history me-2 text-info"></i>Логи активности
+                    </a>
+                    <a href="{% url 'adminpanel:system_logs' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-terminal me-2 text-warning"></i>Системные логи
+                    </a>
+                    <a href="{% url 'adminpanel:error_logs' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-bug me-2 text-danger"></i>Логи ошибок
+                    </a>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm bg-light">
+                <div class="card-body">
+                    <h6 class="mb-3"><i class="fas fa-server text-primary me-2"></i>Состояние системы</h6>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Статус:</span>
+                        <span class="badge bg-success">Работает</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Версия Django:</span>
+                        <span class="text-muted">5.1</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>База данных:</span>
+                        <span class="text-muted">PostgreSQL</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

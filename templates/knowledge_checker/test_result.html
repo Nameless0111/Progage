@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Результаты теста - Progage{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-lg">
+                <div class="card-body text-center p-5">
+                    {% if attempt.score >= 80 %}
+                    <div class="mb-4">
+                        <i class="fas fa-trophy fa-5x text-warning"></i>
+                    </div>
+                    <h2 class="text-success mb-3">Отличный результат!</h2>
+                    {% elif attempt.score >= 60 %}
+                    <div class="mb-4">
+                        <i class="fas fa-thumbs-up fa-5x text-info"></i>
+                    </div>
+                    <h2 class="text-info mb-3">Хороший результат!</h2>
+                    {% else %}
+                    <div class="mb-4">
+                        <i class="fas fa-redo fa-5x text-secondary"></i>
+                    </div>
+                    <h2 class="text-secondary mb-3">Попробуйте еще раз</h2>
+                    {% endif %}
+
+                    <h4 class="mb-4">{{ attempt.test.title }}</h4>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <div class="p-3 bg-light rounded">
+                                <h3 class="{% if attempt.score >= 60 %}text-success{% else %}text-danger{% endif %}">{{ attempt.score }}%</h3>
+                                <small class="text-muted">Набрано баллов</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 bg-light rounded">
+                                <h3>{{ attempt.correct_answers }}/{{ attempt.total_questions }}</h3>
+                                <small class="text-muted">Правильных ответов</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 bg-light rounded">
+                                <h3>{{ attempt.time_spent }} мин</h3>
+                                <small class="text-muted">Время</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if attempt.score >= 80 %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-certificate me-2"></i>Поздравляем! Вы получили сертификат за прохождение теста.
+                    </div>
+                    {% endif %}
+
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="{% url 'knowledge_checker:student_dashboard' %}" class="btn btn-outline-secondary btn-lg">
+                            <i class="fas fa-tachometer-alt me-2"></i>В панель
+                        </a>
+                        {% if attempt.score < 80 %}
+                        <a href="{% url 'knowledge_checker:start_test' attempt.test.id %}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-redo me-2"></i>Пройти снова
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="fas fa-list-check text-primary me-2"></i>Детальный разбор</h5>
+                </div>
+                <div class="card-body">
+                    {% for answer in attempt.answers.all %}
+                    <div class="mb-4 pb-4 border-bottom">
+                        <h6 class="mb-2">
+                            <span class="badge {% if answer.is_correct %}bg-success{% else %}bg-danger{% endif %} me-2">
+                                <i class="fas {% if answer.is_correct %}fa-check{% else %}fa-times{% endif %}"></i>
+                            </span>
+                            {{ answer.question.text }}
+                        </h6>
+                        <div class="ms-4">
+                            <p class="mb-1">
+                                <strong>Ваш ответ:</strong> 
+                                <span class="{% if answer.is_correct %}text-success{% else %}text-danger{% endif %}">{{ answer.given_answer }}</span>
+                            </p>
+                            {% if not answer.is_correct %}
+                            <p class="mb-1 text-success">
+                                <strong>Правильный ответ:</strong> {{ answer.correct_answer }}
+                            </p>
+                            {% endif %}
+                            {% if answer.question.explanation %}
+                            <div class="alert alert-info mt-2">
+                                <i class="fas fa-lightbulb me-2"></i>{{ answer.question.explanation }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

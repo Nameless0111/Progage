@@ -1,0 +1,47 @@
+<div class="mb-4">
+    <div class="card border-0 shadow-sm">
+        <div class="card-body py-2">
+            <div class="d-flex flex-wrap gap-2">
+                <a class="btn btn-sm btn-outline-primary" href="{% url 'adminpanel:dashboard' %}">
+                    <i class="fas fa-chart-line me-1"></i>Дашборд
+                </a>
+                <a class="btn btn-sm btn-outline-primary" href="{% url 'adminpanel:user_list' %}">
+                    <i class="fas fa-users me-1"></i>Пользователи
+                </a>
+                <a class="btn btn-sm btn-outline-primary" href="{% url 'adminpanel:course_list' %}">
+                    <i class="fas fa-book me-1"></i>Курсы
+                </a>
+                <a class="btn btn-sm btn-outline-primary" href="{% url 'adminpanel:enrollment_list' %}">
+                    <i class="fas fa-user-graduate me-1"></i>Записи
+                </a>
+                <a class="btn btn-sm btn-outline-primary" href="{% url 'adminpanel:like_list' %}">
+                    <i class="fas fa-heart me-1"></i>Лайки
+                </a>
+                <a class="btn btn-sm btn-outline-primary" href="{% url 'adminpanel:review_list' %}">
+                    <i class="fas fa-star me-1"></i>Отзывы
+                </a>
+                <a class="btn btn-sm btn-outline-primary" href="{% url 'adminpanel:error_logs' %}">
+                    <i class="fas fa-bug me-1"></i>Ошибки
+                </a>
+                <a class="btn btn-sm btn-outline-primary" href="{% url 'adminpanel:activity_logs' %}">
+                    <i class="fas fa-history me-1"></i>Активность
+                </a>
+                <a class="btn btn-sm btn-outline-primary" href="{% url 'adminpanel:system_logs' %}">
+                    <i class="fas fa-server me-1"></i>Системные логи
+                </a>
+                <a class="btn btn-sm btn-outline-primary" href="{% url 'adminpanel:user_sessions' %}">
+                    <i class="fas fa-user-clock me-1"></i>Сессии
+                </a>
+                <a class="btn btn-sm btn-outline-primary" href="{% url 'adminpanel:popular_content' %}">
+                    <i class="fas fa-fire me-1"></i>Популярное
+                </a>
+                <a class="btn btn-sm btn-outline-primary" href="{% url 'adminpanel:backup_logs' %}">
+                    <i class="fas fa-database me-1"></i>Бэкапы
+                </a>
+                <a class="btn btn-sm btn-outline-primary" href="{% url 'adminpanel:statistics' %}">
+                    <i class="fas fa-chart-pie me-1"></i>Статистика
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

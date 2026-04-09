@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Настройка двухфакторной аутентификации{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-mobile-alt fa-3x text-primary mb-3"></i>
+                        <h2>Двухфакторная аутентификация</h2>
+                        <p class="text-muted">Увеличьте безопасность вашего аккаунта с помощью TOTP</p>
+                    </div>
+                    
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-qrcode me-2"></i>1. Отсканируйте QR-код</h5>
+                            <p class="text-muted">Используйте Google Authenticator, Authy или другое TOTP-приложение</p>
+                            
+                            <div class="text-center mb-3">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ qr_code_url|urlencode }}" 
+                                     alt="QR Code" class="img-fluid border rounded">
+                            </div>
+                            
+                            <div class="alert alert-info">
+                                <strong>Секретный ключ:</strong><br>
+                                <code>{{ device.key }}</code>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-key me-2"></i>2. Резервные коды</h5>
+                            <p class="text-muted">Сохраните эти коды в надежном месте. Они помогут войти, если потеряете доступ к приложению.</p>
+                            
+                            {% if backup_codes %}
+                                <div class="row g-2" id="backup-codes">
+                                    {% for code in backup_codes %}
+                                        <div class="col-6">
+                                            <span class="badge bg-light text-dark p-2 w-100 text-center font-monospace">{{ code }}</span>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    Резервные коды не сгенерированы
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="d-flex justify-content-between">
+                        {% if request.user.profile.two_factor_enabled %}
+                            <form method="post" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="disable">
+                                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to disable two-factor authentication?')">
+                                    <i class="fas fa-times me-2"></i>Disable 2FA
+                                </button>
+                            </form>
+                        {% else %}
+                            <form method="post" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="enable">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-check me-2"></i>Enable 2FA
+                                </button>
+                            </form>
+                        {% endif %}
+                        
+                        {% if request.user.profile.two_factor_enabled %}
+                            <form method="post" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="regenerate_codes">
+                                <button type="submit" class="btn btn-outline-primary" onclick="return confirm('Старые резервные коды будут аннулированы. Продолжить?')">
+                                    <i class="fas fa-sync me-2"></i>Обновить коды
+                                </button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ lesson.title }} - {{ lesson.course.title }} - Progage{% endblock %}
+
+{% block extra_css %}
+<style>
+    .lesson-sidebar {
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
+    }
+    .lesson-content {
+        min-height: 400px;
+    }
+    .video-container {
+        position: relative;
+        padding-bottom: 56.25%;
+        height: 0;
+        overflow: hidden;
+    }
+    .video-container iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+    .lesson-nav-item.active {
+        background-color: #e3f2fd;
+        border-left: 3px solid #0d6efd;
+    }
+    .lesson-nav-item.completed {
+        background-color: #e8f5e9;
+    }
+    .progress-indicator {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-3">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'home' %}">Главная</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'courses:course_detail' lesson.course.id %}">{{ lesson.course.title }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ lesson.title }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="badge bg-primary me-2">Урок {{ lesson.order }}</span>
+                        <h4 class="mb-0 d-inline">{{ lesson.title }}</h4>
+                    </div>
+                    <div class="btn-group">
+                        {% if prev_lesson %}
+                        <a href="{% url 'courses:lesson_view' lesson.course.id prev_lesson.id %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-chevron-left"></i> Предыдущий
+                        </a>
+                        {% endif %}
+                        {% if next_lesson %}
+                        <a href="{% url 'courses:lesson_view' lesson.course.id next_lesson.id %}" class="btn btn-outline-primary btn-sm">
+                            Следующий <i class="fas fa-chevron-right"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    {% if lesson.video_url %}
+                    <div class="video-container bg-dark">
+                        {% if 'youtube.com' in lesson.video_url or 'youtu.be' in lesson.video_url %}
+                            {% if 'youtube.com' in lesson.video_url %}
+                                {% with video_id=lesson.video_url|cut:"https://www.youtube.com/watch?v=" %}
+                                <iframe src="https://www.youtube.com/embed/{{ video_id }}" frameborder="0" allowfullscreen></iframe>
+                                {% endwith %}
+                            {% else %}
+                                {% with video_id=lesson.video_url|cut:"https://youtu.be/" %}
+                                <iframe src="https://www.youtube.com/embed/{{ video_id }}" frameborder="0" allowfullscreen></iframe>
+                                {% endwith %}
+                            {% endif %}
+                        {% else %}
+                            <video controls class="w-100" style="max-height: 500px;">
+                                <source src="{{ lesson.video_url }}" type="video/mp4">
+                                Ваш браузер не поддерживает видео.
+                            </video>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="lesson-content p-4">
+                        {{ lesson.content|safe|linebreaks }}
+                    </div>
+                </div>
+                <div class="card-footer bg-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            {% if is_completed %}
+                                <span class="badge bg-success"><i class="fas fa-check me-1"></i>Урок завершен</span>
+                            {% else %}
+                                <span class="badge bg-secondary">В процессе</span>
+                            {% endif %}
+                        </div>
+                        <div>
+                            {% if not is_completed %}
+                            <form method="post" action="{% url 'courses:complete_lesson' lesson.course.id lesson.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-check-circle me-2"></i>Отметить как пройденный
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="fas fa-comments text-primary me-2"></i>Комментарии и вопросы</h5>
+                </div>
+                <div class="card-body">
+                    {% if lesson.comments %}
+                        <div class="list-group list-group-flush mb-4">
+                            {% for comment in lesson.comments.all %}
+                            <div class="list-group-item px-0">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        {% if comment.user.avatar %}
+                                        <img src="{{ comment.user.avatar_url }}" alt="" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
+                                        {% else %}
+                                        <div class="bg-secondary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                            <i class="fas fa-user text-secondary"></i>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="mb-1">{{ comment.user.get_full_name|default:comment.user.username }}</h6>
+                                        <p class="mb-1">{{ comment.content }}</p>
+                                        <small class="text-muted">{{ comment.created_at|timesince }} назад</small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center">Пока нет комментариев. Будьте первым!</p>
+                    {% endif %}
+                    
+                    {% if user.is_authenticated %}
+                    <form method="post" action="{% url 'courses:add_comment' lesson.course.id lesson.id %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <textarea class="form-control" name="content" rows="3" placeholder="Напишите комментарий или вопрос..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Отправить</button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm sticky-top" style="top: 20px;">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">{{ lesson.course.title }}</h5>
+                    <div class="progress mt-2" style="height: 6px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ course_progress|default:0 }}%"></div>
+                    </div>
+                    <small class="text-muted">{{ course_progress|default:0 }}% завершено</small>
+                </div>
+                <div class="lesson-sidebar list-group list-group-flush">
+                    {% for course_lesson in all_lessons %}
+                    <a href="{% url 'courses:lesson_view' lesson.course.id course_lesson.id %}" 
+                       class="list-group-item list-group-item-action lesson-nav-item {% if course_lesson.id == lesson.id %}active{% endif %} {% if course_lesson.is_completed %}completed{% endif %}">
+                        <div class="d-flex align-items-center">
+                            <div class="progress-indicator me-3 {% if course_lesson.is_completed %}bg-success text-white{% elif course_lesson.id == lesson.id %}bg-primary text-white{% else %}bg-light border{% endif %}">
+                                {% if course_lesson.is_completed %}
+                                    <i class="fas fa-check"></i>
+                                {% else %}
+                                    {{ course_lesson.order }}
+                                {% endif %}
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0 {% if course_lesson.id == lesson.id %}fw-bold{% endif %}">{{ course_lesson.title }}</h6>
+                                {% if course_lesson.is_free %}
+                                    <span class="badge bg-success">Бесплатно</span>
+                                {% endif %}
+                            </div>
+                            {% if course_lesson.video_url %}
+                                <i class="fas fa-play-circle text-muted ms-2"></i>
+                            {% endif %}
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                <div class="card-footer bg-white">
+                    <a href="{% url 'courses:course_detail' lesson.course.id %}" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-info-circle me-2"></i>О курсе
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

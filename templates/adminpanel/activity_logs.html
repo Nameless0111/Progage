@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Progage{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold"><i class="fas fa-history text-primary me-3"></i>{{ title }}</h1>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Логи активности пользователей</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <select class="form-select" name="action_type">
+                        <option value="">Все типы действий</option>
+                        {% for type_code, type_name in action_types %}
+                        <option value="{{ type_code }}" {% if request.GET.action_type == type_code %}selected{% endif %}>{{ type_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <input type="text" class="form-control" name="user" placeholder="Пользователь" value="{{ request.GET.user }}">
+                </div>
+                <div class="col-md-2">
+                    <input type="date" class="form-control" name="date_from" placeholder="С" value="{{ request.GET.date_from }}">
+                </div>
+                <div class="col-md-2">
+                    <input type="date" class="form-control" name="date_to" placeholder="По" value="{{ request.GET.date_to }}">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter me-2"></i>Фильтр
+                    </button>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Время</th>
+                            <th>Пользователь</th>
+                            <th>Действие</th>
+                            <th>Объект</th>
+                            <th>IP адрес</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in page_obj %}
+                        <tr>
+                            <td>{{ log.action_time|date:"d.m.Y H:i:s" }}</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% if log.user.avatar %}
+                                    <img src="{{ log.user.avatar_url }}" alt="" class="rounded-circle me-2" style="width: 30px; height: 30px; object-fit: cover;">
+                                    {% else %}
+                                    <div class="bg-secondary bg-opacity-10 rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 30px; height: 30px;">
+                                        <i class="fas fa-user text-secondary small"></i>
+                                    </div>
+                                    {% endif %}
+                                    {{ log.user.get_full_name|default:log.user.username }}
+                                </div>
+                            </td>
+                            <td>
+                                {% if log.action_type == 'create' %}
+                                    <span class="badge bg-success">{{ log.get_action_type_display }}</span>
+                                {% elif log.action_type == 'update' %}
+                                    <span class="badge bg-primary">{{ log.get_action_type_display }}</span>
+                                {% elif log.action_type == 'delete' %}
+                                    <span class="badge bg-danger">{{ log.get_action_type_display }}</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ log.get_action_type_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ log.object_repr|default:"-" }}</td>
+                            <td><code>{{ log.ip_address|default:"-" }}</code></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-4 text-muted">
+                                <i class="fas fa-inbox fa-2x mb-2"></i>
+                                <p>Логи не найдены</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if page_obj.has_other_pages %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.action_type %}&action_type={{ request.GET.action_type }}{% endif %}{% if request.GET.user %}&user={{ request.GET.user }}{% endif %}">Предыдущая</a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% else %}
+                        <li class="page-item"><a class="page-link" href="?page={{ num }}{% if request.GET.action_type %}&action_type={{ request.GET.action_type }}{% endif %}{% if request.GET.user %}&user={{ request.GET.user }}{% endif %}">{{ num }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.action_type %}&action_type={{ request.GET.action_type }}{% endif %}{% if request.GET.user %}&user={{ request.GET.user }}{% endif %}">Следующая</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
