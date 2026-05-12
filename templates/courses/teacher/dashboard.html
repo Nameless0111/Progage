@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Панель преподавателя{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2 mb-0">
+                    <i class="fas fa-chalkboard-teacher text-primary me-2"></i>
+                    Панель преподавателя
+                </h1>
+                <a href="{% url 'courses:teacher_create_course' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Создать курс
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Статистика -->
+    <div class="row mb-5">
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="display-6 fw-bold text-primary">{{ total_courses }}</div>
+                    <p class="text-muted mb-0">Курсов</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="display-6 fw-bold text-success">{{ total_students }}</div>
+                    <p class="text-muted mb-0">Студентов</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="display-6 fw-bold text-info">{{ total_lessons }}</div>
+                    <p class="text-muted mb-0">Уроков</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="display-6 fw-bold text-warning">{{ avg_rating }} ⭐</div>
+                    <p class="text-muted mb-0">Средний рейтинг</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Список курсов -->
+    <div class="row">
+        <div class="col-12">
+            <h3 class="mb-4">Мои курсы</h3>
+            
+            {% if courses %}
+                <div class="row g-4">
+                    {% for course in courses %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card h-100 border-0 shadow-sm">
+                            {% if course.thumbnail %}
+                            <img src="{{ course.thumbnail_url }}" class="card-img-top" alt="{{ course.title }}" style="height: 200px; object-fit: cover;">
+                            {% else %}
+                            <div class="bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" style="height: 200px;">
+                                <i class="fas fa-book text-primary fa-3x"></i>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <span class="badge bg-{{ course.level }}">{{ course.get_level_display }}</span>
+                                    <span class="badge {% if course.is_published %}bg-success{% else %}bg-secondary{% endif %}">
+                                        {% if course.is_published %}Опубликовано{% else %}Черновик{% endif %}
+                                    </span>
+                                </div>
+                                <h5 class="card-title">{{ course.title }}</h5>
+                                <p class="card-text text-muted small">{{ course.description|truncatechars:100 }}</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        <i class="fas fa-users me-1"></i>{{ course.enrollments.count }} студентов
+                                    </small>
+                                    <small class="text-muted">
+                                        <i class="fas fa-book-open me-1"></i>{{ course.lessons.count }} уроков
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <div class="card-footer bg-white border-0">
+                                <div class="btn-group w-100" role="group">
+                                    <a href="{% url 'courses:course_detail' course.id %}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-eye me-1"></i>Просмотр
+                                    </a>
+                                    <a href="{% url 'courses:teacher_course_lessons' course.id %}" class="btn btn-outline-info btn-sm">
+                                        <i class="fas fa-list me-1"></i>Уроки
+                                    </a>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                                            <i class="fas fa-cog"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li>
+                                                <a class="dropdown-item" href="{% url 'courses:teacher_edit_course' course.id %}">
+                                                    <i class="fas fa-edit me-2"></i>Редактировать
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item text-danger" href="{% url 'courses:teacher_delete_course' course.id %}">
+                                                    <i class="fas fa-trash me-2"></i>Удалить
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-book text-muted fa-4x mb-3"></i>
+                    <h4 class="text-muted">У вас пока нет курсов</h4>
+                    <p class="text-muted">Создайте свой первый курс и начните обучать!</p>
+                    <a href="{% url 'courses:teacher_create_course' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Создать курс
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Fix dropdown z-index for course cards */
+.dropdown-menu {
+    z-index: 9999 !important;
+}
+
+/* Ensure dropdown appears above all content */
+.card .dropdown-menu {
+    position: absolute !important;
+    z-index: 9999 !important;
+}
+
+/* Fix dropdown positioning */
+.card .btn-group {
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+.card .btn-group .dropdown-menu {
+    top: 100% !important;
+    left: 0 !important;
+    z-index: 9999 !important;
+    transform: translateY(0) !important;
+}
+
+/* Bring entire card to front when dropdown is open */
+.card .btn-group.show .dropdown-menu,
+.card:hover .dropdown-menu {
+    z-index: 9999 !important;
+}
+
+/* Bring entire card to front when hovering or when dropdown is open */
+.card:hover,
+.card .btn-group.show {
+    position: relative !important;
+    z-index: 1000 !important;
+}
+
+/* Ensure card with open dropdown is on top */
+.card .btn-group.show ~ .card-body,
+.card:hover .card-body {
+    position: relative !important;
+    z-index: 1001 !important;
+}
+
+/* Higher z-index for card when dropdown is active */
+.card:has(.btn-group.show) {
+    position: relative !important;
+    z-index: 1002 !important;
+}
+
+/* Alternative for browsers that don't support :has() */
+.card.active-dropdown {
+    position: relative !important;
+    z-index: 1002 !important;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get all dropdown buttons in course cards
+    const dropdownButtons = document.querySelectorAll('.card .dropdown-toggle');
+    
+    dropdownButtons.forEach(button => {
+        const dropdown = new bootstrap.Dropdown(button);
+        const card = button.closest('.card');
+        
+        // When dropdown is shown
+        button.addEventListener('show.bs.dropdown', function() {
+            // Add active class to the card
+            card.classList.add('active-dropdown');
+            
+            // Set high z-index for this specific card
+            card.style.zIndex = '1002';
+            card.style.position = 'relative';
+        });
+        
+        // When dropdown is hidden
+        button.addEventListener('hide.bs.dropdown', function() {
+            // Remove active class from the card
+            card.classList.remove('active-dropdown');
+            
+            // Reset z-index
+            card.style.zIndex = '';
+            card.style.position = '';
+        });
+    });
+});
+</script>
+{% endblock %}

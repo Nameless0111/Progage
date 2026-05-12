@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}{{ lesson.title }} - {{ lesson.course.title }} - Progage{% endblock %}
 
@@ -41,6 +42,59 @@
         justify-content: center;
         font-size: 10px;
     }
+    
+    /* Стили для отображения кода */
+    .code-container {
+        position: relative;
+    }
+    
+    .code-container pre {
+        margin: 0;
+        white-space: pre-wrap;
+        overflow-x: auto;
+        font-family: Consolas, monospace;
+        font-size: 13px;
+        line-height: 1.5;
+    }
+    
+    .code-container code {
+        font-family: Consolas, monospace;
+        font-size: 13px;
+        background: none;
+        padding: 0;
+        border: none;
+    }
+    
+    .code-container pre::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .code-container pre::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+    
+    .code-container pre::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 4px;
+    }
+    
+    .code-container pre::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
+    }
+    
+    /* Дополнительные стили для модального окна */
+    .modal-xl .modal-dialog {
+        max-width: 1140px;
+    }
+    
+    .code-container.border-danger {
+        border-color: #dc3545;
+    }
+    
+    .code-container.border-danger pre {
+        border-color: #dc3545;
+    }
 </style>
 {% endblock %}
 
@@ -64,6 +118,7 @@
                 <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                     <div>
                         <span class="badge bg-primary me-2">Урок {{ lesson.order }}</span>
+                        <span class="badge bg-info me-2">{{ lesson.get_lesson_type_display }}</span>
                         <h4 class="mb-0 d-inline">{{ lesson.title }}</h4>
                     </div>
                     <div class="btn-group">
@@ -80,30 +135,271 @@
                     </div>
                 </div>
                 <div class="card-body p-0">
-                    {% if lesson.video_url %}
-                    <div class="video-container bg-dark">
-                        {% if 'youtube.com' in lesson.video_url or 'youtu.be' in lesson.video_url %}
-                            {% if 'youtube.com' in lesson.video_url %}
-                                {% with video_id=lesson.video_url|cut:"https://www.youtube.com/watch?v=" %}
-                                <iframe src="https://www.youtube.com/embed/{{ video_id }}" frameborder="0" allowfullscreen></iframe>
-                                {% endwith %}
-                            {% else %}
-                                {% with video_id=lesson.video_url|cut:"https://youtu.be/" %}
-                                <iframe src="https://www.youtube.com/embed/{{ video_id }}" frameborder="0" allowfullscreen></iframe>
-                                {% endwith %}
+                    {% if lesson.lesson_type == 'lecture' %}
+                        <!-- Lecture content with file attachment -->
+                        {% if lesson.attachment %}
+                        <div class="attachment-section p-4 bg-light border-bottom">
+                            <h5 class="mb-3"><i class="fas fa-paperclip me-2"></i>Материалы урока</h5>
+                            <div class="attachment-card">
+                                <div class="d-flex align-items-center p-3 bg-white rounded border">
+                                    <div class="file-icon me-3">
+                                        <i class="{{ lesson.icon_class }} fa-2x text-primary"></i>
+                                    </div>
+                                    <div class="file-info flex-grow-1">
+                                        <h6 class="mb-1">{{ lesson.attachment_name|default:lesson.attachment.name }}</h6>
+                                        <small class="text-muted">
+                                            {% if lesson.file_type == 'video' %}
+                                                Видео файл • {{ lesson.file_extension|upper }}
+                                            {% elif lesson.file_type == 'pdf' %}
+                                                PDF документ
+                                            {% elif lesson.file_type == 'word' %}
+                                                Word документ
+                                            {% elif lesson.file_type == 'presentation' %}
+                                                Презентация
+                                            {% else %}
+                                                Документ • {{ lesson.file_extension|upper }}
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                    <div class="file-action">
+                                        {% if lesson.file_type == 'video' %}
+                                        <button class="btn btn-primary" onclick="toggleVideo()">
+                                            <i class="fas fa-play me-2"></i>Смотреть
+                                        </button>
+                                        {% else %}
+                                        <a href="{{ lesson.attachment.url }}" download class="btn btn-primary">
+                                            <i class="fas fa-download me-2"></i>Скачать
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {% if lesson.file_type == 'video' %}
+                            <div id="video-container" class="video-container bg-dark mt-3" style="display: none;">
+                                <video controls class="w-100">
+                                    <source src="{{ lesson.attachment.url }}" type="video/{{ lesson.file_extension }}">
+                                        Ваш браузер не поддерживает видео.
+                                </video>
+                            </div>
                             {% endif %}
-                        {% else %}
-                            <video controls class="w-100" style="max-height: 500px;">
-                                <source src="{{ lesson.video_url }}" type="video/mp4">
-                                Ваш браузер не поддерживает видео.
-                            </video>
+                        </div>
                         {% endif %}
-                    </div>
+                        
+                        <div class="lesson-content p-4">
+                            {% if lesson.content %}
+                                {{ lesson.content|safe|linebreaks }}
+                            {% else %}
+                                <div class="text-center py-5">
+                                    <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">Текстовое содержание отсутствует. Используйте материалы урока выше.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                    {% elif lesson.lesson_type == 'test' %}
+                        <!-- Test content -->
+                        <div class="test-section p-4">
+                            {% if lesson.test_questions.exists %}
+                                <div class="test-info mb-4">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="card bg-primary text-white">
+                                                <div class="card-body text-center">
+                                                    <h4>{{ lesson.test_questions.count }}</h4>
+                                                    <small>вопросов</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="card bg-success text-white">
+                                                <div class="card-body text-center">
+                                                    <h4>{{ total_points }}</h4>
+                                                    <small>баллов всего</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="card bg-info text-white">
+                                                <div class="card-body text-center">
+                                                    <h4>{{ required_questions_count }}</h4>
+                                                    <small>обязательных</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="text-center mb-4">
+                                    <h5>Готовы пройти тест?</h5>
+                                    <p class="text-muted">Тест содержит {{ lesson.test_questions.count }} вопрос{{ lesson.test_questions.count|pluralize:"ов,а,ов" }} на общую сумму {{ total_points }} балл{{ total_points|pluralize:"а,ов,ов" }}.</p>
+                                    <button class="btn btn-primary btn-lg" onclick="startTest()">
+                                        <i class="fas fa-play me-2"></i>Начать тест
+                                    </button>
+                                </div>
+                                
+                                <div class="test-preview">
+                                    <h6><i class="fas fa-eye me-2"></i>Предварительный просмотр вопросов:</h6>
+                                    <div class="list-group">
+                                        {% for question in lesson.test_questions.all %}
+                                        <div class="list-group-item">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <span class="badge bg-{{ question.question_type|question_type_color }} me-2">
+                                                        {{ question.get_question_type_display }}
+                                                    </span>
+                                                    <span class="badge bg-secondary me-2">{{ question.points }} балл{{ question.points|pluralize:"а,ов" }}</span>
+                                                    {% if question.is_required %}
+                                                        <span class="badge bg-warning">Обязательный</span>
+                                                    {% endif %}
+                                                </div>
+                                                <span class="text-muted">Вопрос {{ forloop.counter }}</span>
+                                            </div>
+                                            <div class="mt-2">
+                                                <small>{{ question.question_text|truncatechars:100 }}</small>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-5">
+                                    <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                                    <h4>Тест еще не готов</h4>
+                                    <p class="text-muted">Преподаватель еще не добавил вопросы в этот тест.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                    {% elif lesson.lesson_type == 'practice' %}
+                        <!-- Practice content -->
+                        <div class="practice-section p-4">
+                            {% if lesson.practice_assignment and lesson.practice_assignment.is_published %}
+                                <div class="assignment-info mb-4">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="card bg-success text-white">
+                                                <div class="card-body text-center">
+                                                    <h4>{{ lesson.practice_assignment.programming_language|upper }}</h4>
+                                                    <small>Язык программирования</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="card bg-info text-white">
+                                                <div class="card-body text-center">
+                                                    <h4>{{ lesson.practice_assignment.max_attempts }}</h4>
+                                                    <small>Попыток доступно</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="card bg-warning text-white">
+                                                <div class="card-body text-center">
+                                                    <h4>{{ lesson.practice_assignment.time_limit }}с</h4>
+                                                    <small>Лимит времени</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="assignment-description mb-4">
+                                    <h5><i class="fas fa-tasks me-2"></i>{{ lesson.practice_assignment.title }}</h5>
+                                    <p class="text-muted">{{ lesson.practice_assignment.description }}</p>
+                                    
+                                    <div class="requirements bg-light p-3 rounded mb-3">
+                                        <h6><i class="fas fa-clipboard-list me-2"></i>Требования:</h6>
+                                        <p class="mb-0">{{ lesson.practice_assignment.requirements|linebreaks }}</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Форма отправки кода -->
+                                <div class="code-submission mb-4">
+                                    <h6><i class="fas fa-code me-2"></i>Отправить решение</h6>
+                                    
+                                    {% if user_submissions %}
+                                        <div class="submission-history mb-3">
+                                            <div class="alert alert-info">
+                                                <i class="fas fa-history me-2"></i>
+                                                Ваши попытки: {{ user_submissions.count }}/{{ lesson.practice_assignment.max_attempts }}
+                                                {% if has_correct_submission %}
+                                                    <span class="badge bg-success ms-2">✅ Решено!</span>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            {% for submission in user_submissions %}
+                                            <div class="submission-item card mb-2">
+                                                <div class="card-body py-2">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <span class="badge bg-{{ submission.status|submission_color }}">Попытка {{ submission.attempt_number }}</span>
+                                                            {% if submission.is_correct %}
+                                                                <span class="badge bg-success ms-1">✅ Верно</span>
+                                                            {% endif %}
+                                                            {% if submission.execution_time %}
+                                                                <small class="text-muted ms-2">{{ submission.execution_time|floatformat:2 }}с</small>
+                                                            {% endif %}
+                                                        </div>
+                                                        <small class="text-muted">{{ submission.submitted_at|timesince }} назад</small>
+                                                    </div>
+                                                    {% if submission.output %}
+                                                    <details class="mt-2">
+                                                        <summary class="text-muted small">Результат выполнения</summary>
+                                                        <pre class="bg-light p-2 rounded small mt-2">{{ submission.output }}</pre>
+                                                    </details>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    
+                                    {% if user_submissions.count < lesson.practice_assignment.max_attempts %}
+                                    <form method="post" action="{% url 'courses:submit_code' lesson.id %}">
+                                        {% csrf_token %}
+                                        <div class="mb-3">
+                                            <label for="code" class="form-label">Ваш код:</label>
+                                            <textarea name="code" id="code" class="form-control font-monospace" rows="15" placeholder="Введите ваш код здесь..." required>{{ lesson.practice_assignment.starter_code }}</textarea>
+                                        </div>
+                                        <div class="d-flex gap-2">
+                                            <button type="button" class="btn btn-outline-warning" onclick="testStudentCode()">
+                                                <i class="fas fa-play me-2"></i>Проверить код
+                                            </button>
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-paper-plane me-2"></i>Отправить на проверку
+                                            </button>
+                                        </div>
+                                    </form>
+                                    {% else %}
+                                    <div class="alert alert-warning">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        Вы исчерпали лимит попыток ({{ lesson.practice_assignment.max_attempts }})
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Информация о безопасности -->
+                                <div class="security-info bg-light p-3 rounded">
+                                    <h6><i class="fas fa-shield-alt me-2"></i>Информация о выполнении:</h6>
+                                    <ul class="small mb-0">
+                                        <li>Код выполняется в изолированной среде</li>
+                                        <li>Лимит времени: {{ lesson.practice_assignment.time_limit }} секунд</li>
+                                        <li>Лимит памяти: {{ lesson.practice_assignment.memory_limit }} МБ</li>
+                                        <li>Запрещены операции с файлами и сетью</li>
+                                        <li>Тестовые случаи: {{ lesson.practice_assignment.test_cases|length }}</li>
+                                    </ul>
+                                </div>
+                                
+                            {% else %}
+                                <div class="text-center py-5">
+                                    <i class="fas fa-code fa-3x text-muted mb-3"></i>
+                                    <h4>Задание еще не готово</h4>
+                                    <p class="text-muted">Преподаватель еще не опубликовал практическое задание.</p>
+                                </div>
+                            {% endif %}
+                        </div>
                     {% endif %}
-                    
-                    <div class="lesson-content p-4">
-                        {{ lesson.content|safe|linebreaks }}
-                    </div>
                 </div>
                 <div class="card-footer bg-white py-3">
                     <div class="d-flex justify-content-between align-items-center">
@@ -160,14 +456,11 @@
                         <p class="text-muted text-center">Пока нет комментариев. Будьте первым!</p>
                     {% endif %}
                     
+                    <!-- Комментарии временно отключены до создания миграций -->
                     {% if user.is_authenticated %}
-                    <form method="post" action="{% url 'courses:add_comment' lesson.course.id lesson.id %}">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            <textarea class="form-control" name="content" rows="3" placeholder="Напишите комментарий или вопрос..."></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Отправить</button>
-                    </form>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>Функция комментариев временно отключена
+                    </div>
                     {% endif %}
                 </div>
             </div>
@@ -200,8 +493,16 @@
                                     <span class="badge bg-success">Бесплатно</span>
                                 {% endif %}
                             </div>
-                            {% if course_lesson.video_url %}
-                                <i class="fas fa-play-circle text-muted ms-2"></i>
+                            {% if lesson.lesson_type == 'lecture' and lesson.attachment %}
+                                {% if lesson.file_type == 'video' %}
+                                    <i class="fas fa-play-circle text-muted ms-2"></i>
+                                {% else %}
+                                    <i class="fas fa-file-alt text-muted ms-2"></i>
+                                {% endif %}
+                            {% elif lesson.lesson_type == 'test' %}
+                                <i class="fas fa-clipboard-list text-muted ms-2"></i>
+                            {% elif lesson.lesson_type == 'practice' %}
+                                <i class="fas fa-code text-muted ms-2"></i>
                             {% endif %}
                         </div>
                     </a>
@@ -216,4 +517,184 @@
         </div>
     </div>
 </div>
+
+<script>
+function toggleVideo() {
+    const videoContainer = document.getElementById('video-container');
+    const button = event.target;
+    
+    if (videoContainer.style.display === 'none') {
+        videoContainer.style.display = 'block';
+        button.innerHTML = '<i class="fas fa-pause me-2"></i>Скрыть';
+    } else {
+        videoContainer.style.display = 'none';
+        button.innerHTML = '<i class="fas fa-play me-2"></i>Смотреть';
+    }
+}
+
+function startTest() {
+    window.location.href = "{% url 'courses:take_test' lesson.id %}";
+}
+
+// Функция для проверки кода студента
+async function testStudentCode() {
+    const code = document.getElementById('code').value;
+    const language = "{{ lesson.practice_assignment.programming_language }}";
+    
+    if (!code.trim()) {
+        alert('Сначала напишите код для проверки');
+        return;
+    }
+    
+    // Показываем индикатор загрузки
+    const testBtn = event.target;
+    const originalText = testBtn.innerHTML;
+    testBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Проверка...';
+    testBtn.disabled = true;
+    
+    try {
+        const response = await fetch('/courses/api/test-code/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                code: code,
+                language: language
+            })
+        });
+        
+        const result = await response.json();
+        
+        // Всегда показываем модальное окно с результатом
+        showStudentTestResult(result);
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Произошла ошибка при проверке кода');
+    } finally {
+        // Возвращаем кнопку в исходное состояние
+        testBtn.innerHTML = originalText;
+        testBtn.disabled = false;
+    }
+}
+
+// Функция для экранирования HTML
+function escapeHtml(text) {
+    if (!text) return '';
+    
+    return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+// Функция для отображения результата проверки студента
+function showStudentTestResult(result) {
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    
+    // Функция для создания раскрывающегося блока
+    function createExpandableBlock(title, content, type = 'output') {
+        const safeContent = content || 'Нет данных';
+        
+        const isLong = safeContent.length > 500;
+        const truncated = isLong ? safeContent.substring(0, 500) + '...' : safeContent;
+        
+        return `
+            <div class="mb-2">
+                <h6 class="mb-1">
+                    <i class="fas fa-${type === 'error' ? 'exclamation-triangle text-danger' : 'play-circle text-success'} me-2"></i>
+                    ${title}
+                </h6>
+                <div class="code-container">
+                    <pre class="bg-light py-2 px-3 rounded mb-0 ${type === 'error' ? 'border border-danger' : ''}"><code>${escapeHtml(truncated)}</code></pre>
+                    ${isLong ? `
+                        <button class="btn btn-sm btn-outline-primary mt-2" onclick="toggleExpand(this, ${JSON.stringify(safeContent)})">
+                            <i class="fas fa-expand-alt me-1"></i>Развернуть
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }
+    
+    modal.innerHTML = `
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h5 class="modal-title mb-0">
+                        <i class="fas fa-terminal me-2"></i>Результат проверки кода
+                    </h5>
+                    <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body py-2">
+                    <div class="row">
+    <div class="col-md-6">
+        ${result.output ? createExpandableBlock('Вывод программы', result.output, 'output') : '<div class="alert alert-secondary mb-2">Нет вывода</div>'}
+    </div>
+    <div class="col-md-6">
+        <h6 class="mb-2">
+            <i class="fas fa-clock me-2"></i>
+            Статистика
+        </h6>
+        <ul class="list-unstyled mb-3">
+            <li><strong>Время:</strong> ${result.execution_time || 'N/A'} мс</li>
+            <li><strong>Память:</strong> ${result.memory_usage || 'N/A'} МБ</li>
+            <li>
+                <strong>Статус:</strong>
+                <span class="badge ${result.success ? 'bg-success' : 'bg-danger'}">
+                    ${result.success ? 'Успешно' : 'Неудача'}
+                </span>
+            </li>
+        </ul>
+        ${result.error ? createExpandableBlock('Ошибка', result.error, 'error') : ''}
+    </div>
+</div>
+                    <div class="alert alert-info mt-1 mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <small><strong>Примечание:</strong> Это предварительная проверка. Окончательная проверка будет выполнена с тестовыми случаями при отправке задания.</small>
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Закрыть</button>
+                    <button type="button" class="btn btn-success btn-sm" data-bs-dismiss="modal" onclick="document.querySelector('form').submit();">
+                        <i class="fas fa-paper-plane me-1"></i>Отправить
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    const modalInstance = new bootstrap.Modal(modal);
+    modalInstance.show();
+    
+    // Удаляем модальное окно после закрытия
+    modal.addEventListener('hidden.bs.modal', function() {
+        modal.remove();
+    });
+}
+
+// Функция для развертывания полного текста
+function toggleExpand(button, fullText) {
+    const pre = button.parentElement.querySelector('pre code');
+    const expanded = button.dataset.expanded === 'true';
+    
+    if (!expanded) {
+        // Развернуть полный текст
+        pre.textContent = fullText;
+        button.innerHTML = '<i class="fas fa-compress-alt me-1"></i>Свернуть';
+        button.dataset.expanded = 'true';
+        button.className = 'btn btn-sm btn-outline-secondary mt-2';
+    } else {
+        // Свернуть до усеченного текста
+        const truncated = fullText.length > 500 ? fullText.substring(0, 500) + '...' : fullText;
+        pre.textContent = truncated;
+        button.innerHTML = '<i class="fas fa-expand-alt me-1"></i>Развернуть';
+        button.dataset.expanded = 'false';
+        button.className = 'btn btn-sm btn-outline-primary mt-2';
+    }
+}
+</script>
 {% endblock %}

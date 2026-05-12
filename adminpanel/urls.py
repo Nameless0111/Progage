@@ -48,4 +48,8 @@ urlpatterns = [
     # Reviews
     path('reviews/', views.review_list, name='review_list'),
     path('reviews/<int:review_id>/delete/', views.review_delete, name='review_delete'),
+    
+    # Chat Management
+    path('chats/', views.chat_management, name='chat_management'),
+    path('chats/<int:chat_id>/reopen/', views.reopen_chat, name='reopen_chat'),
 ]

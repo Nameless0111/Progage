@@ -89,9 +89,9 @@
         
         <div class="card-body p-0">
             <div class="chat-container p-4" id="chatMessages">
-                {% if messages %}
-                    {% for message in messages %}
-                    <div class="d-flex {% if message.sender == user %}justify-content-end{% else %}justify-content-start{% endif %} mb-3">
+                {% if chat_messages %}
+                    {% for message in chat_messages %}
+                    <div class="d-flex {% if message.sender == user %}justify-content-end{% else %}justify-content-start{% endif %} mb-3" data-message-id="{{ message.id }}">
                         {% if message.sender != user %}
                         <div class="flex-shrink-0 me-2">
                             {% if message.sender.avatar %}
@@ -110,7 +110,7 @@
                                     {{ message.sender.get_full_name|default:message.sender.username }}
                                 </small>
                                 <small class="{% if message.sender == user %}text-white-50{% else %}text-muted{% endif %} ms-2">
-                                    {{ message.timestamp|time:"H:i" }}
+                                    {{ message.created_at|time:"H:i" }}
                                 </small>
                             </div>
                             <p class="mb-0">{{ message.content|linebreaksbr }}</p>
@@ -148,11 +148,125 @@
 {% block extra_js %}
 <script>
     // Scroll to bottom of chat
-    document.addEventListener('DOMContentLoaded', function() {
+    function scrollToBottom() {
         const chatContainer = document.getElementById('chatMessages');
         if (chatContainer) {
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        scrollToBottom();
+        
+        // Auto-refresh chat every 5 seconds
+        setInterval(function() {
+            const chatId = {{ chat.id }};
+            fetch(`/chat/${chatId}/refresh/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.messages) {
+                        updateChatMessages(data.messages);
+                    }
+                })
+                .catch(error => console.error('Error refreshing chat:', error));
+        }, 5000);
+        
+        // Handle form submission with AJAX
+        const messageForm = document.querySelector('form[action*="send_message"]');
+        if (messageForm) {
+            messageForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const submitBtn = this.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                
+                // Disable button and show loading
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                
+                fetch(this.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                        return;
+                    }
+                    return response.text();
+                })
+                .then(html => {
+                    // If server returns HTML, it means there was an error or redirect
+                    if (html.includes('form')) {
+                        // Update the page content
+                        document.documentElement.innerHTML = html;
+                        scrollToBottom();
+                    } else {
+                        // Reload page to show new message
+                        window.location.reload();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error sending message:', error);
+                    // Restore button
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                });
+            });
+        }
     });
+    
+    function updateChatMessages(newMessages) {
+        const chatContainer = document.getElementById('chatMessages');
+        if (!chatContainer) return;
+        
+        // Get current message IDs
+        const currentMessages = Array.from(chatContainer.querySelectorAll('[data-message-id]'))
+            .map(el => parseInt(el.dataset.messageId));
+        
+        // Add only new messages
+        newMessages.forEach(msg => {
+            if (!currentMessages.includes(msg.id)) {
+                const messageHtml = createMessageHtml(msg);
+                chatContainer.insertAdjacentHTML('beforeend', messageHtml);
+            }
+        });
+        
+        scrollToBottom();
+    }
+    
+    function createMessageHtml(message) {
+        const isOwn = message.sender === '{{ user.username }}';
+        const sentClass = isOwn ? 'sent' : 'received';
+        const justifyClass = isOwn ? 'justify-content-end' : 'justify-content-start';
+        const textColorClass = isOwn ? 'text-white-50' : 'text-muted';
+        
+        return `
+            <div class="d-flex ${justifyClass} mb-3" data-message-id="${message.id}">
+                ${!isOwn ? `
+                <div class="flex-shrink-0 me-2">
+                    <div class="bg-secondary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+                        <i class="fas fa-user text-secondary small"></i>
+                    </div>
+                </div>` : ''}
+                
+                <div class="chat-message ${sentClass}">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <small class="${textColorClass}">
+                            ${message.sender}
+                        </small>
+                        <small class="${textColorClass} ms-2">
+                            ${message.timestamp}
+                        </small>
+                    </div>
+                    <p class="mb-0">${message.content.replace(/\n/g, '<br>')}</p>
+                </div>
+            </div>
+        `;
+    }
 </script>
 {% endblock %}

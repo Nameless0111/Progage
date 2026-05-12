@@ -256,18 +256,16 @@ class SystemBackup:
             status = 'success' if success else 'failed'
             file_size = os.path.getsize(path) if success and os.path.exists(path) else 0
             
-            AdminBackupLog.objects.create(
-                backup_type='full_system',
-                filename=filename,
+            from adminpanel.models import BackupLog
+            
+            BackupLog.objects.create(
+                backup_type='full',
+                status='completed' if success else 'failed',
                 file_path=path,
                 file_size=file_size,
-                status=status,
                 created_by=user,
-                details={
-                    'error': error,
-                    'timestamp': datetime.now().isoformat(),
-                    'backup_dir': self.backup_dir
-                }
+                description=f"Полный бэкап системы: {filename}",
+                error_message=error if not success else None
             )
             
             # Также логируем в системный лог
@@ -328,18 +326,14 @@ class SystemBackup:
                 print(f"Бэкап удален: {filename}")
                 
                 # Логирование удаления
-                AdminBackupLog.objects.create(
+                from adminpanel.models import BackupLog
+                BackupLog.objects.create(
                     backup_type='delete',
-                    filename=filename,
                     file_path=file_path,
                     file_size=file_size,
-                    status='success',
+                    status='completed',
                     created_by=user,
-                    details={
-                        'operation': 'delete',
-                        'timestamp': datetime.now().isoformat(),
-                        'backup_dir': self.backup_dir
-                    }
+                    description=f"Удален бэкап: {filename}"
                 )
                 
                 return True
@@ -351,18 +345,14 @@ class SystemBackup:
             print(f"Ошибка при удалении бэкапа: {e}")
             
             # Логирование ошибки
-            AdminBackupLog.objects.create(
+            from adminpanel.models import BackupLog
+            BackupLog.objects.create(
                 backup_type='delete',
-                filename=filename,
                 file_path=os.path.join(self.backup_dir, filename),
                 status='failed',
                 created_by=user,
-                details={
-                    'operation': 'delete',
-                    'error': str(e),
-                    'timestamp': datetime.now().isoformat(),
-                    'backup_dir': self.backup_dir
-                }
+                description=f"Ошибка при удалении бэкапа: {filename}",
+                error_message=str(e)
             )
             return False
     

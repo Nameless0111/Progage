@@ -1,6 +1,7 @@
 from django.core.cache import cache
 from django.http import HttpResponse
 from django.utils.deprecation import MiddlewareMixin
+from django.utils.functional import SimpleLazyObject
 import time
 
 class BruteForceProtectionMiddleware(MiddlewareMixin):
@@ -63,3 +64,36 @@ class BruteForceProtectionMiddleware(MiddlewareMixin):
                 cache.set(user_key, 1, 300)
             else:
                 cache.incr(user_key)
+
+
+def get_unread_notifications_count(request):
+    """Получает количество непрочитанных уведомлений для пользователя"""
+    if not hasattr(request, '_unread_notifications_count'):
+        if request.user.is_authenticated:
+            try:
+                from accounts.models import Notification
+                count = Notification.objects.filter(
+                    user=request.user,
+                    is_read=False
+                ).count()
+                request._unread_notifications_count = count
+            except:
+                request._unread_notifications_count = 0
+        else:
+            request._unread_notifications_count = 0
+    
+    return request._unread_notifications_count
+
+
+class NotificationMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        # Добавляем количество непрочитанных уведомлений в request
+        request.unread_notifications_count = SimpleLazyObject(
+            lambda: get_unread_notifications_count(request)
+        )
+        
+        response = self.get_response(request)
+        return response

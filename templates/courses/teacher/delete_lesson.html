@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Удаление урока{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h4 class="mb-0 text-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Удаление урока
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Внимание!</strong> Это действие необратимо. Все данные об уроке будут удалены.
+                    </div>
+                    
+                    <h5>Вы уверены, что хотите удалить урок?</h5>
+                    <p class="lead"><strong>{{ lesson.title }}</strong></p>
+                    <p class="text-muted">{{ lesson.content|truncatechars:100 }}</p>
+                    
+                    <div class="mt-4">
+                        <strong>Информация об уроке:</strong>
+                        <ul class="list-unstyled mt-2">
+                            <li><i class="fas fa-book me-2"></i>Курс: {{ lesson.course.title }}</li>
+                            <li><i class="fas fa-sort-numeric-up me-2"></i>Порядок: {{ lesson.order }}</li>
+                            {% if lesson.is_free %}
+                            <li><i class="fas fa-gift me-2"></i>Тип: Бесплатный урок</li>
+                            {% else %}
+                            <li><i class="fas fa-lock me-2"></i>Тип: Платный урок</li>
+                            {% endif %}
+                            {% if lesson.video_url %}
+                            <li><i class="fas fa-video me-2"></i>Есть видео</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'courses:teacher_course_lessons' course.id %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Отмена
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash me-2"></i>Удалить урок
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

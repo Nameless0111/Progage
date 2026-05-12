@@ -52,30 +52,42 @@ class ChatConsumer(AsyncWebsocketConsumer):
         sender = self.scope['user']
 
         chat = SupportChat.objects.get(id=self.chat_id)
-        msg = Message.objects.create(chat=chat, sender=sender, text=message)
+        msg = Message.objects.create(chat=chat, sender=sender, content=message)
 
         # Auto reply for predefined questions
         reply_text = None
-        if msg.text in predefined:
+        if msg.content in predefined:
             admin = chat.admin or User.objects.filter(role='admin').first()
             if admin:
-                reply_text = predefined[msg.text]
-                reply = Message.objects.create(chat=chat, sender=admin, text=reply_text)
+                reply_text = predefined[msg.content]
+                reply = Message.objects.create(chat=chat, sender=admin, content=reply_text)
                 chat.updated_at = timezone.now()
                 chat.save()
-        elif msg.text == "Другая проблема":
+        elif msg.content == "Другая проблема":
             chat.priority = True
             chat.save()
 
         # Create notification for user if admin sent message
         if msg.sender.role == 'admin':
-            Notification.objects.create(user=chat.user, message=f"Администратор ответил: {msg.text[:50]}...")
+            Notification.objects.create(
+                user=chat.user, 
+                notification_type='new_chat_message',
+                title='Ответ администратора',
+                message=f"Администратор {msg.sender.get_full_name() or msg.sender.username} ответил: {msg.content[:50]}...",
+                chat_room_id=str(self.chat_id)
+            )
         
-        # Create notification for admin if user sent message
+        # Create notification for all admins if user sent message
         elif msg.sender == chat.user:
-            admin = chat.admin or User.objects.filter(role='admin').first()
-            if admin:
-                Notification.objects.create(user=admin, message=f"Новое сообщение в поддержке от {msg.sender.username}: {msg.text[:50]}...")
+            admins = User.objects.filter(role='admin')
+            for admin in admins:
+                Notification.objects.create(
+                    user=admin, 
+                    notification_type='new_chat_message',
+                    title='Новое сообщение в поддержке',
+                    message=f"Новое сообщение от {msg.sender.get_full_name() or msg.sender.username}: {msg.content[:50]}...",
+                    chat_room_id=str(self.chat_id)
+                )
 
         await self.channel_layer.group_send(
             self.room_group_name,
@@ -84,7 +96,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'message': message,
                 'sender': sender.username,
                 'sender_id': sender.id,
-                'timestamp': str(msg.timestamp)
+                'timestamp': str(msg.created_at)
             }
         )
 
@@ -97,7 +109,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     'message': reply_text,
                     'sender': admin.username,
                     'sender_id': admin.id,
-                    'timestamp': str(reply.timestamp)
+                    'timestamp': str(reply.created_at)
                 }
             )
 

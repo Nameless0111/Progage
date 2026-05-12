@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Редактирование урока{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h4 class="mb-0">
+                        <i class="fas fa-edit text-primary me-2"></i>
+                        Редактирование урока "{{ lesson.title }}"
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.title.id_for_label }}" class="form-label">Название урока *</label>
+                            {{ form.title }}
+                            {% if form.title.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.title.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.lesson_type.id_for_label }}" class="form-label">Тип урока *</label>
+                            {{ form.lesson_type }}
+                            {% if form.lesson_type.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.lesson_type.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3" id="content-field">
+                            <label for="{{ form.content.id_for_label }}" class="form-label">{{ form.content.label }}</label>
+                            {{ form.content }}
+                            {% if form.content.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.content.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">{{ form.content.help_text }}</div>
+                        </div>
+
+                        <div class="mb-3" id="attachment-field">
+                            <label for="{{ form.attachment.id_for_label }}" class="form-label">{{ form.attachment.label }}</label>
+                            {{ form.attachment }}
+                            {% if form.attachment.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.attachment.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">{{ form.attachment.help_text }}</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.order.id_for_label }}" class="form-label">Порядковый номер *</label>
+                                {{ form.order }}
+                                {% if form.order.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.order.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check mt-4">
+                                    {{ form.is_free }}
+                                    <label class="form-check-label" for="{{ form.is_free.id_for_label }}">
+                                        Бесплатный урок
+                                    </label>
+                                </div>
+                                {% if form.is_free.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.is_free.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'courses:teacher_course_lessons' course.id %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Отмена
+                            </a>
+                            <div>
+                                {% if lesson.lesson_type == 'test' %}
+                                <a href="{% url 'courses:test_constructor' lesson.id %}" class="btn btn-info me-2">
+                                    <i class="fas fa-clipboard-list me-2"></i>Конструктор теста
+                                </a>
+                                {% elif lesson.lesson_type == 'practice' %}
+                                {% if lesson.practice_assignment and lesson.practice_assignment.require_manual_review %}
+                                <a href="{% url 'courses:practice_assignment_manual' lesson.id %}" class="btn btn-warning me-2">
+                                    <i class="fas fa-user-check me-2"></i>Ручная проверка
+                                </a>
+                                {% else %}
+                                <a href="{% url 'courses:practice_assignment' lesson.id %}" class="btn btn-success me-2">
+                                    <i class="fas fa-code me-2"></i>Автоматическая проверка
+                                </a>
+                                <a href="{% url 'courses:practice_assignment_manual' lesson.id %}" class="btn btn-outline-warning me-2">
+                                    <i class="fas fa-user-check me-2"></i>Ручная проверка
+                                </a>
+                                {% endif %}
+                                {% endif %}
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>Сохранить изменения
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const lessonTypeSelect = document.getElementById('{{ form.lesson_type.id_for_label }}');
+    const contentField = document.getElementById('content-field');
+    const attachmentField = document.getElementById('attachment-field');
+    
+    function updateFormFields() {
+        const lessonType = lessonTypeSelect.value;
+        
+        // Для всех типов показываем содержание
+        contentField.style.display = 'block';
+        
+        if (lessonType === 'lecture') {
+            // Для лекции показываем поле файла
+            attachmentField.style.display = 'block';
+        } else if (lessonType === 'test') {
+            // Для теста скрываем поле файла
+            attachmentField.style.display = 'none';
+            // Можно добавить специальные поля для теста в будущем
+        } else if (lessonType === 'practice') {
+            // Для практического задания скрываем поле файла
+            attachmentField.style.display = 'none';
+            // Можно добавить специальные поля для практики в будущем
+        }
+    }
+    
+    // Инициализация при загрузке
+    updateFormFields();
+    
+    // Обработка изменения типа урока
+    lessonTypeSelect.addEventListener('change', updateFormFields);
+});
+</script>
+{% endblock %}

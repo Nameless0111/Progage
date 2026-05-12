@@ -21,9 +21,9 @@ try:
     env_file = Path(__file__).resolve().parent.parent / '.env.local'
     if env_file.exists():
         load_dotenv(env_file)
-        print("✅ Загружены переменные из .env.local")
+        print("Loaded variables from .env.local")
 except ImportError:
-    print("⚠️ python-dotenv не установлен, используем значения по умолчанию")
+    print("Warning: python-dotenv not installed, using default values")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -97,6 +97,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'accounts.middleware.BruteForceProtectionMiddleware',
+    'accounts.middleware.NotificationMiddleware',
     'adminpanel.middleware.LoggingMiddleware',
     'adminpanel.middleware.ExceptionLoggingMiddleware',
 ]
@@ -200,15 +201,15 @@ CORS_ALLOW_CREDENTIALS = True
 
 # Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  # Для реальной отправки
-EMAIL_HOST = 'smtp.gmail.com'  # Правильный SMTP сервер Gmail
-EMAIL_PORT = 587  # Правильный порт для Gmail с TLS
-EMAIL_HOST_USER = 'pashokbilashenko335@gmail.com'
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')  # Пароль приложения Gmail
-EMAIL_USE_TLS = True  # Включаем TLS
-EMAIL_USE_SSL = False  # Отключаем SSL
+EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='pashokbilashenko335@gmail.com')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=False, cast=bool)
 EMAIL_TIMEOUT = 60  # Большой таймаут
 EMAIL_USE_LOCALTIME = True  # Добавлено для SMTP
-DEFAULT_FROM_EMAIL = 'pashokbilashenko335@gmail.com'
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='pashokbilashenko335@gmail.com')
 
 # Password reset settings
 PASSWORD_RESET_TIMEOUT = 86400  # 24 часа в секундах
@@ -231,7 +232,7 @@ LOGGING = {
         },
     },
     'root': {
-        'level': 'WARNING',
+        'level': 'ERROR',
         'handlers': ['console'],
     },
     'loggers': {
@@ -240,6 +241,10 @@ LOGGING = {
             'level': 'WARNING',
         },
         'daphne': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+        },
+        'django.db.backends': {
             'handlers': ['console'],
             'level': 'WARNING',
         },

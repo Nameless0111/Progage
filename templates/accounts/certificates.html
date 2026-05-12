@@ -1,0 +1,367 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Сертификаты - Progage{% endblock %}
+
+{% block extra_css %}
+<style>
+.certificates-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 80px 0;
+    text-align: center;
+}
+
+.certificates-title {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.certificates-subtitle {
+    font-size: 1.2rem;
+    opacity: 0.9;
+}
+
+.certificates-container {
+    padding: 80px 0;
+    background: #f8f9fa;
+}
+
+.certificate-card {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    margin-bottom: 40px;
+    cursor: pointer;
+    position: relative;
+}
+
+.certificate-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.certificate-preview {
+    height: 250px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.certificate-preview::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text x="50" y="50" font-size="100" fill="rgba(255,255,255,0.1)" text-anchor="middle">🏆</text></svg>');
+    background-size: 50px 50px;
+    opacity: 0.3;
+}
+
+.certificate-icon {
+    font-size: 4rem;
+    color: white;
+    z-index: 1;
+}
+
+.certificate-content {
+    padding: 30px;
+}
+
+.certificate-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.certificate-description {
+    color: #666;
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+.certificate-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+}
+
+.certificate-date {
+    color: #888;
+    font-size: 0.9rem;
+}
+
+.certificate-status {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.status-completed {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-in-progress {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-available {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.certificate-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 30px;
+    margin-top: 40px;
+}
+
+.back-button {
+    margin-bottom: 30px;
+}
+
+.filter-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 40px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.filter-tab {
+    padding: 15px 25px;
+    background: none;
+    border: none;
+    color: #666;
+    font-weight: 500;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.filter-tab.active {
+    color: #667eea;
+}
+
+.filter-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #667eea;
+}
+
+.filter-tab:hover {
+    color: #667eea;
+}
+
+@media (max-width: 768px) {
+    .certificates-title {
+        font-size: 2rem;
+    }
+    
+    .certificate-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .filter-tabs {
+        flex-wrap: wrap;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Back Button -->
+<div class="container">
+    <div class="back-button">
+        <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i>Вернуться в профиль
+        </a>
+    </div>
+</div>
+
+<!-- Certificates Header -->
+<div class="certificates-header">
+    <div class="container">
+        <h1 class="certificates-title">Сертификаты</h1>
+        <p class="certificates-subtitle">Ваши достижения и профессиональное развитие</p>
+    </div>
+</div>
+
+<!-- Certificates Container -->
+<div class="certificates-container">
+    <div class="container">
+        <!-- Filter Tabs -->
+        <div class="filter-tabs">
+            <button class="filter-tab active" data-filter="all">Все сертификаты</button>
+            <button class="filter-tab" data-filter="completed">Завершенные</button>
+            <button class="filter-tab" data-filter="in-progress">В процессе</button>
+            <button class="filter-tab" data-filter="available">Доступные</button>
+        </div>
+
+        <!-- Certificates Grid -->
+        <div class="certificate-grid">
+            <!-- Certificate 1 - Completed -->
+            <div class="certificate-card" data-status="completed">
+                <div class="certificate-preview">
+                    <i class="fas fa-certificate certificate-icon"></i>
+                </div>
+                <div class="certificate-content">
+                    <h3 class="certificate-title">Python Professional</h3>
+                    <p class="certificate-description">
+                        Полный курс профессиональной разработки на Python. Овладейте продвинутыми концепциями и создайте реальные проекты.
+                    </p>
+                    <div class="certificate-meta">
+                        <span class="certificate-date">Получен: 15.03.2024</span>
+                        <span class="certificate-status status-completed">Завершен</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Certificate 2 - In Progress -->
+            <div class="certificate-card" data-status="in-progress">
+                <div class="certificate-preview">
+                    <i class="fas fa-code certificate-icon"></i>
+                </div>
+                <div class="certificate-content">
+                    <h3 class="certificate-title">Web Development</h3>
+                    <p class="certificate-description">
+                        Современная веб-разработка с использованием HTML, CSS, JavaScript и популярных фреймворков.
+                    </p>
+                    <div class="certificate-meta">
+                        <span class="certificate-date">Прогресс: 65%</span>
+                        <span class="certificate-status status-in-progress">В процессе</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Certificate 3 - Available -->
+            <div class="certificate-card" data-status="available">
+                <div class="certificate-preview">
+                    <i class="fas fa-database certificate-icon"></i>
+                </div>
+                <div class="certificate-content">
+                    <h3 class="certificate-title">Database Management</h3>
+                    <p class="certificate-description">
+                        Управление базами данных, SQL, NoSQL и современные технологии хранения данных.
+                    </p>
+                    <div class="certificate-meta">
+                        <span class="certificate-date">Доступен</span>
+                        <span class="certificate-status status-available">Доступен</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Certificate 4 - Completed -->
+            <div class="certificate-card" data-status="completed">
+                <div class="certificate-preview">
+                    <i class="fas fa-shield-alt certificate-icon"></i>
+                </div>
+                <div class="certificate-content">
+                    <h3 class="certificate-title">Cybersecurity Basics</h3>
+                    <p class="certificate-description">
+                        Основы кибербезопасности, защита данных и современные методы противодействия угрозам.
+                    </p>
+                    <div class="certificate-meta">
+                        <span class="certificate-date">Получен: 28.02.2024</span>
+                        <span class="certificate-status status-completed">Завершен</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Certificate 5 - In Progress -->
+            <div class="certificate-card" data-status="in-progress">
+                <div class="certificate-preview">
+                    <i class="fas fa-mobile-alt certificate-icon"></i>
+                </div>
+                <div class="certificate-content">
+                    <h3 class="certificate-title">Mobile Development</h3>
+                    <p class="certificate-description">
+                        Разработка мобильных приложений для iOS и Android с использованием современных фреймворков.
+                    </p>
+                    <div class="certificate-meta">
+                        <span class="certificate-date">Прогресс: 40%</span>
+                        <span class="certificate-status status-in-progress">В процессе</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Certificate 6 - Available -->
+            <div class="certificate-card" data-status="available">
+                <div class="certificate-preview">
+                    <i class="fas fa-cloud certificate-icon"></i>
+                </div>
+                <div class="certificate-content">
+                    <h3 class="certificate-title">Cloud Computing</h3>
+                    <p class="certificate-description">
+                        Облачные технологии, AWS, Azure и современные подходы к развертыванию приложений.
+                    </p>
+                    <div class="certificate-meta">
+                        <span class="certificate-date">Доступен</span>
+                        <span class="certificate-status status-available">Доступен</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Filter functionality
+    const filterTabs = document.querySelectorAll('.filter-tab');
+    const certificateCards = document.querySelectorAll('.certificate-card');
+
+    filterTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            // Remove active class from all tabs
+            filterTabs.forEach(t => t.classList.remove('active'));
+            // Add active class to clicked tab
+            this.classList.add('active');
+
+            const filter = this.getAttribute('data-filter');
+
+            certificateCards.forEach(card => {
+                if (filter === 'all') {
+                    card.style.display = 'block';
+                } else {
+                    const status = card.getAttribute('data-status');
+                    card.style.display = status === filter ? 'block' : 'none';
+                }
+            });
+        });
+    });
+
+    // Certificate card click handler
+    certificateCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const title = this.querySelector('.certificate-title').textContent;
+            const status = this.querySelector('.certificate-status').textContent;
+            
+            // Here you can add logic to show certificate details
+            console.log(`Clicked certificate: ${title} (${status})`);
+            
+            // For demo purposes, show an alert
+            alert(`Сертификат: ${title}\nСтатус: ${status}\n\nЗдесь будет страница с подробной информацией о сертификате.`);
+        });
+    });
+});
+</script>
+{% endblock %}

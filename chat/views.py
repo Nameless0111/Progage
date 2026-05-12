@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from django.utils import timezone
 from .models import SupportChat, Message
 from accounts.models import User
 
@@ -35,7 +36,7 @@ def chat_detail(request, chat_id):
     
     return render(request, 'chat/chat_detail.html', {
         'chat': chat,
-        'messages': messages_list
+        'chat_messages': messages_list
     })
 
 @login_required
@@ -45,7 +46,8 @@ def send_message(request, chat_id):
     
     # Проверка доступа
     if request.user.role != 'admin' and chat.user != request.user:
-        return JsonResponse({'success': False, 'error': 'Access denied'})
+        messages.error(request, 'У вас нет доступа к этому чату')
+        return redirect('chat:chat_detail', chat_id=chat_id)
     
     content = request.POST.get('content')
     
@@ -58,18 +60,66 @@ def send_message(request, chat_id):
         chat.updated_at = message.created_at
         chat.save()
         
-        return JsonResponse({
-            'success': True,
-            'message': {
-                'id': message.id,
-                'content': message.content,
-                'timestamp': message.created_at.strftime('%H:%M'),
-                'sender': message.sender.username,
-                'is_own': True
-            }
+        # Добавляем уведомления для всех участников чата
+        from accounts.models import User, Notification
+        
+        # Если сообщение от пользователя - уведомляем админов
+        if request.user.role != 'admin':
+            admins = User.objects.filter(role='admin')
+            for admin in admins:
+                notification = Notification(
+                    user=admin,
+                    notification_type='new_chat_message',
+                    title=f'Новое сообщение в чате "{chat.subject}"',
+                    message=f'Пользователь {request.user.get_full_name() or request.user.username} отправил сообщение: {content.strip()[:100]}...',
+                    chat_room_id=str(chat_id)
+                )
+                notification.save()
+        # Если сообщение от админа - уведомляем пользователя чата
+        else:
+            notification = Notification(
+                user=chat.user,
+                notification_type='new_chat_message',
+                title=f'Ответ администратора в чате "{chat.subject}"',
+                message=f'Администратор {request.user.get_full_name() or request.user.username} ответил: {content.strip()[:100]}...',
+                chat_room_id=str(chat_id)
+            )
+            notification.save()
+    
+    messages.success(request, 'Сообщение отправлено')
+    return redirect('chat:chat_detail', chat_id=chat_id)
+
+@login_required
+def refresh_chat(request, chat_id):
+    """AJAX endpoint для обновления чата в реальном времени"""
+    chat = get_object_or_404(SupportChat, id=chat_id)
+    
+    # Проверка доступа
+    if request.user.role != 'admin' and chat.user != request.user:
+        return JsonResponse({'success': False, 'error': 'Access denied'})
+    
+    # Получаем последние сообщения (за последние 5 минут)
+    five_minutes_ago = timezone.now() - timezone.timedelta(minutes=5)
+    recent_messages = chat.messages.filter(
+        created_at__gte=five_minutes_ago
+    ).order_by('created_at').values(
+        'id', 'content', 'created_at', 'sender__username'
+    )
+    
+    # Форматируем сообщения
+    messages_data = []
+    for msg in recent_messages:
+        messages_data.append({
+            'id': msg['id'],
+            'content': msg['content'],
+            'timestamp': msg['created_at'].strftime('%H:%M'),
+            'sender': msg['sender__username']
         })
     
-    return JsonResponse({'success': False, 'error': 'Empty message'})
+    return JsonResponse({
+        'success': True,
+        'messages': messages_data
+    })
 
 @login_required
 def start_chat(request):
@@ -84,6 +134,20 @@ def start_chat(request):
                 user=request.user,
                 subject=subject.strip()
             )
+            
+            # Уведомляем администраторов о новом чате
+            from accounts.models import User, Notification
+            
+            admins = User.objects.filter(role='admin')
+            for admin in admins:
+                notification = Notification(
+                    user=admin,
+                    notification_type='new_chat',
+                    title=f'Новый чат поддержки',
+                    message=f'Пользователь {request.user.get_full_name() or request.user.username} создал чат "{subject}"'
+                )
+                notification.save()
+            
             messages.success(request, 'Чат создан')
             return redirect('chat:chat_detail', chat_id=chat.id)
     

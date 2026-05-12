@@ -3,15 +3,16 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 
 from django.db import models
-from django.db.models import Count, Q, F
+from django.db.models import Count, Q, F, Avg, Sum
 
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, update_session_auth_hash
+import os
 
 from django.urls import reverse
 
 from django.utils import timezone
 
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from django.http import JsonResponse, HttpResponse
 
@@ -24,6 +25,8 @@ from .models import ActivityLog, SystemLog, BackupLog, UserSession, PopularConte
 from accounts.models import User
 
 from courses.models import Course, CourseEnrollment, CourseLike, CourseReview, Lesson, Category
+
+from chat.models import Message, SupportChat
 
 
 
@@ -47,7 +50,7 @@ def dashboard(request):
 
         'students': User.objects.filter(role='student').count(),
 
-        'authors': User.objects.filter(role='author').count(),
+        'teachers': User.objects.filter(role='teacher').count(),  # ИСПРАВЛЕНО: было 'author'
 
         'admins': User.objects.filter(role='admin').count(),
 
@@ -71,11 +74,11 @@ def dashboard(request):
 
         'new_users': User.objects.filter(date_joined__gte=week_ago).count(),
 
-        'active_users': UserSession.objects.filter(
+        'active_users': User.objects.filter(
 
-            last_activity__gte=week_ago
+            last_login__gte=week_ago
 
-        ).values('user').distinct().count(),
+        ).count(),  # ИСПРАВЛЕНО: было UserSession
 
         'new_enrollments': CourseEnrollment.objects.filter(
 
@@ -84,6 +87,8 @@ def dashboard(request):
         ).count(),
 
         'new_courses': Course.objects.filter(created_at__gte=week_ago).count(),
+
+        'error_count': ErrorLog.objects.filter(timestamp__gte=timezone.now() - timedelta(hours=24)).count(),  # ИСПРАВЛЕНО: правильный ключ
 
     }
 
@@ -107,14 +112,6 @@ def dashboard(request):
 
     
 
-    # Ошибки за последние 24 часа
-
-    day_ago = timezone.now() - timedelta(hours=24)
-
-    recent_errors = ErrorLog.objects.filter(timestamp__gte=day_ago).count()
-
-    
-
     context = {
 
         'stats': stats,
@@ -124,8 +121,6 @@ def dashboard(request):
         'popular_courses': popular_courses,
 
         'recent_activities': recent_activities,
-
-        'recent_errors': recent_errors,
 
         'title': 'Админ-панель',
 
@@ -323,7 +318,7 @@ def error_logs(request):
 
     if resolved is not None:
 
-        logs = logs.filter(resolved=resolved == 'true')
+        logs = logs.filter(resolved=(resolved.lower() == 'true'))
 
     if date_from:
 
@@ -517,191 +512,16 @@ def popular_content(request):
 
 
 
-# Бэкапы
 
-@admin_required
 
-def backup_logs(request):
 
-    """Просмотр логов бэкапов"""
 
-    logs = BackupLog.objects.select_related('created_by').order_by('-started_at')
 
-    
 
-    # Фильтры
 
-    status = request.GET.get('status')
 
-    backup_type = request.GET.get('backup_type')
 
-    date_from = request.GET.get('date_from')
 
-    date_to = request.GET.get('date_to')
-
-    
-
-    if status:
-
-        logs = logs.filter(status=status)
-
-    if backup_type:
-
-        logs = logs.filter(backup_type=backup_type)
-
-    if date_from:
-
-        logs = logs.filter(started_at__gte=date_from)
-
-    if date_to:
-
-        logs = logs.filter(started_at__lte=date_to)
-
-    
-
-    # Пагинация
-
-    paginator = Paginator(logs, 50)
-
-    page_number = request.GET.get('page')
-
-    page_obj = paginator.get_page(page_number)
-
-    
-
-    context = {
-
-        'page_obj': page_obj,
-
-        'status_choices': BackupLog.STATUS_CHOICES,
-
-        'title': 'Логи бэкапов',
-
-    }
-
-    return render(request, 'adminpanel/backup_logs.html', context)
-
-
-
-
-
-@admin_required
-
-def create_backup(request):
-
-    """Создание бэкапа"""
-
-    if request.method == 'POST':
-
-        backup_type = request.POST.get('backup_type', 'full')
-
-        description = request.POST.get('description', '')
-
-        
-
-        # Создаем запись о начале бэкапа
-
-        backup_log = BackupLog.objects.create(
-
-            backup_type=backup_type,
-
-            status='started',
-
-            created_by=request.user,
-
-            description=description
-
-        )
-
-        
-
-        try:
-
-            # Здесь будет логика создания бэкапа
-
-            # import subprocess
-
-            # result = subprocess.run(['python', 'manage.py', 'dbbackup'], 
-
-            #                         capture_output=True, text=True)
-
-            
-
-            # Временно имитируем успешное создание
-
-            backup_log.status = 'completed'
-
-            backup_log.completed_at = timezone.now()
-
-            backup_log.file_path = f'/backups/backup_{timezone.now().strftime("%Y%m%d_%H%M%S")}.sql'
-
-            backup_log.file_size = 1024 * 1024  # 1MB
-
-            backup_log.tables_count = 10
-
-            backup_log.records_count = 1000
-
-            backup_log.save()
-
-            
-
-            messages.success(request, f'Бэкап успешно создан: {backup_log.file_path}')
-
-            
-
-        except Exception as e:
-
-            backup_log.status = 'failed'
-
-            backup_log.error_message = str(e)
-
-            backup_log.save()
-
-            
-
-            messages.error(request, f'Ошибка при создании бэкапа: {str(e)}')
-
-        
-
-        return redirect('adminpanel:backup_logs')
-
-    
-
-    context = {
-
-        'title': 'Создание бэкапа',
-
-    }
-
-    return render(request, 'adminpanel/create_backup.html', context)
-
-
-
-
-
-@admin_required
-
-def download_backup(request, backup_id):
-
-    """Скачивание бэкапа"""
-
-    backup = get_object_or_404(BackupLog, id=backup_id)
-
-    
-
-    if backup.file_path and backup.status == 'completed':
-
-        # Здесь будет логика скачивания файла
-
-        messages.success(request, 'Начало скачивания бэкапа')
-
-    else:
-
-        messages.error(request, 'Файл бэкапа не найден или бэкап не завершен')
-
-    
-
-    return redirect('adminpanel:backup_logs')
 
 
 
@@ -713,7 +533,7 @@ def download_backup(request, backup_id):
 
 def statistics(request):
 
-    """Подробная статистика"""
+    """Подробная статистика с графиками"""
 
     # Период для статистики
 
@@ -753,7 +573,7 @@ def statistics(request):
 
         'user_sessions': UserSession.objects.count(),
 
-        'backup_logs': AdminBackupLog.objects.count(),
+        'backup_logs': BackupLog.objects.count(),
 
     }
 
@@ -775,9 +595,7 @@ def statistics(request):
 
         'reviews': CourseReview.objects.filter(created_at__gte=month_start).count(),
 
-        'messages': Message.objects.filter(timestamp__gte=month_start).count(),
-
-        'chats': SupportChat.objects.filter(created_at__gte=month_start).count(),
+        'messages': Message.objects.filter(created_at__gte=month_start).count(),
 
     }
 
@@ -789,11 +607,117 @@ def statistics(request):
 
         'students_count': User.objects.filter(role='student').count(),
 
-        'authors_count': User.objects.filter(role='author').count(),
+        'teachers_count': User.objects.filter(role='teacher').count(),
 
         'admins_count': User.objects.filter(role='admin').count(),
 
     }
+
+    
+
+    # Данные для графиков
+
+    # График регистраций за последние 7 дней
+
+    registration_chart = []
+
+    for i in range(7):
+
+        day = timezone.now() - timedelta(days=i)
+
+        count = User.objects.filter(date_joined__date=day.date()).count()
+
+        registration_chart.append({
+
+            'date': day.strftime('%d.%m'),
+
+            'count': count
+
+        })
+
+    registration_chart.reverse()
+
+    
+
+    # График записей на курсы за последние 7 дней
+
+    enrollment_chart = []
+
+    for i in range(7):
+
+        day = timezone.now() - timedelta(days=i)
+
+        count = CourseEnrollment.objects.filter(enrolled_at__date=day.date()).count()
+
+        enrollment_chart.append({
+
+            'date': day.strftime('%d.%m'),
+
+            'count': count
+
+        })
+
+    enrollment_chart.reverse()
+
+    
+
+    # Топ категорий курсов
+
+    category_chart = []
+
+    categories = Category.objects.annotate(course_count=Count('course')).order_by('-course_count')[:5]
+
+    for cat in categories:
+
+        category_chart.append({
+
+            'name': cat.name,
+
+            'count': cat.course_count
+
+        })
+
+    
+
+    # График активности по часам
+
+    hourly_activity = []
+
+    for i in range(24):
+
+        count = ActivityLog.objects.filter(action_time__hour=i).count()
+
+        hourly_activity.append({
+
+            'hour': str(i),
+
+            'count': count
+
+        })
+
+    
+
+    # Топ популярных курсов
+
+    popular_courses = Course.objects.annotate(
+
+        enrollment_total=Count('enrollments'),
+
+        like_count=Count('likes')
+
+    ).order_by('-enrollment_total', '-like_count')[:5]
+
+    
+
+    # Статистика по уровням курсов
+
+    level_stats = {}
+
+    for level in ['beginner', 'intermediate', 'advanced']:
+
+        count = Course.objects.filter(level=level).count()
+
+        level_stats[level] = count
 
     
 
@@ -811,17 +735,9 @@ def statistics(request):
 
     
 
-    # Курсы по языкам программирования
+    # Курсы по языкам программирования (поле временно отключено)
 
-    programming_languages = list(
-
-        Course.objects.values('programming_language')
-
-        .annotate(count=Count('id'))
-
-        .order_by('-count')[:8]
-
-    )
+    programming_languages = []
 
     
 
@@ -831,13 +747,11 @@ def statistics(request):
 
         Course.objects.annotate(
 
-            enrollment_count=Count('enrollments'),
+            enrollment_total=Count('enrollments'),
 
-            like_count=Count('likes')
+            like_count=Count('likes'),
 
-        ).annotate(
-
-            popularity_score=F('enrollment_count') * 10 + F('like_count') * 7
+            popularity_score=F('enrollment_total') * 10 + F('like_count') * 7
 
         ).order_by('-popularity_score')[:10]
 
@@ -907,7 +821,7 @@ def statistics(request):
 
         stats['users'], stats['courses'], stats['lessons'], 
 
-        stats['enrollments'], stats['likes'], stats['reviews']
+        stats['enrollment_count'], stats['likes'], stats['reviews']
 
     ])
 
@@ -921,7 +835,7 @@ def statistics(request):
 
         'lesson_percentage': round((stats['lessons'] / total_items) * 100, 1) if total_items > 0 else 0,
 
-        'enrollment_percentage': round((stats['enrollments'] / total_items) * 100, 1) if total_items > 0 else 0,
+        'enrollment_percentage': round((stats['enrollment_count'] / total_items) * 100, 1) if total_items > 0 else 0,
 
         'like_percentage': round((stats['likes'] / total_items) * 100, 1) if total_items > 0 else 0,
 
@@ -955,15 +869,13 @@ def statistics(request):
 
         'monthly_messages_growth': monthly_growth['messages'],
 
-        'monthly_chats_growth': monthly_growth['chats'],
-
         
 
         # Роли пользователей
 
         'students_count': user_roles['students_count'],
 
-        'authors_count': user_roles['authors_count'],
+        'teachers_count': user_roles['teachers_count'],
 
         'admins_count': user_roles['admins_count'],
 
@@ -1013,18 +925,96 @@ def statistics(request):
 
         'title': 'Детальная статистика',
 
+        # Данные для графиков
+
+        'registration_chart': registration_chart,
+
+        'enrollment_chart': enrollment_chart,
+
+        'category_chart': category_chart,
+
+        'hourly_activity': hourly_activity,
+
+        'popular_courses': popular_courses,
+
+        'level_stats': level_stats,
+
+        'teachers_count': user_roles['teachers_count'],
+
+        # Дополнительные графики
+
+        'user_registrations': user_registrations[::-1],
+
+        'course_creations': course_creations[::-1],
+
+        'months_labels': months_labels[::-1],
+
+        'weekday_activity': weekday_activity,
+
+        'weekday_labels': weekday_labels,
+
+        'top_courses': top_courses,
+
+        'programming_languages': programming_languages,
+
     }
 
     return render(request, 'adminpanel/statistics.html', context)
 
 
+# Управление чатами поддержки
+@admin_required
+def chat_management(request):
+    """Управление чатами поддержки"""
+    from chat.models import SupportChat, Message
+    
+    # Получаем все чаты
+    chats = SupportChat.objects.select_related('user', 'admin').prefetch_related('messages').order_by('-updated_at')
+    
+    # Фильтры
+    status = request.GET.get('status')
+    if status == 'open':
+        chats = chats.filter(status='open')
+    elif status == 'closed':
+        chats = chats.filter(status='closed')
+    
+    context = {
+        'chats': chats,
+        'title': 'Управление чатами поддержки',
+    }
+    return render(request, 'adminpanel/chat_management.html', context)
 
-
-
-# Пользователи CRUD (сохраняем существующие функции)
 
 @admin_required
+def reopen_chat(request, chat_id):
+    """Переоткрыть чат поддержки"""
+    from chat.models import SupportChat
+    
+    chat = get_object_or_404(SupportChat, id=chat_id)
+    chat.status = 'open'
+    chat.save()
+    
+    # Добавляем сообщение о переоткрытии
+    from chat.models import Message
+    Message.objects.create(
+        chat=chat,
+        sender=request.user,
+        content=f"Чат переоткрыт администратором {request.user.username}"
+    )
+    
+    # Уведомляем пользователя о переоткрытии
+    from accounts.models import Notification
+    Notification.objects.create(
+        user=chat.user,
+        notification_type='new_chat_message',
+        title='Чат переоткрыт',
+        message=f'Администратор {request.user.get_full_name() or request.user.username} переоткрыл ваш чат "{chat.subject}"'
+    )
+    
+    messages.success(request, f'Чат с {chat.user.username} успешно переоткрыт')
+    return redirect('adminpanel:chat_management')
 
+@admin_required
 def user_list(request):
 
     """Список пользователей"""
@@ -1071,18 +1061,14 @@ def user_create(request):
 
             from .middleware import ActivityLogger
 
-            ActivityLogger.log_activity(
-
+            ActivityLogger.log_action(
                 user=request.user,
-
                 action_type='create_user',
-
-                request=request,
-
-                obj=user,
-
-                details={'created_username': user.username}
-
+                object_type='User',
+                object_id=user.id,
+                object_repr=str(user),
+                details={'created_username': user.username},
+                request=request
             )
 
             
@@ -1114,71 +1100,43 @@ def user_create(request):
 @admin_required
 
 def user_edit(request, user_id):
-
     """Редактирование пользователя"""
-
     from .forms import UserForm
-
-    user = get_object_or_404(User, id=user_id)
-
-    
-
+    edited_user = get_object_or_404(User, id=user_id)
     if request.method == 'POST':
-
-        form = UserForm(request.POST, request.FILES, instance=user)
-
+        form = UserForm(request.POST, request.FILES, instance=edited_user)
         if form.is_valid():
-
-            updated_user = form.save(commit=False)
-
-            if form.cleaned_data.get('password'):
-
-                updated_user.set_password(form.cleaned_data['password'])
-
-            updated_user.save()
-
+            user_obj = form.save(commit=False)
+            password = form.cleaned_data.get('password')
+            if password:
+                user_obj.set_password(password)
+            user_obj.save()
             
-
+            # ВАЖНО: если админ меняет СВОЙ пароль — не выкидываем его из системы
+            if edited_user.id == request.user.id and password:
+                from django.contrib.auth import update_session_auth_hash
+                update_session_auth_hash(request, user_obj)
+            
             # Логируем обновление пользователя
-
             from .middleware import ActivityLogger
-
-            ActivityLogger.log_activity(
-
+            ActivityLogger.log_action(
                 user=request.user,
-
                 action_type='update_user',
-
-                request=request,
-
-                obj=user,
-
-                details={'updated_fields': list(form.changed_data)}
-
+                object_type='User',
+                object_id=user_obj.id,
+                object_repr=str(user_obj),
+                details={'updated_fields': list(form.changed_data)},
+                request=request
             )
-
-            
-
-            messages.success(request, f'Пользователь {user.username} обновлен.')
-
+            messages.success(request, f'Пользователь {user_obj.username} обновлен.')
             return redirect('adminpanel:user_list')
-
     else:
-
-        form = UserForm(instance=user)
-
-    
-
+        form = UserForm(instance=edited_user)
     context = {
-
         'form': form,
-
-        'user': user,
-
+        'edited_user': edited_user,
         'title': 'Редактирование пользователя',
-
     }
-
     return render(request, 'adminpanel/user_form.html', context)
 
 
@@ -1205,22 +1163,16 @@ def user_delete(request, user_id):
 
         from .middleware import ActivityLogger
 
-        ActivityLogger.log_activity(
-
+        ActivityLogger.log_action(
             user=request.user,
-
             action_type='delete_user',
-
-            request=request,
-
-            obj=user,
-
-            details={'deleted_username': username}
-
+            object_type='User',
+            object_id=user.id,
+            object_repr=str(user),
+            details={'deleted_username': username},
+            request=request
         )
-
         
-
         user.delete()
 
         messages.success(request, f'Пользователь {username} удален.')
@@ -1296,16 +1248,13 @@ def course_create(request):
 
             from .middleware import ActivityLogger
 
-            ActivityLogger.log_activity(
-
+            ActivityLogger.log_action(
                 user=request.user,
-
                 action_type='create_course',
-
-                request=request,
-
-                obj=course
-
+                object_type='Course',
+                object_id=course.id,
+                object_repr=str(course),
+                request=request
             )
 
             
@@ -1347,8 +1296,10 @@ def course_edit(request, course_id):
     from .forms import CourseForm
 
     course = get_object_or_404(Course, id=course_id)
-
     
+    # Получаем инструкторов и категории
+    instructors = User.objects.filter(role='teacher').order_by('username')
+    categories = Category.objects.all().order_by('name')
 
     if request.method == 'POST':
 
@@ -1364,18 +1315,14 @@ def course_edit(request, course_id):
 
             from .middleware import ActivityLogger
 
-            ActivityLogger.log_activity(
-
+            ActivityLogger.log_action(
                 user=request.user,
-
                 action_type='update_course',
-
-                request=request,
-
-                obj=course,
-
-                details={'updated_fields': list(form.changed_data)}
-
+                object_type='Course',
+                object_id=course.id,
+                object_repr=str(course),
+                details={'updated_fields': list(form.changed_data)},
+                request=request
             )
 
             
@@ -1430,18 +1377,14 @@ def course_delete(request, course_id):
 
         from .middleware import ActivityLogger
 
-        ActivityLogger.log_activity(
-
+        ActivityLogger.log_action(
             user=request.user,
-
             action_type='delete_course',
-
-            request=request,
-
-            obj=course,
-
-            details={'deleted_title': title}
-
+            object_type='Course',
+            object_id=course.id,
+            object_repr=str(course),
+            details={'deleted_title': title},
+            request=request
         )
 
         
@@ -1702,43 +1645,17 @@ def delete_backup(request, filename):
 
 def restore_backup(request, filename):
 
-    """Восстановление из бэкапа"""
+    """Восстановление из бэкапа - только информационная страница"""
 
-    from .backup_utils import SystemBackup
+    context = {
 
-    
+        'filename': filename,
 
-    if request.method == 'POST':
+        'title': 'Восстановление бэкапа',
 
-        try:
+    }
 
-            backup_system = SystemBackup()
-
-            backup_path = os.path.join(backup_system.backup_dir, filename)
-
-            
-
-            result = backup_system.restore_backup(backup_path, user=request.user)
-
-            
-
-            if result['success']:
-
-                messages.success(request, 'Система успешно восстановлена из бэкапа')
-
-            else:
-
-                messages.error(request, 'Ошибка при восстановлении системы')
-
-                
-
-        except Exception as e:
-
-            messages.error(request, f'Ошибка при восстановлении: {str(e)}')
-
-    
-
-    return redirect('adminpanel:backup_logs')
+    return render(request, 'adminpanel/restore_backup.html', context)
 
 @admin_required
 

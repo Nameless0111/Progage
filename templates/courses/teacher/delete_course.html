@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Удаление курса{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h4 class="mb-0 text-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Удаление курса
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Внимание!</strong> Это действие необратимо. Все уроки и данные о курсе будут удалены.
+                    </div>
+                    
+                    <h5>Вы уверены, что хотите удалить курс?</h5>
+                    <p class="lead"><strong>{{ course.title }}</strong></p>
+                    <p class="text-muted">{{ course.description|truncatechars:150 }}</p>
+                    
+                    <div class="mt-4">
+                        <strong>Информация о курсе:</strong>
+                        <ul class="list-unstyled mt-2">
+                            <li><i class="fas fa-book-open me-2"></i>Уроков: {{ course.lessons.count }}</li>
+                            <li><i class="fas fa-users me-2"></i>Студентов: {{ course.enrollments.count }}</li>
+                            <li><i class="fas fa-star me-2"></i>Рейтинг: {{ course.reviews.aggregate(avg_rating=models.Avg('rating')).avg_rating|default:0|floatformat:1 }}</li>
+                        </ul>
+                    </div>
+                    
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'courses:teacher_dashboard' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Отмена
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash me-2"></i>Удалить курс
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

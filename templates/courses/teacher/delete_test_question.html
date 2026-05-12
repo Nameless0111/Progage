@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Удаление вопроса - {{ lesson.title }} - Progage{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h4 class="mb-0">
+                        <i class="fas fa-trash text-danger me-2"></i>
+                        Удаление вопроса
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Внимание!</strong> Это действие необратимо.
+                    </div>
+                    
+                    <p class="mb-3">Вы уверены, что хотите удалить следующий вопрос?</p>
+                    
+                    <div class="bg-light p-3 rounded mb-4">
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="badge bg-{{ question.question_type|question_type_color }} me-2">
+                                {{ question.get_question_type_display }}
+                            </span>
+                            <span class="badge bg-info">{{ question.points }} балл{{ question.points|pluralize:"а,ов" }}</span>
+                        </div>
+                        <h6 class="mb-2">{{ question.question_text }}</h6>
+                        {% if question.answers.exists %}
+                            <small class="text-muted">
+                                <i class="fas fa-list me-1"></i>
+                                {{ question.answers.count }} вариант{{ question.answers.count|pluralize:"а,ов" }} ответа
+                            </small>
+                        {% endif %}
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'courses:test_constructor' lesson.id %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Отмена
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash me-2"></i>Удалить вопрос
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

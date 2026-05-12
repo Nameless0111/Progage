@@ -1,0 +1,690 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Практическое задание (ручная проверка) - {{ lesson.title }} - Progage{% endblock %}
+
+{% block extra_css %}
+<style>
+    .code-editor {
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+    .submission-item {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+    }
+    .submission-item:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .submission-header {
+        background: #f8f9fa;
+        padding: 15px;
+        border-bottom: 1px solid #dee2e6;
+        border-radius: 8px 8px 0 0;
+    }
+    .submission-body {
+        padding: 20px;
+    }
+    .code-block {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        font-size: 13px;
+        line-height: 1.4;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    .output-block {
+        background: #f0f8f0;
+        border: 1px solid #c3e6cb;
+        border-radius: 8px;
+        padding: 15px;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        font-size: 13px;
+        line-height: 1.4;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: 500;
+        font-size: 0.85rem;
+    }
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+    .status-approved {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    .status-rejected {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    .status-reviewed {
+        background: #cce5ff;
+        color: #004085;
+        border: 1px solid #b8daff;
+    }
+    .grade-input {
+        width: 80px;
+        text-align: center;
+    }
+    .feedback-textarea {
+        min-height: 100px;
+    }
+    .language-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    .stats-card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        border-left: 4px solid #007bff;
+    }
+    .filter-tabs {
+        border-bottom: 2px solid #dee2e6;
+        margin-bottom: 20px;
+    }
+    .filter-tab {
+        border: none;
+        background: none;
+        padding: 10px 20px;
+        font-weight: 500;
+        color: #6c757d;
+        border-bottom: 3px solid transparent;
+        transition: all 0.3s ease;
+    }
+    .filter-tab.active {
+        color: #007bff;
+        border-bottom-color: #007bff;
+    }
+    .filter-tab:hover {
+        color: #007bff;
+    }
+    
+    /* Стили для тестовых случаев */
+    .test-case {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        background: #fff;
+    }
+    
+    .test-case-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 15px;
+        background: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+        border-radius: 8px 8px 0 0;
+    }
+    
+    .add-test-case {
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        background: #f8f9ff;
+    }
+    .add-test-case:hover {
+        border-color: #007bff;
+        background: #e3f2fd;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-3">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'home' %}">Главная</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'courses:teacher_dashboard' %}">Панель преподавателя</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'courses:teacher_course_lessons' course.id %}">{{ course.title }}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'courses:teacher_edit_lesson' course.id lesson.id %}">{{ lesson.title }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Практическое задание</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Форма практического задания -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h4 class="mb-0">
+                        <i class="fas fa-code text-primary me-2"></i>
+                        Практическое задание (ручная проверка)
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.title.id_for_label }}" class="form-label">Название задания *</label>
+                                {{ form.title }}
+                                {% if form.title.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.title.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.programming_language.id_for_label }}" class="form-label">Язык программирования *</label>
+                                {{ form.programming_language }}
+                                {% if form.programming_language.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.programming_language.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">Описание задания *</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.description.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.requirements.id_for_label }}" class="form-label">Требования к решению *</label>
+                            {{ form.requirements }}
+                            {% if form.requirements.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.requirements.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Опишите, что должен сделать студент, какие ограничения есть, какой формат вывода ожидается.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.starter_code.id_for_label }}" class="form-label">Начальный код</label>
+                            {{ form.starter_code }}
+                            {% if form.starter_code.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.starter_code.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Код, который будет показан студенту как основа для решения.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.expected_output.id_for_label }}" class="form-label">Ожидаемый вывод (опционально)</label>
+                            {{ form.expected_output }}
+                            {% if form.expected_output.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.expected_output.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Пример вывода, который должен получить студент. Это поможет ему понять, что от него ожидается.</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.max_attempts.id_for_label }}" class="form-label">Максимум попыток</label>
+                                {{ form.max_attempts }}
+                                {% if form.max_attempts.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.max_attempts.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Оставьте пустым для значения по умолчанию (10)</div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.max_grade.id_for_label }}" class="form-label">Максимальная оценка</label>
+                                {{ form.max_grade }}
+                                {% if form.max_grade.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.max_grade.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Оставьте пустым для значения по умолчанию (100)</div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.deadline.id_for_label }}" class="form-label">Дедлайн (опционально)</label>
+                                {{ form.deadline }}
+                                {% if form.deadline.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.deadline.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.is_published }}
+                                <label class="form-check-label" for="{{ form.is_published.id_for_label }}">
+                                    Опубликовать задание (студенты смогут его видеть и отправлять решения)
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.require_manual_review }}
+                                <label class="form-check-label" for="{{ form.require_manual_review.id_for_label }}">
+                                    Требуется ручная проверка (преподаватель проверяет задания вручную)
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'courses:teacher_edit_lesson' course.id lesson.id %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Отмена
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Сохранить задание
+                            </button>
+                        </div>
+
+            <!-- Тестовые случаи -->
+            {% include 'courses/teacher/test_cases_minimal.html' %}
+
+                    </form>
+                </div>
+            </div>
+
+            <!-- Отправки студентов на проверку -->
+            {% if assignment and assignment.submissions.exists %}
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-users text-primary me-2"></i>
+                            Отправки студентов ({{ total_submissions }})
+                        </h5>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="filterSubmissions('all')">
+                                Все ({{ total_submissions }})
+                            </button>
+                            <button type="button" class="btn btn-outline-warning btn-sm" onclick="filterSubmissions('pending')">
+                                На проверке ({{ pending_submissions }})
+                            </button>
+                            <button type="button" class="btn btn-outline-success btn-sm" onclick="filterSubmissions('approved')">
+                                Принято ({{ approved_submissions }})
+                            </button>
+                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="filterSubmissions('rejected')">
+                                Отклонено ({{ rejected_submissions }})
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="submissions-container">
+                        {% for submission in assignment.submissions.all %}
+                        <div class="submission-item" data-status="{{ submission.status }}">
+                            <div class="submission-header">
+                                <div class="row align-items-center">
+                                    <div class="col-md-3">
+                                        <strong>{{ submission.user.get_full_name|default:submission.user.username }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ submission.user.email }}</small>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <span class="language-badge">{{ submission.programming_language|upper }}</span>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <span class="status-badge status-{{ submission.status }}">
+                                            {% if submission.status == 'pending' %}На проверке{% endif %}
+                                            {% if submission.status == 'approved' %}Принято{% endif %}
+                                            {% if submission.status == 'rejected' %}Отклонено{% endif %}
+                                            {% if submission.status == 'reviewed' %}Проверено{% endif %}
+                                        </span>
+                                    </div>
+                                    <div class="col-md-2">
+                                        {% if submission.grade %}
+                                            <strong>Оценка: {{ submission.grade }}/{{ assignment.max_grade }}</strong>
+                                        {% else %}
+                                            <span class="text-muted">Не оценено</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-3">
+                                        <small class="text-muted">{{ submission.submitted_at|date:"d.m.Y H:i" }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="submission-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6><i class="fas fa-code me-2"></i>Код студента:</h6>
+                                        <div class="code-block">{{ submission.code }}</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6><i class="fas fa-terminal me-2"></i>Вывод программы:</h6>
+                                        {% if submission.output %}
+                                            <div class="output-block">{{ submission.output }}</div>
+                                        {% else %}
+                                            <div class="text-muted">Нет вывода</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                {% if submission.status == 'pending' or submission.status == 'reviewed' %}
+                                <form method="post" action="{% url 'courses:review_submission' submission.id %}" class="mt-3">
+                                    {% csrf_token %}
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label for="grade-{{ submission.id }}" class="form-label">Оценка:</label>
+                                            <input type="number" name="grade" id="grade-{{ submission.id }}" 
+                                                   class="form-control grade-input" 
+                                                   min="0" max="{{ assignment.max_grade }}" 
+                                                   value="{{ submission.grade|default:'' }}"
+                                                   placeholder="0-{{ assignment.max_grade }}">
+                                        </div>
+                                        <div class="col-md-9">
+                                            <label for="feedback-{{ submission.id }}" class="form-label">Комментарий преподавателя:</label>
+                                            <textarea name="feedback" id="feedback-{{ submission.id }}" 
+                                                      class="form-control feedback-textarea" 
+                                                      placeholder="Введите ваш комментарий...">{{ submission.feedback|default:'' }}</textarea>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-md-12">
+                                            <div class="btn-group" role="group">
+                                                <button type="submit" name="action" value="approve" class="btn btn-success">
+                                                    <i class="fas fa-check me-2"></i>Принять
+                                                </button>
+                                                <button type="submit" name="action" value="reject" class="btn btn-danger">
+                                                    <i class="fas fa-times me-2"></i>Отклонить
+                                                </button>
+                                                <button type="submit" name="action" value="save" class="btn btn-outline-primary">
+                                                    <i class="fas fa-save me-2"></i>Сохранить черновик
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                                {% else %}
+                                <div class="mt-3">
+                                    <strong>Комментарий преподавателя:</strong>
+                                    <div class="mt-2 p-3 bg-light rounded">{{ submission.feedback|default:"Нет комментария" }}</div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Статистика -->
+            {% if assignment and assignment.submissions.exists %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-bar text-info me-2"></i>
+                        Статистика
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <div class="stats-card">
+                                <h4>{{ total_submissions }}</h4>
+                                <small class="text-muted">Всего отправок</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stats-card">
+                                <h4>{{ unique_students }}</h4>
+                                <small class="text-muted">Уникальных студентов</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Статусы:</strong>
+                        <div class="mt-2">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>На проверке:</span>
+                                <span class="badge bg-warning">{{ pending_submissions }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Принято:</span>
+                                <span class="badge bg-success">{{ approved_submissions }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Отклонено:</span>
+                                <span class="badge bg-danger">{{ rejected_submissions }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Уникальных студентов:</span>
+                                <span class="badge bg-info">{{ unique_students }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if avg_grade > 0 %}
+                    <div class="mb-3">
+                        <strong>Средняя оценка:</strong>
+                        <div class="mt-1">
+                            <h4>{{ avg_grade|floatformat:1 }}/{{ assignment.max_grade }}</h4>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if assignment.deadline %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-clock me-2"></i>
+                        <strong>Дедлайн:</strong> {{ assignment.deadline|date:"d.m.Y H:i" }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Информация о задании -->
+            {% if assignment %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle text-primary me-2"></i>
+                        Информация о задании
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <strong>Язык:</strong> {{ assignment.programming_language|upper }}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Макс. попыток:</strong> {{ assignment.max_attempts }}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Макс. оценка:</strong> {{ assignment.max_grade }}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Тип проверки:</strong> 
+                        {% if assignment.require_manual_review %}
+                            <span class="badge bg-warning">Ручная</span>
+                        {% else %}
+                            <span class="badge bg-success">Автоматическая</span>
+                        {% endif %}
+                    </div>
+                    <div class="mb-0">
+                        <strong>Статус:</strong> 
+                        {% if assignment.is_published %}
+                            <span class="badge bg-success">Опубликовано</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Черновик</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Поддерживаемые языки -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0">
+                        <i class="fas fa-code text-primary me-2"></i>
+                        Поддерживаемые языки
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <span class="language-badge">Python</span>
+                        <small class="text-muted d-block">Python 3.11</small>
+                    </div>
+                    <div class="mb-2">
+                        <span class="language-badge">JavaScript</span>
+                        <small class="text-muted d-block">Node.js 18</small>
+                    </div>
+                    <div class="mb-2">
+                        <span class="language-badge">Java</span>
+                        <small class="text-muted d-block">OpenJDK 17</small>
+                    </div>
+                    <div class="mb-2">
+                        <span class="language-badge">C++</span>
+                        <small class="text-muted d-block">GCC с C++17</small>
+                    </div>
+                    <div class="mb-2">
+                        <span class="language-badge">C</span>
+                        <small class="text-muted d-block">GCC с C11</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function filterSubmissions(status) {
+    const submissions = document.querySelectorAll('.submission-item');
+    
+    submissions.forEach(submission => {
+        if (status === 'all') {
+            submission.style.display = 'block';
+        } else {
+            if (submission.dataset.status === status) {
+                submission.style.display = 'block';
+            } else {
+                submission.style.display = 'none';
+            }
+        }
+    });
+    
+    // Обновляем активную кнопку
+    document.querySelectorAll('.btn-group .btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+}
+
+// Функции для управления тестовыми случаями
+let testCaseCounter = 0;
+
+function addTestCase() {
+    const container = document.getElementById('test-cases-container');
+    const addDiv = document.querySelector('.add-test-case');
+    
+    testCaseDiv.innerHTML = `
+        <div class="test-case-header">
+            <h6 class="mb-0">Тест ${testCaseCounter + 1}</h6>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeTestCase(${testCaseCounter})">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-2">
+                <label class="form-label">Входные данные <small class="text-muted">(опционально)</small></label>
+                <textarea name="test_input_${testCaseCounter}" class="form-control code-editor" rows="2" placeholder="Входные данные (если не требуются, оставьте пустым)..."></textarea>
+            </div>
+            <div class="col-md-6 mb-2">
+                <label class="form-label">Ожидаемый вывод *</label>
+                <textarea name="test_output_${testCaseCounter}" class="form-control code-editor" rows="2" placeholder="Ожидаемый вывод..." required></textarea>
+            </div>
+        </div>
+    `;
+    
+    if (addDiv) {
+        addDiv.style.display = 'none';
+    }
+    
+    container.appendChild(testCaseDiv);
+    testCaseCounter++;
+}
+
+function removeTestCase(index) {
+    const testCase = document.querySelector(`[data-test-index="${index}"]`);
+    if (testCase) {
+        testCase.remove();
+        // Показываем кнопку добавления если больше нет тестов
+        const remainingTests = document.querySelectorAll('.test-case');
+        if (remainingTests.length === 0) {
+            const addDiv = document.querySelector('.add-test-case');
+            if (addDiv) {
+                addDiv.style.display = 'block';
+            }
+        }
+    }
+}
+
+// Автосохранение черновика при изменении
+document.addEventListener('DOMContentLoaded', function() {
+    const forms = document.querySelectorAll('form[action*="review_submission"]');
+    
+    forms.forEach(form => {
+        const gradeInput = form.querySelector('input[name="grade"]');
+        const feedbackTextarea = form.querySelector('textarea[name="feedback"]');
+        
+        if (gradeInput && feedbackTextarea) {
+            let saveTimeout;
+            
+            function autoSave() {
+                clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(() => {
+                    const formData = new FormData(form);
+                    formData.append('action', 'save');
+                    
+                    fetch(form.action, {
+                        method: 'POST',
+                        body: formData
+                    }).then(response => {
+                        if (response.ok) {
+                            console.log('Автосохранение выполнено');
+                        }
+                    });
+                }, 2000); // Сохраняем через 2 секунды после последнего изменения
+            }
+            
+            gradeInput.addEventListener('input', autoSave);
+            feedbackTextarea.addEventListener('input', autoSave);
+        }
+    });
+});
+</script>
+{% endblock %}

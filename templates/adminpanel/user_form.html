@@ -15,20 +15,42 @@
         <div class="col-lg-8">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white py-3">
-                    <h5 class="mb-0">{% if user %}Редактирование{% else %}Создание{% endif %} пользователя</h5>
+                    <h5 class="mb-0">{% if edited_user %}Редактирование{% else %}Создание{% endif %} пользователя</h5>
                 </div>
                 <div class="card-body">
                     <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
                         
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="id_username" class="form-label">Имя пользователя</label>
-                                <input type="text" class="form-control" id="id_username" name="username" value="{{ form.username.value|default:'' }}" required>
+                                <input type="text" class="form-control {% if form.username.errors %}is-invalid{% endif %}" id="id_username" name="username" value="{{ form.username.value|default:'' }}" required>
+                                {% if form.username.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.username.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="id_email" class="form-label">Email</label>
-                                <input type="email" class="form-control" id="id_email" name="email" value="{{ form.email.value|default:'' }}" required>
+                                <input type="email" class="form-control {% if form.email.errors %}is-invalid{% endif %}" id="id_email" name="email" value="{{ form.email.value|default:'' }}" required>
+                                {% if form.email.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.email.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
                             </div>
                         </div>
 
@@ -52,10 +74,6 @@
                                     <option value="admin" {% if form.role.value == 'admin' %}selected{% endif %}>Администратор</option>
                                 </select>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="id_phone" class="form-label">Телефон</label>
-                                <input type="tel" class="form-control" id="id_phone" name="phone" value="{{ form.phone.value|default:'' }}">
-                            </div>
                         </div>
 
                         <div class="mb-3">
@@ -66,21 +84,21 @@
                         <div class="mb-3">
                             <label for="id_avatar" class="form-label">Аватар</label>
                             <input type="file" class="form-control" id="id_avatar" name="avatar" accept="image/*">
-                            {% if user and user.avatar %}
+                            {% if edited_user and edited_user.avatar %}
                             <div class="mt-2">
-                                <img src="{{ user.avatar_url }}" alt="Текущий аватар" class="rounded" style="width: 100px; height: 100px; object-fit: cover;">
+                                <img src="{{ edited_user.avatar_url }}" alt="Текущий аватар" class="rounded" style="width: 100px; height: 100px; object-fit: cover;">
                             </div>
                             {% endif %}
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="id_password" class="form-label">{% if user %}Новый пароль (оставьте пустым, чтобы не менять){% else %}Пароль{% endif %}</label>
-                                <input type="password" class="form-control" id="id_password" name="password" {% if not user %}required{% endif %}>
+                                <label for="id_password" class="form-label">{% if edited_user %}Новый пароль (оставьте пустым, чтобы не менять){% else %}Пароль{% endif %}</label>
+                                <input type="password" class="form-control" id="id_password" name="password" {% if not edited_user %}required{% endif %}>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <div class="form-check mt-4">
-                                    <input class="form-check-input" type="checkbox" id="id_is_active" name="is_active" {% if form.is_active.value %}checked{% endif %}>
+                                    <input class="form-check-input" type="checkbox" id="id_is_active" name="is_active" {% if edited_user and edited_user.is_active %}checked{% endif %}>
                                     <label class="form-check-label" for="id_is_active">
                                         Активный пользователь
                                     </label>

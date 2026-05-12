@@ -40,41 +40,47 @@
 <div class="container mb-5">
     <div class="row g-4 mb-5">
         <div class="col-md-4">
-            <div class="card h-100 border-0 shadow-sm text-center p-4">
-                <div class="card-body">
-                    <i class="fas fa-book-open fa-3x text-primary mb-3"></i>
-                    <h5 class="card-title">Более 100 курсов</h5>
-                    <p class="card-text text-muted">Выбирайте из разнообразных курсов по разным направлениям программирования</p>
+            <a href="{% url 'courses:course_list' %}" class="text-decoration-none">
+                <div class="card h-100 border-0 shadow-sm text-center p-4 hover-lift">
+                    <div class="card-body">
+                        <i class="fas fa-book-open fa-3x text-primary mb-3"></i>
+                        <h5 class="card-title">Разнообразные курсы</h5>
+                        <p class="card-text text-muted">Изучайте современные технологии и языки программирования</p>
+                    </div>
                 </div>
-            </div>
+            </a>
         </div>
         <div class="col-md-4">
-            <div class="card h-100 border-0 shadow-sm text-center p-4">
-                <div class="card-body">
-                    <i class="fas fa-users fa-3x text-success mb-3"></i>
-                    <h5 class="card-title">Опытные преподаватели</h5>
-                    <p class="card-text text-muted">Учитесь у лучших специалистов в своих областях</p>
+            <a href="{% url 'accounts:teachers_list' %}" class="text-decoration-none">
+                <div class="card h-100 border-0 shadow-sm text-center p-4 hover-lift">
+                    <div class="card-body">
+                        <i class="fas fa-chalkboard-teacher fa-3x text-success mb-3"></i>
+                        <h5 class="card-title">Профессиональные преподаватели</h5>
+                        <p class="card-text text-muted">Обучение от практикующих специалистов индустрии</p>
+                    </div>
                 </div>
-            </div>
+            </a>
         </div>
         <div class="col-md-4">
-            <div class="card h-100 border-0 shadow-sm text-center p-4">
-                <div class="card-body">
-                    <i class="fas fa-certificate fa-3x text-warning mb-3"></i>
-                    <h5 class="card-title">Сертификаты</h5>
-                    <p class="card-text text-muted">Получите сертификаты о прохождении курсов</p>
+            <a href="{% url 'accounts:certificates' %}" class="text-decoration-none">
+                <div class="card h-100 border-0 shadow-sm text-center p-4 hover-lift">
+                    <div class="card-body">
+                        <i class="fas fa-award fa-3x text-warning mb-3"></i>
+                        <h5 class="card-title">Дипломы и сертификаты</h5>
+                        <p class="card-text text-muted">Официальные документы об успешном завершении обучения</p>
+                    </div>
                 </div>
-            </div>
+            </a>
         </div>
     </div>
 
-    <h2 class="text-center mb-4"><i class="fas fa-fire text-primary me-2"></i>Популярные курсы</h2>
+    <h2 class="text-center mb-4"><i class="fas fa-star text-primary me-2"></i>Рекомендуемые курсы</h2>
     <div class="row g-4">
         {% for course in popular_courses %}
         <div class="col-md-6 col-lg-3">
             <div class="card h-100 border-0 shadow-sm course-card">
                 {% if course.thumbnail %}
-                <img src="{{ course.thumbnail.url }}" class="card-img-top course-image" alt="{{ course.title }}" style="height: 180px; object-fit: cover;">
+                <img src="{{ course.thumbnail_url }}" class="card-img-top course-image" alt="{{ course.title }}" style="height: 180px; object-fit: cover;">
                 {% else %}
                 <div class="bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" style="height: 180px;">
                     <i class="fas fa-book text-primary fa-3x"></i>
@@ -105,8 +111,8 @@
     </div>
 
     <div class="text-center mt-4">
-        <a href="{% url 'courses:course_list' %}" class="btn btn-primary btn-lg">
-            <i class="fas fa-th-large me-2"></i>Все курсы
+        <a href="{% url 'courses:course_list' %}" class="btn btn-primary btn-lg px-5">
+            <i class="fas fa-compass me-2"></i>Смотреть все курсы
         </a>
     </div>
 </div>

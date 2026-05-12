@@ -36,7 +36,12 @@
                             
                             <div class="alert alert-info">
                                 <strong>Секретный ключ:</strong><br>
-                                <code>{{ device.key }}</code>
+                                <code>{{ device.key }}</code><br>
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Этот ключ понадобится если вы потеряете доступ к приложению аутентификатора. 
+                                    Сохраните его в надежном месте вместе с резервными кодами.
+                                </small>
                             </div>
                         </div>
                         
@@ -68,8 +73,8 @@
                             <form method="post" class="d-inline">
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="disable">
-                                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to disable two-factor authentication?')">
-                                    <i class="fas fa-times me-2"></i>Disable 2FA
+                                <button type="submit" class="btn btn-danger" onclick="return confirm('Вы уверены, что хотите отключить двухфакторную аутентификацию?')">
+                                    <i class="fas fa-times me-2"></i>Отключить 2FA
                                 </button>
                             </form>
                         {% else %}
@@ -77,7 +82,7 @@
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="enable">
                                 <button type="submit" class="btn btn-success">
-                                    <i class="fas fa-check me-2"></i>Enable 2FA
+                                    <i class="fas fa-check me-2"></i>Включить 2FA
                                 </button>
                             </form>
                         {% endif %}

@@ -21,7 +21,11 @@
                     <span class="badge bg-{% if user.role == 'admin' %}danger{% elif user.role == 'teacher' %}info{% else %}success{% endif %} mb-3">
                         {{ user.get_role_display }}
                     </span>
-                    <p class="text-muted">{{ user.bio|default:"Нет информации о себе" }}</p>
+                    {% if user.bio %}
+    <p class="text-muted px-2" style="white-space: pre-line;">
+        {{ user.bio }}
+    </p>
+{% endif %}
                     <hr>
                     <div class="d-flex justify-content-around">
                         <div class="text-center">
@@ -46,6 +50,12 @@
                     <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
                         
+                        <div class="mb-3">
+                            <label for="id_username" class="form-label">Имя пользователя</label>
+                            <input type="text" class="form-control" id="id_username" name="username" value="{{ user_form.username.value|default:user.username }}">
+                            <small class="form-text text-muted">Уникальное имя для входа в систему</small>
+                        </div>
+                        
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="id_first_name" class="form-label">Имя</label>
@@ -67,26 +77,30 @@
                             <textarea class="form-control" id="id_bio" name="bio" rows="4">{{ profile_form.bio.value|default:'' }}</textarea>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="id_phone" class="form-label">Телефон</label>
-                            <input type="tel" class="form-control" id="id_phone" name="phone" value="{{ profile_form.phone.value|default:'' }}">
-                        </div>
-
+                        
                         <div class="mb-3">
                             <label for="id_avatar" class="form-label">Новый аватар</label>
                             <input type="file" class="form-control" id="id_avatar" name="avatar" accept="image/*">
                         </div>
 
                         <div class="mb-3">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="id_two_factor_enabled" name="two_factor_enabled" {% if user.profile.two_factor_enabled %}checked{% endif %}>
-                                <label class="form-check-label" for="id_two_factor_enabled">
-                                    Двухфакторная аутентификация (2FA)
-                                </label>
+                            <label class="form-label">Двухфакторная аутентификация</label>
+                            
+                            <div class="d-flex align-items-center gap-2">
+                                {% if user.profile.two_factor_enabled %}
+                                    <span class="badge bg-success">Включена</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Выключена</span>
+                                {% endif %}
+                                
+                                <a href="{% url 'accounts:two_factor_setup' %}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-shield-alt me-1"></i>
+                                    Настроить 2FA
+                                </a>
                             </div>
+                            
                             <small class="form-text text-muted">
-                                Включите для дополнительной защиты аккаунта с помощью кода из приложения аутентификатора.
-                                <a href="{% url 'accounts:two_factor_setup' %}" class="text-decoration-none">Настроить 2FA</a>
+                                Двухфакторная аутентификация настраивается через приложение-аутентификатор.
                             </small>
                         </div>
 
@@ -104,4 +118,207 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form[method="post"]');
+    const usernameInput = document.getElementById('id_username');
+    const emailInput = document.getElementById('id_email');
+    const firstNameInput = document.getElementById('id_first_name');
+    const lastNameInput = document.getElementById('id_last_name');
+    const bioInput = document.getElementById('id_bio');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    
+    let validationState = {
+        username: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        bio: true
+    };
+    
+    // Жесткая валидация имени пользователя
+    function validateUsername() {
+        const username = usernameInput.value.trim();
+        const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+        
+        if (!username) {
+            showFieldError(usernameInput, 'Имя пользователя обязательно');
+            validationState.username = false;
+        } else if (!usernameRegex.test(username)) {
+            showFieldError(usernameInput, 'Имя пользователя должно содержать только буквы, цифры и подчеркивания (3-20 символов)');
+            validationState.username = false;
+        } else if (username.toLowerCase() !== username) {
+            showFieldError(usernameInput, 'Имя пользователя должно быть в нижнем регистре');
+            validationState.username = false;
+        } else {
+            clearFieldError(usernameInput);
+            validationState.username = true;
+        }
+        updateSubmitButton();
+    }
+    
+    // Жесткая валидация email
+    function validateEmail() {
+        const email = emailInput.value.trim();
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        
+        if (!email) {
+            showFieldError(emailInput, 'Email обязателен');
+            validationState.email = false;
+        } else if (!emailRegex.test(email)) {
+            showFieldError(emailInput, 'Введите корректный email адрес');
+            validationState.email = false;
+        } else if (email.toLowerCase() !== email) {
+            showFieldError(emailInput, 'Email должен быть в нижнем регистре');
+            validationState.email = false;
+        } else {
+            clearFieldError(emailInput);
+            validationState.email = true;
+        }
+        updateSubmitButton();
+    }
+    
+    // Жесткая валидация имени
+    function validateFirstName() {
+        const firstName = firstNameInput.value.trim();
+        const nameRegex = /^[а-яёА-ЯЁa-zA-Z]{2,30}$/;
+        
+        if (!firstName) {
+            showFieldError(firstNameInput, 'Имя обязательно');
+            validationState.firstName = false;
+        } else if (!nameRegex.test(firstName)) {
+            showFieldError(firstNameInput, 'Имя должно содержать только буквы (2-30 символов)');
+            validationState.firstName = false;
+        } else {
+            clearFieldError(firstNameInput);
+            validationState.firstName = true;
+        }
+        updateSubmitButton();
+    }
+    
+    // Жесткая валидация фамилии
+    function validateLastName() {
+        const lastName = lastNameInput.value.trim();
+        const nameRegex = /^[а-яёА-ЯЁa-zA-Z]{2,30}$/;
+        
+        if (!lastName) {
+            showFieldError(lastNameInput, 'Фамилия обязательна');
+            validationState.lastName = false;
+        } else if (!nameRegex.test(lastName)) {
+            showFieldError(lastNameInput, 'Фамилия должна содержать только буквы (2-30 символов)');
+            validationState.lastName = false;
+        } else {
+            clearFieldError(lastNameInput);
+            validationState.lastName = true;
+        }
+        updateSubmitButton();
+    }
+    
+    // Валидация биографии
+    function validateBio() {
+        const bio = bioInput.value.trim();
+        
+        if (bio.length > 500) {
+            showFieldError(bioInput, 'Максимальная длина - 500 символов');
+            validationState.bio = false;
+        } else {
+            clearFieldError(bioInput);
+            validationState.bio = true;
+        }
+        updateSubmitButton();
+    }
+    
+    // Показать ошибку поля
+    function showFieldError(input, message) {
+        clearFieldError(input);
+        input.classList.add('is-invalid');
+        
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'invalid-feedback';
+        errorDiv.id = `${input.id}-error`;
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+        
+        input.parentNode.appendChild(errorDiv);
+    }
+    
+    // Очистить ошибку поля
+    function clearFieldError(input) {
+        input.classList.remove('is-invalid');
+        const existingError = input.parentNode.querySelector(`#${input.id}-error`);
+        if (existingError) {
+            existingError.remove();
+        }
+    }
+    
+    // Обновить состояние кнопки отправки
+    function updateSubmitButton() {
+        const isValid = Object.values(validationState).every(state => state === true);
+        submitBtn.disabled = !isValid;
+        
+        if (isValid) {
+            submitBtn.classList.remove('btn-secondary');
+            submitBtn.classList.add('btn-primary');
+        } else {
+            submitBtn.classList.remove('btn-primary');
+            submitBtn.classList.add('btn-secondary');
+        }
+    }
+    
+    // Добавляем обработчики событий
+    usernameInput.addEventListener('input', validateUsername);
+    usernameInput.addEventListener('blur', validateUsername);
+    
+    emailInput.addEventListener('input', validateEmail);
+    emailInput.addEventListener('blur', validateEmail);
+    
+    firstNameInput.addEventListener('input', validateFirstName);
+    firstNameInput.addEventListener('blur', validateFirstName);
+    
+    lastNameInput.addEventListener('input', validateLastName);
+    lastNameInput.addEventListener('blur', validateLastName);
+    
+    bioInput.addEventListener('input', validateBio);
+    bioInput.addEventListener('blur', validateBio);
+    
+    // Первичная проверка значений
+    validateUsername();
+    validateEmail();
+    validateFirstName();
+    validateLastName();
+    validateBio();
+    
+    // Предотвращаем отправку формы при ошибках
+    form.addEventListener('submit', function(e) {
+        // Запускаем валидацию всех полей
+        validateUsername();
+        validateEmail();
+        validateFirstName();
+        validateLastName();
+        validateBio();
+        
+        const isValid = Object.values(validationState).every(state => state === true);
+        if (!isValid) {
+            e.preventDefault();
+            
+            // Находим первое невалидное поле и фокусируемся на нем
+            const firstInvalid = form.querySelector('.is-invalid');
+            if (firstInvalid) {
+                firstInvalid.focus();
+            }
+            
+            // Показываем общее сообщение об ошибке
+            if (!document.querySelector('.alert-danger')) {
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-danger mt-3';
+                alert.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Пожалуйста, исправьте ошибки в форме перед сохранением.';
+                form.insertBefore(alert, submitBtn.parentNode);
+            }
+        }
+    });
+});
+</script>
 {% endblock %}

@@ -59,12 +59,19 @@
                         <ul class="list-group">
                             {% for f in backup_files %}
                             <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <div class="text-truncate" style="max-width: 220px;">{{ f }}</div>
+                                <div class="text-truncate" style="max-width: 220px;">{{ f.filename }} ({{ f.size_mb }} MB)</div>
                                 <div class="btn-group btn-group-sm">
-                                    <a class="btn btn-outline-primary" href="{% url 'adminpanel:download_backup' f %}"><i class="fas fa-download"></i></a>
-                                    <form method="post" action="{% url 'adminpanel:delete_backup' f %}" style="display:inline;">
+                                    <a class="btn btn-outline-primary" href="{% url 'adminpanel:download_backup' filename=f.filename %}" title="Скачать">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                    <a class="btn btn-outline-warning" href="{% url 'adminpanel:restore_backup' filename=f.filename %}" title="Восстановить">
+                                        <i class="fas fa-undo"></i>
+                                    </a>
+                                    <form method="post" action="{% url 'adminpanel:delete_backup' filename=f.filename %}" style="display:inline;" onsubmit="return confirmDelete('{{ f.filename }}')">
                                         {% csrf_token %}
-                                        <button class="btn btn-outline-danger" type="submit"><i class="fas fa-trash"></i></button>
+                                        <button class="btn btn-outline-danger" type="submit" title="Удалить">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
                                     </form>
                                 </div>
                             </li>
@@ -87,4 +94,14 @@
         </div>
     </div>
 </div>
+
+<script>
+function confirmDelete(filename) {
+    return confirm(
+        '⚠️ Удаление бэкапа\n\n' +
+        'Вы уверены, что хотите удалить бэкап "' + filename + '"?\n\n' +
+        'Это действие нельзя отменить!'
+    );
+}
+</script>
 {% endblock %}

@@ -62,3 +62,11 @@ ssl/
 *.crt
 *.bak
 *.backup
+
+# Large files and archives
+*.zip
+*.tar.gz
+*.rar
+dump.json
+progage_site.*
+Progage.*

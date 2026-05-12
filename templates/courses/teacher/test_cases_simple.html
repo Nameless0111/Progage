@@ -1,0 +1,100 @@
+<!-- Простая механика тестовых случаев -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-vial text-primary me-2"></i>
+            Тестовые случаи
+        </h5>
+        <button type="button" class="btn btn-outline-primary btn-sm" onclick="addTestCase()">
+            <i class="fas fa-plus me-2"></i>Добавить тест
+        </button>
+    </div>
+    <div class="card-body">
+        <div id="test-cases-container">
+            {% for test_case in test_cases %}
+            <div class="test-case mb-3 p-3 border rounded" data-test-index="{{ forloop.counter0 }}">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0">Тест {{ forloop.counter }}</h6>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeTestCase({{ forloop.counter0 }})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label">Входные данные <small class="text-muted">(опционально)</small></label>
+                        <textarea name="test_input_{{ forloop.counter0 }}" class="form-control" rows="2" placeholder="Входные данные...">{{ test_case.input }}</textarea>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label">Ожидаемый вывод <small class="text-danger">*</small></label>
+                        <textarea name="test_output_{{ forloop.counter0 }}" class="form-control" rows="2" placeholder="Ожидаемый вывод..." required>{{ test_case.expected_output }}</textarea>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        {% if not test_cases %}
+        <div class="text-center py-4" id="no-tests-message">
+            <i class="fas fa-vial fa-2x text-muted mb-2"></i>
+            <h6>Нет тестовых случаев</h6>
+            <p class="text-muted mb-0">Нажмите "Добавить тест" чтобы создать первый тестовый случай</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+let testCaseCounter = {{ test_cases|length }};
+
+function addTestCase() {
+    const container = document.getElementById('test-cases-container');
+    const noTestsMessage = document.getElementById('no-tests-message');
+    
+    // Скрываем сообщение о отсутствии тестов
+    if (noTestsMessage) {
+        noTestsMessage.style.display = 'none';
+    }
+    
+    const testCaseDiv = document.createElement('div');
+    testCaseDiv.className = 'test-case mb-3 p-3 border rounded';
+    testCaseDiv.dataset.testIndex = testCaseCounter;
+
+    testCaseDiv.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="mb-0">Тест ${testCaseCounter + 1}</h6>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeTestCase(${testCaseCounter})">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-2">
+                <label class="form-label">Входные данные <small class="text-muted">(опционально)</small></label>
+                <textarea name="test_input_${testCaseCounter}" class="form-control" rows="2" placeholder="Входные данные..."></textarea>
+            </div>
+            <div class="col-md-6 mb-2">
+                <label class="form-label">Ожидаемый вывод <small class="text-danger">*</small></label>
+                <textarea name="test_output_${testCaseCounter}" class="form-control" rows="2" placeholder="Ожидаемый вывод..." required></textarea>
+            </div>
+        </div>
+    `;
+    
+    container.appendChild(testCaseDiv);
+    testCaseCounter++;
+}
+
+function removeTestCase(index) {
+    const testCase = document.querySelector(`[data-test-index="${index}"]`);
+    if (testCase) {
+        testCase.remove();
+    }
+    
+    // Показываем сообщение если нет тестов
+    const container = document.getElementById('test-cases-container');
+    const remainingTests = container.querySelectorAll('.test-case');
+    const noTestsMessage = document.getElementById('no-tests-message');
+    
+    if (remainingTests.length === 0 && noTestsMessage) {
+        noTestsMessage.style.display = 'block';
+    }
+}
+</script>

@@ -1,0 +1,535 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Настройки - Progage{% endblock %}
+
+{% block extra_css %}
+<style>
+    .settings-section {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        padding: 25px;
+        margin-bottom: 25px;
+    }
+    .settings-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+    .settings-header i {
+        font-size: 1.5rem;
+        margin-right: 15px;
+    }
+    .qr-code {
+        text-align: center;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        margin: 20px 0;
+    }
+    .backup-codes {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+    }
+    .backup-code {
+        font-family: 'Courier New', monospace;
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #2d3436;
+        background: white;
+        padding: 8px 12px;
+        margin: 5px;
+        border-radius: 4px;
+        display: inline-block;
+    }
+    .status-badge {
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+    .status-enabled {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    .status-disabled {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    .step-indicator {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    .step {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: #6c757d;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 10px;
+    }
+    .step.active {
+        background: #007bff;
+    }
+    .step.completed {
+        background: #28a745;
+    }
+    .step-line {
+        flex: 1;
+        height: 2px;
+        background: #dee2e6;
+        margin-right: 10px;
+    }
+    .step-line.completed {
+        background: #28a745;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-3">
+            <!-- Меню настроек -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <a href="#security" class="list-group-item list-group-item-action active">
+                            <i class="fas fa-shield-alt me-2"></i>Безопасность
+                        </a>
+                        <a href="#notifications" class="list-group-item list-group-item-action">
+                            <i class="fas fa-bell me-2"></i>Уведомления
+                        </a>
+                        <a href="#privacy" class="list-group-item list-group-item-action">
+                            <i class="fas fa-lock me-2"></i>Приватность
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-9">
+                        
+            <!-- Настройки безопасности -->
+            <div id="security" class="settings-section">
+                <div class="settings-header">
+                    <i class="fas fa-shield-alt text-success"></i>
+                    <h4 class="mb-0">Безопасность</h4>
+                </div>
+                
+                <!-- Двухфакторная аутентификация -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h5 class="mb-1">Двухфакторная аутентификация</h5>
+                            <p class="text-muted mb-0">Дополнительный уровень безопасности для вашего аккаунта</p>
+                        </div>
+                        <div>
+                            {% if user.profile.two_factor_enabled %}
+                                <span class="status-badge status-enabled">
+                                    <i class="fas fa-check-circle me-1"></i>Включена
+                                </span>
+                            {% else %}
+                                <span class="status-badge status-disabled">
+                                    <i class="fas fa-times-circle me-1"></i>Отключена
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if not user.profile.two_factor_enabled %}
+                        <!-- Включение 2FA -->
+                        <a href="{% url 'accounts:two_factor_setup' %}" class="btn btn-success">
+                            <i class="fas fa-plus me-2"></i>Включить 2FA
+                        </a>
+                    {% else %}
+                        <!-- Управление 2FA -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <a href="{% url 'accounts:two_factor_setup' %}" class="btn btn-outline-primary">
+                                    <i class="fas fa-cog me-2"></i>Управление 2FA
+                                </a>
+                            </div>
+                            <div class="col-md-6">
+                                <form method="post" action="{% url 'accounts:disable_2fa' %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Вы уверены, что хотите отключить двухфакторную аутентификацию?')">
+                                        <i class="fas fa-times me-2"></i>Отключить 2FA
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Смена пароля -->
+                <div class="mb-4">
+                    <h5 class="mb-3">Смена пароля</h5>
+                    <form method="post" action="{% url 'accounts:change_password' %}" id="change-password-form">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="current_password" class="form-label">Текущий пароль</label>
+                                <input type="password" class="form-control" id="current_password" name="current_password" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="new_password" class="form-label">Новый пароль</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="new_password" name="new_password" required>
+                                    <button class="btn btn-outline-secondary" type="button" id="toggle-new" title="Показать пароль">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="confirm_password" class="form-label">Подтвердите новый пароль</label>
+                                <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-key me-2"></i>Изменить пароль
+                        </button>
+                    </form>
+                </div>
+            
+            <!-- Настройки уведомлений -->
+            <div id="notifications" class="settings-section">
+                <div class="settings-header">
+                    <i class="fas fa-bell text-warning"></i>
+                    <h4 class="mb-0">Уведомления</h4>
+                </div>
+                
+                <form method="post" action="{% url 'accounts:update_notifications' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <h6>Уведомления на сайте</h6>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="support_messages" name="support_messages" {% if user.notification_settings.support_messages %}checked{% endif %}>
+                            <label class="form-check-label" for="support_messages">
+                                <i class="fas fa-headset me-2"></i>Сообщения из поддержки
+                            </label>
+                            <small class="form-text text-muted d-block">Уведомления о новых сообщениях в чате поддержки</small>
+                        </div>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="new_lessons" name="new_lessons" {% if user.notification_settings.new_lessons %}checked{% endif %}>
+                            <label class="form-check-label" for="new_lessons">
+                                <i class="fas fa-book-open me-2"></i>Новые уроки в курсах
+                            </label>
+                            <small class="form-text text-muted d-block">Уведомления о появлении новых уроков в курсах, на которые вы записаны</small>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Сохранить настройки
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Настройки приватности -->
+            <div id="privacy" class="settings-section">
+                <div class="settings-header">
+                    <i class="fas fa-lock text-danger"></i>
+                    <h4 class="mb-0">Приватность</h4>
+                </div>
+                
+                <form method="post" action="/accounts/update-privacy/">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <h6>Видимость профиля</h6>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="public_profile" name="public_profile" {% if user.privacy_settings.public_profile %}checked{% endif %}>
+                            <label class="form-check-label" for="public_profile">
+                                Публичный профиль
+                            </label>
+                            <small class="form-text text-muted d-block">Ваш профиль будет виден другим пользователям</small>
+                        </div>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="show_email" name="show_email" {% if user.privacy_settings.show_email %}checked{% endif %}>
+                            <label class="form-check-label" for="show_email">
+                                Показывать email
+                            </label>
+                            <small class="form-text text-muted d-block">Ваш email будет виден в профиле</small>
+                        </div>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="show_progress" name="show_progress" {% if user.privacy_settings.show_progress %}checked{% endif %}>
+                            <label class="form-check-label" for="show_progress">
+                                Показывать прогресс обучения
+                            </label>
+                            <small class="form-text text-muted d-block">Ваш прогресс по курсам будет виден другим</small>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Сохранить настройки
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+// Навигация по вкладкам
+document.addEventListener('DOMContentLoaded', function() {
+    // Проверяем, какие секции уже видны
+    const visibleSections = new Set();
+    document.querySelectorAll('.settings-section').forEach(el => {
+        if (el.style.display !== 'none') {
+            visibleSections.add(el.id);
+        }
+    });
+    
+    // Если ни одна секция не видима, показываем первую
+    if (visibleSections.size === 0) {
+        const firstSection = document.getElementById('security');
+        if (firstSection) {
+            firstSection.style.display = 'block';
+            visibleSections.add('security');
+        }
+    }
+    
+    // Добавляем обработчики кликов для навигации
+    document.querySelectorAll('.list-group-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const targetId = this.getAttribute('href');
+            if (!targetId || targetId === '#') return;
+            
+            const sectionId = targetId.substring(1);
+            const targetSection = document.getElementById(sectionId);
+            
+            if (!targetSection) return;
+            
+            // Удаляем активный класс у всех элементов
+            document.querySelectorAll('.list-group-item').forEach(el => el.classList.remove('active'));
+            
+            // Скрываем только те секции, которые были видны изначально
+            visibleSections.forEach(sectionId => {
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    section.style.display = 'none';
+                }
+            });
+            visibleSections.clear();
+            
+            // Добавляем активный класс текущему элементу
+            this.classList.add('active');
+            
+            // Показываем соответствующую секцию
+            targetSection.style.display = 'block';
+            visibleSections.add(sectionId);
+        });
+    });
+});
+
+// Функция для показа/скрытия пароля
+function togglePassword(inputId, buttonId) {
+    const input = document.getElementById(inputId);
+    const button = document.getElementById(buttonId);
+    const icon = button.querySelector('i');
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+        button.title = 'Скрыть пароль';
+    } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+        button.title = 'Показать пароль';
+    }
+}
+
+// Добавляем обработчики для кнопок показа пароля
+document.addEventListener('DOMContentLoaded', function() {
+    // Кнопка для нового пароля
+    const newPasswordInput = document.getElementById('new_password');
+    const toggleButton = document.getElementById('toggle-new');
+    
+    if (newPasswordInput && toggleButton) {
+        toggleButton.addEventListener('click', function() {
+            togglePassword('new_password', 'toggle-new');
+        });
+    }
+    
+    // Обработчик формы смены пароля
+    const passwordForm = document.getElementById('change-password-form');
+    if (passwordForm) {
+        passwordForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            // Показываем загрузку
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Изменение...';
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Показываем успешное сообщение
+                    showAlert('Пароль успешно изменен! Вы будете перенаправлены на страницу входа через 3 секунды...', 'success');
+                    // Очищаем форму
+                    this.reset();
+                    
+                    // Перенаправляем на страницу входа через 3 секунды
+                    setTimeout(() => {
+                        window.location.href = '/accounts/login/';
+                    }, 3000);
+                } else {
+                    // Показываем ошибку
+                    showAlert(data.error || 'Ошибка при смене пароля', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('Ошибка подключения к серверу', 'danger');
+            })
+            .finally(() => {
+                // Восстанавливаем кнопку
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            });
+        });
+    }
+    
+    // Обработчик формы уведомлений
+    const notificationsForm = document.querySelector('form[action="/accounts/update-notifications/"]');
+    if (notificationsForm) {
+        notificationsForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            // Показываем загрузку
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Сохранение...';
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Показываем успешное сообщение
+                    showAlert('Настройки уведомлений сохранены!', 'success');
+                } else {
+                    // Показываем ошибку
+                    showAlert(data.error || 'Ошибка при сохранении настроек', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('Ошибка подключения к серверу', 'danger');
+            })
+            .finally(() => {
+                // Восстанавливаем кнопку
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            });
+        });
+    }
+});
+
+// Обработчик формы приватности
+    const privacyForm = document.querySelector('form[action="/accounts/update-privacy/"]');
+    if (privacyForm) {
+        privacyForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            // Показываем загрузку
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Сохранение...';
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Показываем успешное сообщение
+                    showAlert('Настройки приватности сохранены!', 'success');
+                } else {
+                    // Показываем ошибку
+                    showAlert(data.error || 'Ошибка при сохранении настроек приватности', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('Ошибка подключения к серверу', 'danger');
+            })
+            .finally(() => {
+                // Восстанавливаем кнопку
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            });
+        });
+    }
+});
+
+// Функция для показа алертов
+function showAlert(message, type) {
+    // Удаляем существующие алерты
+    const existingAlerts = document.querySelectorAll('.alert');
+    existingAlerts.forEach(alert => alert.remove());
+    
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    const container = document.querySelector('.settings-section.active');
+    if (container) {
+        container.insertBefore(alertDiv, container.firstChild);
+    }
+    
+    // Автоматически скрыть через 5 секунд
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

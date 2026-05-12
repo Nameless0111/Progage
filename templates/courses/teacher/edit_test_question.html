@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Редактирование вопроса - {{ lesson.title }} - Progage{% endblock %}
+
+{% block extra_css %}
+<style>
+    .answer-formset {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        background: #f8f9fa;
+    }
+    .answer-item {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 15px;
+        margin-bottom: 10px;
+        position: relative;
+    }
+    .answer-item .delete-row {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+    .answer-item.has-correct {
+        border-left: 4px solid #28a745;
+    }
+    .question-type-info {
+        background: #e3f2fd;
+        border: 1px solid #bbdefb;
+        border-radius: 6px;
+        padding: 12px;
+        margin-bottom: 20px;
+    }
+    .text-answer-field {
+        display: none;
+    }
+    .text-answer-field.show {
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-3">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'home' %}">Главная</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'courses:teacher_dashboard' %}">Панель преподавателя</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'courses:teacher_course_lessons' course.id %}">{{ course.title }}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'courses:teacher_edit_lesson' course.id lesson.id %}">{{ lesson.title }}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'courses:test_constructor' lesson.id %}">Конструктор тестов</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Редактирование вопроса</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h4 class="mb-0">
+                        <i class="fas fa-edit text-primary me-2"></i>
+                        Редактирование вопроса
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ question_form.question_text.id_for_label }}" class="form-label">Текст вопроса *</label>
+                            {{ question_form.question_text }}
+                            {% if question_form.question_text.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ question_form.question_text.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ question_form.question_type.id_for_label }}" class="form-label">Тип вопроса *</label>
+                            {{ question_form.question_type }}
+                            {% if question_form.question_type.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ question_form.question_type.errors.0 }}
+                                </div>
+                            {% endif %}
+                            
+                            <div id="question-type-info" class="question-type-info mt-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    <span id="question-type-description">Выберите тип вопроса</span>
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ question_form.points.id_for_label }}" class="form-label">Баллы *</label>
+                                {{ question_form.points }}
+                                {% if question_form.points.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ question_form.points.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check mt-4">
+                                    {{ question_form.is_required }}
+                                    <label class="form-check-label" for="{{ question_form.is_required.id_for_label }}">
+                                        Обязательный вопрос
+                                    </label>
+                                </div>
+                                {% if question_form.is_required.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ question_form.is_required.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ question_form.explanation.id_for_label }}" class="form-label">Пояснение к ответу</label>
+                            {{ question_form.explanation }}
+                            {% if question_form.explanation.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ question_form.explanation.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Необязательно. Показывается студенту после ответа на вопрос.</div>
+                        </div>
+
+                        <!-- Варианты ответов (только для вопросов с вариантами) -->
+                        <div id="answers-section" class="answer-formset">
+                            <h5 class="mb-3">
+                                <i class="fas fa-list-ul text-primary me-2"></i>
+                                Варианты ответов
+                            </h5>
+                            
+                            {{ answer_formset.management_form }}
+                            
+                            <div id="answers-container">
+                                {% for form in answer_formset %}
+                                    <div class="answer-item {% if form.instance.is_correct %}has-correct{% endif %}">
+                                        {{ form.id }}
+                                        <div class="row align-items-center">
+                                            <div class="col-md-8">
+                                                <label class="form-label">Текст ответа</label>
+                                                {{ form.answer_text }}
+                                                {% if form.answer_text.errors %}
+                                                    <div class="text-danger small mt-1">
+                                                        {{ form.answer_text.errors.0 }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-2">
+                                                <div class="form-check mt-4">
+                                                    {{ form.is_correct }}
+                                                    <label class="form-check-label" for="{{ form.is_correct.id_for_label }}">
+                                                        Правильный
+                                                    </label>
+                                                </div>
+                                                {% if form.is_correct.errors %}
+                                                    <div class="text-danger small mt-1">
+                                                        {{ form.is_correct.errors.0 }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="form-label">Порядок</label>
+                                                {{ form.order }}
+                                                {% if form.order.errors %}
+                                                    <div class="text-danger small mt-1">
+                                                        {{ form.order.errors.0 }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        {% if form.DELETE %}
+                                            <div class="delete-row">
+                                                {{ form.DELETE }}
+                                                <label class="form-check-label" for="{{ form.DELETE.id_for_label }}">
+                                                    <i class="fas fa-trash text-danger"></i> Удалить
+                                                </label>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="addAnswer()">
+                                <i class="fas fa-plus me-2"></i>Добавить вариант ответа
+                            </button>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'courses:test_constructor' lesson.id %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Отмена
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Сохранить вопрос
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const questionTypeSelect = document.getElementById('{{ question_form.question_type.id_for_label }}');
+    const answersSection = document.getElementById('answers-section');
+    const questionTypeDescription = document.getElementById('question-type-description');
+    
+    const descriptions = {
+        'single': 'Студент должен выбрать только один правильный вариант из предложенных.',
+        'multiple': 'Студент может выбрать несколько правильных вариантов ответа.',
+        'text': 'Студент вводит текстовый ответ, система проверяет по ключевым словам.',
+        'essay': 'Студент пишет развернутый ответ, который проверяет преподаватель.'
+    };
+    
+    function updateQuestionType() {
+        const questionType = questionTypeSelect.value;
+        questionTypeDescription.textContent = descriptions[questionType] || 'Выберите тип вопроса';
+        
+        if (questionType === 'single' || questionType === 'multiple') {
+            answersSection.style.display = 'block';
+        } else {
+            answersSection.style.display = 'none';
+        }
+    }
+    
+    // Инициализация
+    updateQuestionType();
+    
+    // Обработка изменения типа вопроса
+    questionTypeSelect.addEventListener('change', updateQuestionType);
+});
+
+function addAnswer() {
+    // Можно добавить JavaScript для динамического добавления полей ответов
+    // Для простоты пока используем стандартный formset
+    alert('Для добавления новых вариантов ответа сохраните вопрос и отредактируйте его снова, или используйте дополнительные пустые поля в форме.');
+}
+</script>
+{% endblock %}

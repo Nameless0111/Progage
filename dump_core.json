@@ -1,0 +1,706 @@
+Loaded variables from .env.local
+[
+{
+  "model": "otp_totp.totpdevice",
+  "pk": 4,
+  "fields": {
+    "user": 325,
+    "name": "Progage 2FA",
+    "confirmed": true,
+    "throttling_failure_timestamp": null,
+    "throttling_failure_count": 0,
+    "created_at": "2026-05-09T11:56:51.331Z",
+    "last_used_at": "2026-05-09T13:26:41.599Z",
+    "key": "2be9ffb7d92406a06354ad199eafc412afc51263",
+    "step": 30,
+    "t0": 0,
+    "digits": 6,
+    "tolerance": 1,
+    "drift": 0,
+    "last_t": 59277773
+  }
+},
+{
+  "model": "accounts.user",
+  "pk": 322,
+  "fields": {
+    "password": "pbkdf2_sha256$870000$k89XxxoOQtqyrt31h9bSZH$clDAOL6fp3N/JifZrctvafH2nVVV4BJkL7CnMcGcASc=",
+    "last_login": "2026-05-12T20:07:41.713Z",
+    "is_superuser": false,
+    "username": "qqqq",
+    "first_name": "Imp",
+    "last_name": "ddd",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-05-09T11:24:33.706Z",
+    "email": "classnuychelovek@gmail.com",
+    "is_email_verified": false,
+    "role": "teacher",
+    "avatar": "",
+    "bio": "",
+    "phone": "+79611352634",
+    "date_of_birth": null,
+    "created_at": "2026-05-09T11:24:34.095Z",
+    "updated_at": "2026-05-09T11:33:38.246Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "accounts.user",
+  "pk": 325,
+  "fields": {
+    "password": "pbkdf2_sha256$870000$b48sDjD34Xjd8Ns1dgIPfS$g6zmSAxpaItNl/+8Q14UX/0iabiG/U3BfhZQI6ujiTs=",
+    "last_login": "2026-05-12T20:05:14.590Z",
+    "is_superuser": true,
+    "username": "233",
+    "first_name": "лрппук",
+    "last_name": "вавxsasx",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2026-05-09T11:38:06.376Z",
+    "email": "pashokbilashenko335@gmail.com",
+    "is_email_verified": false,
+    "role": "admin",
+    "avatar": "avatars/photo_3_2026-04-15_13-40-34.jpg",
+    "bio": "",
+    "phone": "",
+    "date_of_birth": null,
+    "created_at": "2026-05-09T11:38:06.631Z",
+    "updated_at": "2026-05-12T11:56:16.970Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "accounts.user",
+  "pk": 330,
+  "fields": {
+    "password": "pbkdf2_sha256$870000$D4pPsG7jl4kuDNYPdLTfvP$4oIouf6YZ4Ds9+RxYgbmUtLqqezaqdzOCJk0dDbaa3c=",
+    "last_login": "2026-05-12T20:08:30.453Z",
+    "is_superuser": false,
+    "username": "wwww",
+    "first_name": "Уо",
+    "last_name": "Уоо",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-05-09T13:40:30.379Z",
+    "email": "lehaprorok228@gmail.com",
+    "is_email_verified": false,
+    "role": "student",
+    "avatar": "avatars/photo_2_2026-04-15_13-40-34.jpg",
+    "bio": "",
+    "phone": "",
+    "date_of_birth": null,
+    "created_at": "2026-05-09T13:40:30.741Z",
+    "updated_at": "2026-05-12T18:35:12.835Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "accounts.profile",
+  "pk": 174,
+  "fields": {
+    "user": 325,
+    "bio": "уйпмкцвампцуsac",
+    "specialization": null,
+    "learning_progress": {},
+    "achievements": [],
+    "preferences": {},
+    "two_factor_enabled": false,
+    "backup_codes": [
+      "5RIVEO21",
+      "GBD9M0TA",
+      "P1RL60UH",
+      "1IXGWUYQ",
+      "SHMLTMGF",
+      "0567FYHW",
+      "HHFYXFNI",
+      "YD1L75SM",
+      "9GBEOIEP",
+      "Z8UBZ5OP"
+    ]
+  }
+},
+{
+  "model": "accounts.profile",
+  "pk": 175,
+  "fields": {
+    "user": 330,
+    "bio": null,
+    "specialization": null,
+    "learning_progress": {},
+    "achievements": [],
+    "preferences": {},
+    "two_factor_enabled": false,
+    "backup_codes": []
+  }
+},
+{
+  "model": "accounts.notification",
+  "pk": 122,
+  "fields": {
+    "user": 325,
+    "notification_type": "new_chat",
+    "title": "Новый чат поддержки",
+    "message": "Пользователь Уо Уоо создал чат \"цвфцвф\"",
+    "is_read": true,
+    "created_at": "2026-05-12T18:36:20.253Z",
+    "course": null,
+    "lesson": null,
+    "chat_room_id": null
+  }
+},
+{
+  "model": "accounts.notification",
+  "pk": 123,
+  "fields": {
+    "user": 325,
+    "notification_type": "new_chat_message",
+    "title": "Новое сообщение в чате \"цвфцвф\"",
+    "message": "Пользователь Уо Уоо отправил сообщение: цвфцвфццф...",
+    "is_read": true,
+    "created_at": "2026-05-12T18:36:23.736Z",
+    "course": null,
+    "lesson": null,
+    "chat_room_id": null
+  }
+},
+{
+  "model": "accounts.notification",
+  "pk": 124,
+  "fields": {
+    "user": 330,
+    "notification_type": "new_chat_message",
+    "title": "Ответ администратора в чате \"цвфцвф\"",
+    "message": "Администратор лрппук вавxsasx ответил: лшрирои...",
+    "is_read": true,
+    "created_at": "2026-05-12T18:36:56.863Z",
+    "course": null,
+    "lesson": null,
+    "chat_room_id": null
+  }
+},
+{
+  "model": "accounts.notification",
+  "pk": 125,
+  "fields": {
+    "user": 322,
+    "notification_type": "new_lesson",
+    "title": "Новый урок в курсе \"уавуцуа\"",
+    "message": "В курсе \"уавуцуа\" появился новый урок: \"Тестовый урок 3\"",
+    "is_read": false,
+    "created_at": "2026-05-12T18:56:02.371Z",
+    "course": 92,
+    "lesson": null,
+    "chat_room_id": null
+  }
+},
+{
+  "model": "accounts.notification",
+  "pk": 126,
+  "fields": {
+    "user": 330,
+    "notification_type": "new_lesson",
+    "title": "Новый урок в курсе \"уавуцуа\"",
+    "message": "В курсе \"уавуцуа\" появился новый урок: \"Тестовый урок 3\"",
+    "is_read": true,
+    "created_at": "2026-05-12T18:56:02.373Z",
+    "course": 92,
+    "lesson": null,
+    "chat_room_id": null
+  }
+},
+{
+  "model": "accounts.notification",
+  "pk": 127,
+  "fields": {
+    "user": 322,
+    "notification_type": "new_lesson",
+    "title": "Новый урок в курсе \"уавуцуа\"",
+    "message": "В курсе \"уавуцуа\" появился новый урок: \"Финальный тестовый урок\"",
+    "is_read": false,
+    "created_at": "2026-05-12T19:00:54.483Z",
+    "course": 92,
+    "lesson": null,
+    "chat_room_id": null
+  }
+},
+{
+  "model": "accounts.notification",
+  "pk": 128,
+  "fields": {
+    "user": 330,
+    "notification_type": "new_lesson",
+    "title": "Новый урок в курсе \"уавуцуа\"",
+    "message": "В курсе \"уавуцуа\" появился новый урок: \"Финальный тестовый урок\"",
+    "is_read": true,
+    "created_at": "2026-05-12T19:00:54.485Z",
+    "course": 92,
+    "lesson": null,
+    "chat_room_id": null
+  }
+},
+{
+  "model": "accounts.notification",
+  "pk": 129,
+  "fields": {
+    "user": 322,
+    "notification_type": "support_messages",
+    "title": "Новое сообщение в поддержке",
+    "message": "Вам ответили в чате поддержки",
+    "is_read": false,
+    "created_at": "2026-05-12T19:03:45.882Z",
+    "course": null,
+    "lesson": null,
+    "chat_room_id": "1"
+  }
+},
+{
+  "model": "accounts.notification",
+  "pk": 130,
+  "fields": {
+    "user": 322,
+    "notification_type": "new_lesson",
+    "title": "Новый урок в курсе \"уавуцуа\"",
+    "message": "В курсе \"уавуцуа\" появился новый урок: \"Финальный тестовый урок с улучшениями\"",
+    "is_read": false,
+    "created_at": "2026-05-12T19:08:51.029Z",
+    "course": 92,
+    "lesson": 70,
+    "chat_room_id": null
+  }
+},
+{
+  "model": "accounts.notification",
+  "pk": 131,
+  "fields": {
+    "user": 330,
+    "notification_type": "new_lesson",
+    "title": "Новый урок в курсе \"уавуцуа\"",
+    "message": "В курсе \"уавуцуа\" появился новый урок: \"Финальный тестовый урок с улучшениями\"",
+    "is_read": true,
+    "created_at": "2026-05-12T19:08:51.032Z",
+    "course": 92,
+    "lesson": 70,
+    "chat_room_id": null
+  }
+},
+{
+  "model": "accounts.notification",
+  "pk": 132,
+  "fields": {
+    "user": 322,
+    "notification_type": "new_chat_message",
+    "title": "Новое сообщение в чате",
+    "message": "Вам написали новое сообщение в чате поддержки",
+    "is_read": false,
+    "created_at": "2026-05-12T19:08:51.060Z",
+    "course": null,
+    "lesson": null,
+    "chat_room_id": "1"
+  }
+},
+{
+  "model": "accounts.notification",
+  "pk": 133,
+  "fields": {
+    "user": 325,
+    "notification_type": "new_chat_message",
+    "title": "Новое сообщение в чате \"цвфцвф\"",
+    "message": "Пользователь Уо Уоо отправил сообщение: ыававаы...",
+    "is_read": true,
+    "created_at": "2026-05-12T20:00:43.249Z",
+    "course": null,
+    "lesson": null,
+    "chat_room_id": null
+  }
+},
+{
+  "model": "accounts.notification",
+  "pk": 134,
+  "fields": {
+    "user": 322,
+    "notification_type": "new_lesson",
+    "title": "Новый урок в курсе \"уавуцуа\"",
+    "message": "В курсе \"уавуцуа\" появился новый урок: \"вмфавыаыв\"",
+    "is_read": false,
+    "created_at": "2026-05-12T20:01:03.054Z",
+    "course": 92,
+    "lesson": 71,
+    "chat_room_id": null
+  }
+},
+{
+  "model": "accounts.notification",
+  "pk": 135,
+  "fields": {
+    "user": 330,
+    "notification_type": "new_lesson",
+    "title": "Новый урок в курсе \"уавуцуа\"",
+    "message": "В курсе \"уавуцуа\" появился новый урок: \"вмфавыаыв\"",
+    "is_read": true,
+    "created_at": "2026-05-12T20:01:03.056Z",
+    "course": 92,
+    "lesson": 71,
+    "chat_room_id": null
+  }
+},
+{
+  "model": "accounts.notification",
+  "pk": 136,
+  "fields": {
+    "user": 325,
+    "notification_type": "new_chat_message",
+    "title": "Новое сообщение в чате \"цвфцвф\"",
+    "message": "Пользователь Уо Уоо отправил сообщение: Тестовое сообщение для проверки уведомлений...",
+    "is_read": false,
+    "created_at": "2026-05-12T20:10:10.495Z",
+    "course": null,
+    "lesson": null,
+    "chat_room_id": "29"
+  }
+},
+{
+  "model": "accounts.usernotifications",
+  "pk": 1,
+  "fields": {
+    "user": 325,
+    "support_messages": true,
+    "new_lessons": false
+  }
+},
+{
+  "model": "accounts.usernotifications",
+  "pk": 2,
+  "fields": {
+    "user": 330,
+    "support_messages": true,
+    "new_lessons": true
+  }
+},
+{
+  "model": "accounts.usernotifications",
+  "pk": 3,
+  "fields": {
+    "user": 322,
+    "support_messages": true,
+    "new_lessons": true
+  }
+},
+{
+  "model": "accounts.userprivacy",
+  "pk": 1,
+  "fields": {
+    "user": 322,
+    "public_profile": false,
+    "show_email": false,
+    "show_progress": false
+  }
+},
+{
+  "model": "courses.category",
+  "pk": 7,
+  "fields": {
+    "name": "Программирование",
+    "description": "Курсы по программированию",
+    "created_at": "2026-05-09T11:37:32.799"
+  }
+},
+{
+  "model": "courses.course",
+  "pk": 92,
+  "fields": {
+    "title": "уавуцуа",
+    "description": "ауаууауа",
+    "instructor": 322,
+    "category": 7,
+    "level": "beginner",
+    "programming_language": "Python",
+    "price": "0.00",
+    "thumbnail": "",
+    "is_published": true,
+    "created_at": "2026-05-12T12:37:09.973Z",
+    "updated_at": "2026-05-12T19:04:46.678Z"
+  }
+},
+{
+  "model": "courses.lesson",
+  "pk": 66,
+  "fields": {
+    "title": "апв",
+    "course": 92,
+    "lesson_type": "lecture",
+    "content": "ымвывмсы",
+    "attachment": "lesson_attachments/ДПР_Куртева.pptx",
+    "attachment_name": "ДП(Р) Куртева.pptx",
+    "order": 1,
+    "is_free": false,
+    "created_at": "2026-05-12T18:29:30.417Z",
+    "updated_at": "2026-05-12T18:29:30.417Z"
+  }
+},
+{
+  "model": "courses.lesson",
+  "pk": 67,
+  "fields": {
+    "title": "фсвсфысф",
+    "course": 92,
+    "lesson_type": "test",
+    "content": "",
+    "attachment": "",
+    "attachment_name": "",
+    "order": 2,
+    "is_free": false,
+    "created_at": "2026-05-12T18:37:14.580Z",
+    "updated_at": "2026-05-12T18:37:14.580Z"
+  }
+},
+{
+  "model": "courses.lesson",
+  "pk": 68,
+  "fields": {
+    "title": "Тестовый урок 3",
+    "course": 92,
+    "lesson_type": "lecture",
+    "content": "Тестовое содержание урока",
+    "attachment": "",
+    "attachment_name": "",
+    "order": 0,
+    "is_free": false,
+    "created_at": "2026-05-12T18:56:02.367Z",
+    "updated_at": "2026-05-12T18:56:02.367Z"
+  }
+},
+{
+  "model": "courses.lesson",
+  "pk": 69,
+  "fields": {
+    "title": "Финальный тестовый урок",
+    "course": 92,
+    "lesson_type": "lecture",
+    "content": "Тестовое содержание",
+    "attachment": "",
+    "attachment_name": "",
+    "order": 0,
+    "is_free": false,
+    "created_at": "2026-05-12T19:00:54.476Z",
+    "updated_at": "2026-05-12T19:00:54.476Z"
+  }
+},
+{
+  "model": "courses.lesson",
+  "pk": 70,
+  "fields": {
+    "title": "Финальный тестовый урок с улучшениями",
+    "course": 92,
+    "lesson_type": "lecture",
+    "content": "Тестовое содержание урока",
+    "attachment": "",
+    "attachment_name": "",
+    "order": 0,
+    "is_free": false,
+    "created_at": "2026-05-12T19:08:51.023Z",
+    "updated_at": "2026-05-12T19:08:51.023Z"
+  }
+},
+{
+  "model": "courses.lesson",
+  "pk": 71,
+  "fields": {
+    "title": "вмфавыаыв",
+    "course": 92,
+    "lesson_type": "practice",
+    "content": "",
+    "attachment": "",
+    "attachment_name": "",
+    "order": 3,
+    "is_free": true,
+    "created_at": "2026-05-12T20:01:03.049Z",
+    "updated_at": "2026-05-12T20:01:03.049Z"
+  }
+},
+{
+  "model": "courses.testquestion",
+  "pk": 4,
+  "fields": {
+    "lesson": 67,
+    "question_text": "цсвымвы",
+    "question_type": "single",
+    "points": 4,
+    "order": 1,
+    "explanation": "",
+    "is_required": true,
+    "created_at": "2026-05-12T18:37:26.107Z"
+  }
+},
+{
+  "model": "courses.testquestion",
+  "pk": 5,
+  "fields": {
+    "lesson": 67,
+    "question_text": "цввцфцфвццфв",
+    "question_type": "multiple",
+    "points": 1,
+    "order": 2,
+    "explanation": "цвф",
+    "is_required": true,
+    "created_at": "2026-05-12T18:38:07.102Z"
+  }
+},
+{
+  "model": "courses.testanswer",
+  "pk": 9,
+  "fields": {
+    "question": 4,
+    "answer_text": "выа",
+    "is_correct": true,
+    "order": 0
+  }
+},
+{
+  "model": "courses.testanswer",
+  "pk": 10,
+  "fields": {
+    "question": 4,
+    "answer_text": "выаы",
+    "is_correct": false,
+    "order": 0
+  }
+},
+{
+  "model": "courses.testanswer",
+  "pk": 11,
+  "fields": {
+    "question": 5,
+    "answer_text": "сфывсы",
+    "is_correct": true,
+    "order": 0
+  }
+},
+{
+  "model": "courses.testanswer",
+  "pk": 12,
+  "fields": {
+    "question": 5,
+    "answer_text": "ымввмы",
+    "is_correct": false,
+    "order": 0
+  }
+},
+{
+  "model": "courses.testanswer",
+  "pk": 13,
+  "fields": {
+    "question": 5,
+    "answer_text": "ысвв",
+    "is_correct": false,
+    "order": 0
+  }
+},
+{
+  "model": "courses.testanswer",
+  "pk": 14,
+  "fields": {
+    "question": 5,
+    "answer_text": "ыссвы",
+    "is_correct": false,
+    "order": 0
+  }
+},
+{
+  "model": "courses.testanswer",
+  "pk": 15,
+  "fields": {
+    "question": 5,
+    "answer_text": "всыыв",
+    "is_correct": false,
+    "order": 0
+  }
+},
+{
+  "model": "courses.testsubmission",
+  "pk": 2,
+  "fields": {
+    "user": 330,
+    "lesson": 67,
+    "submitted_at": "2026-05-12T18:38:50.846Z",
+    "score": 5,
+    "max_score": 5,
+    "percentage": 100.0,
+    "is_completed": true,
+    "needs_review": false
+  }
+},
+{
+  "model": "courses.testanswersubmission",
+  "pk": 2,
+  "fields": {
+    "submission": 2,
+    "question": 4,
+    "text_answer": "",
+    "score": 4,
+    "is_correct": true,
+    "feedback": "",
+    "needs_review": false,
+    "selected_answers": [
+      9
+    ]
+  }
+},
+{
+  "model": "courses.testanswersubmission",
+  "pk": 3,
+  "fields": {
+    "submission": 2,
+    "question": 5,
+    "text_answer": "",
+    "score": 1,
+    "is_correct": true,
+    "feedback": "",
+    "needs_review": false,
+    "selected_answers": [
+      11
+    ]
+  }
+},
+{
+  "model": "courses.practiceassignment",
+  "pk": 27,
+  "fields": {
+    "lesson": 71,
+    "title": "уа",
+    "description": "ауцауц",
+    "requirements": "цуацуа",
+    "programming_language": "javascript",
+    "starter_code": "уаццу",
+    "solution_code": "",
+    "expected_output": "",
+    "test_cases": [
+      {
+        "input": "",
+        "expected_output": "Привет Мир!"
+      }
+    ],
+    "time_limit": 5,
+    "memory_limit": 256,
+    "max_attempts": 10,
+    "max_grade": 100,
+    "deadline": null,
+    "require_manual_review": false,
+    "is_published": true,
+    "created_at": "2026-05-12T20:08:18.539Z",
+    "updated_at": "2026-05-12T20:08:18.539Z"
+  }
+},
+{
+  "model": "courses.codesubmission",
+  "pk": 10,
+  "fields": {
+    "assignment": 27,
+    "user": 330,
+    "code": "// Простой код на JavaScript\r\n\r\nfunction greet(name) {\r\n    console.log(\"Привет \" + name + \"!\");\r\n}\r\n\r\ngreet(\"Мир\");\r\n",
+    "programming_language": "javascript",
+    "status": "success",
+    "output": 

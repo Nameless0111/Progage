@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Test Stars - Progage{% endblock %}
+
+{% block extra_css %}
+<style>
+.star-rating {
+    color: #ffc107;
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+}
+
+.star-rating-empty {
+    color: #ddd;
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+}
+
+.star-rating-small {
+    color: #ffc107;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+}
+
+.star-rating-small-empty {
+    color: #ddd;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+}
+
+.rating-options {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.rating-option {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.rating-option:hover {
+    border-color: #667eea;
+    background-color: #f8f9ff;
+}
+
+.rating-option input[type="radio"] {
+    display: none;
+}
+
+.rating-option input[type="radio"]:checked + label {
+    border-color: #667eea;
+    background-color: #f8f9ff;
+}
+
+.rating-option label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    margin: 0;
+    font-weight: 500;
+}
+
+.rating-number {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #667eea;
+    margin-top: 5px;
+}
+
+.rating-number-small {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #667eea;
+}
+
+.rating-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: #667eea;
+    color: white;
+    border-radius: 50%;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.rating-form-horizontal {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.rating-item-horizontal {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.rating-item-horizontal:hover {
+    border-color: #667eea;
+    background-color: #f8f9ff;
+}
+
+.rating-item-horizontal input[type="radio"] {
+    display: none;
+}
+
+.rating-item-horizontal input[type="radio"]:checked + label {
+    border-color: #667eea;
+    background-color: #f8f9ff;
+}
+
+.rating-item-horizontal label {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    cursor: pointer;
+    margin: 0;
+    font-weight: 500;
+    width: 100%;
+}
+
+.rating-badge-small {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    background: #667eea;
+    color: white;
+    border-radius: 50%;
+    font-weight: 600;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.rating-text {
+    font-size: 0.95rem;
+    color: #333;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Test Stars</h1>
+    
+    <h3>Basic Numeric Rating (3.5/5.0)</h3>
+    <div class="rating-number">
+        3.5/5.0
+    </div>
+    
+    <h3>Small Numeric Rating (4.2/5.0)</h3>
+    <div class="rating-number-small">
+        4.2/5.0
+    </div>
+    
+    <h3>Rating Form - Dropdown Format</h3>
+    <div class="rating-form-dropdown">
+        <label for="rating" class="form-label">Ваша оценка</label>
+        <select name="rating" id="rating" class="form-select">
+            <option value="">Выберите оценку...</option>
+            <option value="1">Оценка 1 из 5</option>
+            <option value="2">Оценка 2 из 5</option>
+            <option value="3" selected>Оценка 3 из 5</option>
+            <option value="4">Оценка 4 из 5</option>
+            <option value="5">Оценка 5 из 5</option>
+        </select>
+    </div>
+</div>
+{% endblock %}

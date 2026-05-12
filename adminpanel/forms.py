@@ -12,10 +12,46 @@ class UserForm(forms.ModelForm):
         help_text='Оставьте пустым, чтобы не менять пароль'
     )
     
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Убираем поле телефона из формы
+        if 'phone' in self.fields:
+            del self.fields['phone']
+    
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if not username:
+            return username
+            
+        # Проверяем только при создании нового пользователя
+        if not self.instance.pk:
+            if User.objects.filter(username__iexact=username).exists():
+                raise forms.ValidationError('Пользователь с таким именем уже существует.')
+        else:
+            # При редактировании проверяем, что username не занят другим пользователем
+            if User.objects.filter(username__iexact=username).exclude(pk=self.instance.pk).exists():
+                raise forms.ValidationError('Пользователь с таким именем уже существует.')
+        return username
+    
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if not email:
+            return email
+            
+        # Проверяем только при создании нового пользователя
+        if not self.instance.pk:
+            if User.objects.filter(email__iexact=email).exists():
+                raise forms.ValidationError('Пользователь с таким email уже существует.')
+        else:
+            # При редактировании проверяем, что email не занят другим пользователем
+            if User.objects.filter(email__iexact=email).exclude(pk=self.instance.pk).exists():
+                raise forms.ValidationError('Пользователь с таким email уже существует.')
+        return email
+    
     class Meta:
         model = User
         fields = [
-            'username', 'email', 'first_name', 'last_name', 'phone',
+            'username', 'email', 'first_name', 'last_name',
             'date_of_birth', 'avatar', 'bio', 'is_active', 'role'
         ]
         widgets = {
@@ -23,7 +59,6 @@ class UserForm(forms.ModelForm):
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
             'first_name': forms.TextInput(attrs={'class': 'form-control'}),
             'last_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'phone': forms.TextInput(attrs={'class': 'form-control'}),
             'date_of_birth': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'avatar': forms.FileInput(attrs={'class': 'form-control'}),
             'bio': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
@@ -34,7 +69,6 @@ class UserForm(forms.ModelForm):
             'email': 'Email',
             'first_name': 'Имя',
             'last_name': 'Фамилия',
-            'phone': 'Телефон',
             'date_of_birth': 'Дата рождения',
             'avatar': 'Аватар',
             'bio': 'О себе',

@@ -63,7 +63,7 @@
                             <td>{{ log.timestamp|date:"d.m.Y H:i:s" }}</td>
                             <td><span class="badge bg-danger">{{ log.get_error_type_display }}</span></td>
                             <td>{{ log.message|truncatechars:80 }}</td>
-                            <td>{{ log.user.get_full_name|default:log.user.username|default:"-" }}</td>
+                            <td>{% if log.user %}{{ log.user.get_full_name|default:log.user.username }}{% else %}-{% endif %}</td>
                             <td>
                                 {% if log.resolved %}
                                     <span class="badge bg-success">Решено</span>
@@ -73,7 +73,7 @@
                             </td>
                             <td>
                                 {% if not log.resolved %}
-                                <a href="{% url 'adminpanel:resolve_error' log.id %}" class="btn btn-sm btn-success">
+                                <a href="{% url 'adminpanel:resolve_error' error_id=log.id %}" class="btn btn-sm btn-success">
                                     <i class="fas fa-check"></i>
                                 </a>
                                 {% endif %}

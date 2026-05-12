@@ -13,22 +13,24 @@
 
     <div class="card border-0 shadow-sm">
         <div class="card-body">
+            <div class="alert alert-info">
+                <h6><i class="fas fa-info-circle me-2"></i>Создание полного бэкапа системы</h6>
+                <p class="mb-0">Будет создана полная копия системы включая:</p>
+                <ul class="mb-0">
+                    <li>🗄️ База данных (пользователи, курсы, уроки)</li>
+                    <li>📁 Медиафайлы (аватары, изображения, файлы)</li>
+                    <li>⚙️ Конфигурация (settings.py, .env)</li>
+                    <li>📝 Логи системы</li>
+                </ul>
+            </div>
+            
             <form method="post">
                 {% csrf_token %}
-                <div class="mb-3">
-                    <label class="form-label" for="backup_type">Тип бэкапа</label>
-                    <select class="form-select" name="backup_type" id="backup_type">
-                        <option value="full">Полный</option>
-                        <option value="db">Только БД</option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label" for="description">Описание</label>
-                    <textarea class="form-control" name="description" id="description" rows="3"></textarea>
-                </div>
                 <div class="d-flex justify-content-between">
                     <a class="btn btn-outline-secondary" href="{% url 'adminpanel:backup_logs' %}"><i class="fas fa-arrow-left me-2"></i>Назад</a>
-                    <button class="btn btn-primary" type="submit"><i class="fas fa-play me-2"></i>Создать</button>
+                    <button class="btn btn-primary" type="submit">
+                        <i class="fas fa-play me-2"></i>Создать полный бэкап
+                    </button>
                 </div>
             </form>
         </div>

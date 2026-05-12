@@ -41,7 +41,7 @@
                         </li>
                         {% elif user.role == 'teacher' %}
                         <li class="nav-item">
-                            <a class="nav-link fw-semibold" href="{% url 'accounts:teacher_dashboard' %}" style="color: rgba(255,255,255,0.95) !important; padding: 0.5rem 1rem;">
+                            <a class="nav-link fw-semibold" href="{% url 'courses:teacher_dashboard' %}" style="color: rgba(255,255,255,0.95) !important; padding: 0.5rem 1rem;">
                                 <i class="fas fa-chalkboard me-1"></i>Преподавание
                             </a>
                         </li>
@@ -52,9 +52,14 @@
                             </a>
                         </li>
                         {% endif %}
-                        <li class="nav-item">
+                        <li class="nav-item position-relative">
                             <a class="nav-link fw-semibold" href="{% url 'accounts:notifications' %}" style="color: rgba(255,255,255,0.95) !important; padding: 0.5rem 1rem;">
                                 <i class="fas fa-bell me-1"></i>Уведомления
+                                {% if request.user.unread_notifications_count > 0 %}
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6em;">
+                                    {{ request.user.unread_notifications_count }}
+                                </span>
+                                {% endif %}
                             </a>
                         </li>
                     {% endif %}
@@ -73,6 +78,10 @@
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0">
                                 <li><a class="dropdown-item py-2" href="{% url 'accounts:profile' %}"><i class="fas fa-id-card me-2 text-primary"></i>Профиль</a></li>
+                                <li><a class="dropdown-item py-2" href="{% url 'accounts:settings' %}"><i class="fas fa-cog me-2 text-secondary"></i>Настройки</a></li>
+                                {% if user.role == 'teacher' %}
+                                <li><a class="dropdown-item py-2" href="{% url 'courses:teacher_dashboard' %}"><i class="fas fa-chalkboard-teacher me-2 text-success"></i>Мои курсы</a></li>
+                                {% endif %}
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item py-2 text-danger" href="{% url 'accounts:logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Выйти</a></li>
                             </ul>
@@ -131,7 +140,8 @@
                 </div>
                 <div class="col-md-4">
                     <h5>Контакты</h5>
-                    <p class="text-muted"><i class="fas fa-envelope me-2"></i>info@progage.com</p>
+                    <p class="text-muted"><i class="fas fa-envelope me-2"></i>pashokbilashenko335@gmail.com</p>
+                    <p class="text-muted"><i class="fas fa-envelope me-2"></i>support@progage.com</p>
                     <p class="text-muted"><i class="fas fa-phone me-2"></i>+7 (999) 123-45-67</p>
                 </div>
             </div>

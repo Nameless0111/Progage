@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Редактирование курса{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h4 class="mb-0">
+                        <i class="fas fa-edit text-primary me-2"></i>
+                        Редактирование курса "{{ course.title }}"
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.title.id_for_label }}" class="form-label">Название курса *</label>
+                            {{ form.title }}
+                            {% if form.title.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.title.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">Описание курса *</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.description.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.category.id_for_label }}" class="form-label">Категория *</label>
+                                {{ form.category }}
+                                {% if form.category.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.category.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.level.id_for_label }}" class="form-label">Уровень сложности *</label>
+                                {{ form.level }}
+                                {% if form.level.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.level.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.programming_language.id_for_label }}" class="form-label">Язык программирования</label>
+                            {{ form.programming_language }}
+                            {% if form.programming_language.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.programming_language.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Например: Python, JavaScript, C++, Java. Необязательное поле.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.price.id_for_label }}" class="form-label">Цена (руб.) *</label>
+                            {{ form.price }}
+                            {% if form.price.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.price.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.thumbnail.id_for_label }}" class="form-label">Обложка курса</label>
+                            {{ form.thumbnail }}
+                            {% if form.thumbnail.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.thumbnail.errors.0 }}
+                                </div>
+                            {% endif %}
+                            {% if course.thumbnail %}
+                                <div class="mt-2">
+                                    <img src="{{ course.thumbnail_url }}" alt="Текущая обложка" class="img-thumbnail" style="max-height: 200px;">
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Рекомендуемый размер: 1200x630px</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="form-check">
+                                {{ form.is_published }}
+                                <label class="form-check-label" for="{{ form.is_published.id_for_label }}">
+                                    Опубликовать курс
+                                </label>
+                            </div>
+                            {% if form.is_published.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.is_published.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'courses:teacher_dashboard' %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Отмена
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Сохранить изменения
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

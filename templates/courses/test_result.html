@@ -1,0 +1,353 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Результаты теста - {{ lesson.title }} - {{ course.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .result-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .result-header {
+        text-align: center;
+        padding: 30px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+    }
+    
+    .result-header.passed {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+    }
+    
+    .result-header.failed {
+        background: linear-gradient(135deg, #dc3545, #fd7e14);
+        color: white;
+    }
+    
+    .score-display {
+        font-size: 48px;
+        font-weight: bold;
+        margin: 20px 0;
+    }
+    
+    .percentage-display {
+        font-size: 24px;
+        opacity: 0.9;
+    }
+    
+    .question-result {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        background: #fff;
+    }
+    
+    .question-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .question-number {
+        background: #007bff;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 14px;
+    }
+    
+    .question-points {
+        background: #6c757d;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 14px;
+    }
+    
+    .answer-option {
+        margin: 10px 0;
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid #e9ecef;
+    }
+    
+    .answer-option.correct {
+        background: #d4edda;
+        border-color: #28a745;
+    }
+    
+    .answer-option.incorrect {
+        background: #f8d7da;
+        border-color: #dc3545;
+    }
+    
+    .answer-option.selected {
+        border-left: 4px solid #007bff;
+        font-weight: bold;
+    }
+    
+    .text-answer {
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        border: 1px solid #e9ecef;
+        white-space: pre-wrap;
+    }
+    
+    .result-badge {
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+    
+    .result-badge.correct {
+        background: #28a745;
+        color: white;
+    }
+    
+    .result-badge.incorrect {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .result-badge.pending {
+        background: #ffc107;
+        color: #212529;
+    }
+    
+    .action-buttons {
+        text-align: center;
+        margin-top: 30px;
+    }
+    
+    .stats-row {
+        display: flex;
+        justify-content: space-around;
+        margin: 30px 0;
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        min-width: 150px;
+    }
+    
+    .stat-number {
+        font-size: 24px;
+        font-weight: bold;
+        color: #007bff;
+    }
+    
+    .stat-label {
+        font-size: 14px;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="result-container">
+        <!-- Хлебные крошки -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'home' %}">Главная</a></li>
+                <li class="breadcrumb-item"><a href="{{ course.get_absolute_url }}">{{ course.title }}</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'courses:lesson_view' course.id lesson.id %}">{{ lesson.title }}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Результаты теста</li>
+            </ol>
+        </nav>
+        
+        <!-- Заголовок результатов -->
+        <div class="result-header {% if passed %}passed{% else %}failed{% endif %}">
+            <h2 class="mb-3">
+                {% if passed %}
+                    <i class="fas fa-trophy me-2"></i>Тест пройден!
+                {% else %}
+                    <i class="fas fa-times-circle me-2"></i>Тест не пройден
+                {% endif %}
+            </h2>
+            <div class="score-display">
+                {{ submission.score }} / {{ submission.max_score }}
+            </div>
+            <div class="percentage-display">
+                {{ percentage }}%
+            </div>
+            <p class="mb-0">
+                {% if passed %}
+                    Поздравляем! Вы успешно сдали тест.
+                {% else %}
+                К сожалению, набрано недостаточно баллов для сдачи теста. Требуется 60%.
+                {% endif %}
+            </p>
+        </div>
+        
+        <!-- Статистика -->
+        <div class="stats-row">
+            <div class="stat-item">
+                <div class="stat-number">{{ questions|length }}</div>
+                <div class="stat-label">Всего вопросов</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">{{ submission.score }}</div>
+                <div class="stat-label">Набрано баллов</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">{{ submission.max_score }}</div>
+                <div class="stat-label">Максимум баллов</div>
+            </div>
+        </div>
+        
+        <!-- Детальные результаты по вопросам -->
+        <h4 class="mb-3">Детальные результаты:</h4>
+        
+        {% for question in questions %}
+        <div class="question-result">
+            <div class="question-header">
+                <div>
+                    <span class="question-number">Вопрос {{ forloop.counter }}</span>
+                    {% if question.is_required %}
+                    <span class="badge bg-warning ms-2">Обязательный</span>
+                    {% endif %}
+                </div>
+                <div>
+                    <span class="question-points">{{ question.points }} балл{{ question.points|pluralize:"а,ов" }}</span>
+                    {% if question.id in answers_by_question %}
+                        {% with user_answer=None %}
+                            {% for q_id, answer in answers_by_question.items %}
+                                {% if q_id == question.id %}
+                                    {% with user_answer=answer %}
+                                        {% if question.question_type == 'text' %}
+                                            <span class="result-badge pending ms-2">На проверке</span>
+                                        {% elif user_answer.is_correct %}
+                                            <span class="result-badge correct ms-2">Верно</span>
+                                        {% else %}
+                                            <span class="result-badge incorrect ms-2">Неверно</span>
+                                        {% endif %}
+                                    {% endwith %}
+                                {% endif %}
+                            {% endfor %}
+                        {% endwith %}
+                    {% else %}
+                        <span class="result-badge incorrect ms-2">Нет ответа</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <h6 class="mb-3">{{ question.question_text }}</h6>
+            
+            {% if question.question_type == 'single' or question.question_type == 'multiple' %}
+                <!-- Варианты ответов -->
+                {% if question.id in answers_by_question %}
+                    {% with user_answer=None %}
+                        {% for q_id, answer in answers_by_question.items %}
+                            {% if q_id == question.id %}
+                                {% with user_answer=answer %}
+                                    {% for answer_option in question.answers.all %}
+                                    <div class="answer-option 
+                                        {% if answer_option.is_correct %}correct{% endif %}
+                                        {% if answer_option in user_answer.selected_answers.all %}selected{% endif %}">
+                                        <div class="d-flex align-items-center">
+                                            {% if question.question_type == 'single' %}
+                                                <input type="radio" disabled {% if answer_option in user_answer.selected_answers.all %}checked{% endif %}>
+                                            {% else %}
+                                                <input type="checkbox" disabled {% if answer_option in user_answer.selected_answers.all %}checked{% endif %}>
+                                            {% endif %}
+                                <span class="ms-2">{{ answer_option.answer_text }}</span>
+                                            {% if answer_option.is_correct %}
+                                            <span class="badge bg-success ms-auto">✓ Правильный</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% endwith %}
+                            {% endif %}
+                        {% endfor %}
+                    {% endwith %}
+                {% else %}
+                    {% for answer in question.answers.all %}
+                    <div class="answer-option 
+                        {% if answer.is_correct %}correct{% endif %}">
+                        <div class="d-flex align-items-center">
+                            {% if question.question_type == 'single' %}
+                                <input type="radio" disabled>
+                            {% else %}
+                                <input type="checkbox" disabled>
+                            {% endif %}
+                            <span class="ms-2">{{ answer.answer_text }}</span>
+                            {% if answer.is_correct %}
+                            <span class="badge bg-success ms-auto">✓ Правильный</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+                
+            {% elif question.question_type == 'text' or question.question_type == 'essay' %}
+                <!-- Текстовый ответ -->
+                {% if question.id in answers_by_question %}
+                    {% with user_answer=None %}
+                        {% for q_id, answer in answers_by_question.items %}
+                            {% if q_id == question.id %}
+                                {% with user_answer=answer %}
+                                    <div class="text-answer">
+                                        Ответ отправлен на проверку
+                                    </div>
+                                    <small class="text-muted mt-2 d-block">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Текстовые ответы проверяются преподавателем
+                                    </small>
+                                {% endwith %}
+                            {% endif %}
+                        {% endfor %}
+                    {% endwith %}
+                {% else %}
+                    <div class="text-answer text-muted">
+                        Нет ответа
+                    </div>
+                {% endif %}
+            {% endif %}
+            
+            {% if question.explanation %}
+            <div class="mt-3">
+                <small class="text-muted">
+                    <i class="fas fa-info-circle me-1"></i>
+                    {{ question.explanation }}
+                </small>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        
+        <!-- Кнопки действий -->
+        <div class="action-buttons">
+            <a href="{% url 'courses:lesson_view' course.id lesson.id %}" class="btn btn-outline-primary me-2">
+                <i class="fas fa-arrow-left me-2"></i>Вернуться к уроку
+            </a>
+            <a href="{{ course.get_absolute_url }}" class="btn btn-primary">
+                <i class="fas fa-book me-2"></i>Продолжить обучение
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Добавим фильтр dictlookup для шаблона
+document.addEventListener('DOMContentLoaded', function() {
+    // Никакой дополнительной логики не нужно
+});
+</script>
+{% endblock %}

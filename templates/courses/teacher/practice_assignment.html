@@ -1,0 +1,397 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Практическое задание - {{ lesson.title }} - Progage{% endblock %}
+
+{% block extra_css %}
+<style>
+    .code-editor {
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+    .test-case {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    .test-case-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    .test-case-pass {
+        border-left: 4px solid #28a745;
+    }
+    .test-case-fail {
+        border-left: 4px solid #dc3545;
+    }
+    .language-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    .security-info {
+        background: #e3f2fd;
+        border: 1px solid #bbdefb;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    .add-test-case {
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .add-test-case:hover {
+        border-color: #007bff;
+        background: #f8f9ff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-3">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'home' %}">Главная</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'courses:teacher_dashboard' %}">Панель преподавателя</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'courses:teacher_course_lessons' course.id %}">{{ course.title }}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'courses:teacher_edit_lesson' course.id lesson.id %}">{{ lesson.title }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Практическое задание</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Форма практического задания -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h4 class="mb-0">
+                        <i class="fas fa-code text-primary me-2"></i>
+                        Практическое задание
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.title.id_for_label }}" class="form-label">Название задания *</label>
+                                {{ form.title }}
+                                {% if form.title.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.title.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.programming_language.id_for_label }}" class="form-label">Язык программирования *</label>
+                                {{ form.programming_language }}
+                                {% if form.programming_language.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.programming_language.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">Описание задания *</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.description.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.requirements.id_for_label }}" class="form-label">Требования к решению *</label>
+                            {{ form.requirements }}
+                            {% if form.requirements.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.requirements.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Опишите, что должен сделать студент, какие ограничения есть, какой формат вывода ожидается.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.starter_code.id_for_label }}" class="form-label">Начальный код</label>
+                            {{ form.starter_code }}
+                            {% if form.starter_code.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.starter_code.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Код, который будет показан студенту как основа для решения.</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.time_limit.id_for_label }}" class="form-label">Лимит времени (сек)</label>
+                                {{ form.time_limit }}
+                                {% if form.time_limit.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.time_limit.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Оставьте пустым для использования значений по умолчанию (5 сек)</div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.memory_limit.id_for_label }}" class="form-label">Лимит памяти (МБ)</label>
+                                {{ form.memory_limit }}
+                                {% if form.memory_limit.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.memory_limit.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Оставьте пустым для использования значения по умолчанию (256 МБ)</div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.max_attempts.id_for_label }}" class="form-label">Максимум попыток</label>
+                                {{ form.max_attempts }}
+                                {% if form.max_attempts.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.max_attempts.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Оставьте пустым для значения по умолчанию (10)</div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.max_grade.id_for_label }}" class="form-label">Максимальная оценка</label>
+                                {{ form.max_grade }}
+                                {% if form.max_grade.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.max_grade.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Оставьте пустым для значения по умолчанию (100)</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.deadline.id_for_label }}" class="form-label">Дедлайн</label>
+                                {{ form.deadline }}
+                                {% if form.deadline.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.deadline.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Оставьте пустым если нет дедлайна</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.require_manual_review }}
+                                <label class="form-check-label" for="{{ form.require_manual_review.id_for_label }}">
+                                    Требуется ручная проверка
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.is_published }}
+                                <label class="form-check-label" for="{{ form.is_published.id_for_label }}">
+                                    Опубликовать задание (студенты смогут его видеть и отправлять решения)
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'courses:teacher_edit_lesson' course.id lesson.id %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Отмена
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Сохранить задание
+                            </button>
+                        </div>
+
+            <!-- Тестовые случаи -->
+            {% include 'courses/teacher/test_cases_minimal.html' %}
+
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Информация о безопасности -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0">
+                        <i class="fas fa-shield-alt text-success me-2"></i>
+                        Безопасность
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="security-info">
+                        <h6><i class="fas fa-lock me-2"></i>Изолированная среда</h6>
+                        <p class="small mb-2">Код студентов выполняется в полностью изолированной среде (песочнице) с ограниченными ресурсами.</p>
+                        
+                        <h6><i class="fas fa-ban me-2"></i>Запрещенные операции</h6>
+                        <ul class="small mb-2">
+                            <li>Доступ к файловой системе</li>
+                            <li>Сетевые запросы</li>
+                            <li>Системные вызовы</li>
+                            <li>Опасные библиотеки</li>
+                        </ul>
+                        
+                        <h6><i class="fas fa-tachometer-alt me-2"></i>Ограничения</h6>
+                        <p class="small mb-0">Время выполнения: {{ form.time_limit.value|default:5 }} сек<br>
+                        Память: {{ form.memory_limit.value|default:256 }} МБ<br>
+                        Попытки: {{ form.max_attempts.value|default:10 }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Поддерживаемые языки -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0">
+                        <i class="fas fa-code text-primary me-2"></i>
+                        Поддерживаемые языки
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <span class="language-badge">Python</span>
+                        <small class="text-muted d-block">Python 3.11</small>
+                    </div>
+                    <div class="mb-2">
+                        <span class="language-badge">JavaScript</span>
+                        <small class="text-muted d-block">Node.js 18</small>
+                    </div>
+                    <div class="mb-2">
+                        <span class="language-badge">Java</span>
+                        <small class="text-muted d-block">OpenJDK 17</small>
+                    </div>
+                    <div class="mb-2">
+                        <span class="language-badge">C++</span>
+                        <small class="text-muted d-block">GCC с C++17</small>
+                    </div>
+                    <div class="mb-2">
+                        <span class="language-badge">C</span>
+                        <small class="text-muted d-block">GCC с C11</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Статистика -->
+            {% if assignment.submissions.exists %}
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-bar text-info me-2"></i>
+                        Статистика
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <strong>Всего отправок:</strong> {{ total_submissions }}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Верных решений:</strong> {{ correct_submissions }}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Уникальных студентов:</strong> {{ unique_students }}
+                    </div>
+                    <div class="mb-0">
+                        <strong>Успешность:</strong> 
+                        {% if total_submissions > 0 %}
+                            {% widthratio correct_submissions total_submissions 100 %}%
+                        {% else %}
+                            0%
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+let testCaseCounter = {{ test_cases|length }};
+
+function addTestCase() {
+            const container = document.getElementById('test-cases-container');
+            const addDiv = document.querySelector('.add-test-case');
+            
+            const testCaseDiv = document.createElement('div');
+            testCaseDiv.className = 'test-case';
+            testCaseDiv.dataset.testIndex = testCaseCounter;
+
+            testCaseDiv.innerHTML = `
+                <div class="test-case-header">
+                    <h6 class="mb-0">Тест ${testCaseCounter + 1}</h6>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeTestCase(${testCaseCounter})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label">Входные данные <small class="text-muted">(опционально)</small></label>
+                        <textarea name="test_input_${testCaseCounter}" class="form-control code-editor" rows="2" placeholder="Входные данные (если не требуются, оставьте пустым)..."></textarea>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label">Ожидаемый вывод *</label>
+                        <textarea name="test_output_${testCaseCounter}" class="form-control code-editor" rows="2" placeholder="Ожидаемый вывод..." required></textarea>
+                    </div>
+                </div>
+            `;
+            
+            if (addDiv) {
+                addDiv.style.display = 'none';
+            }
+            
+            container.appendChild(testCaseDiv);
+            testCaseCounter++;
+        }
+
+function removeTestCase(index) {
+    const testCase = document.querySelector(`[data-test-index="${index}"]`);
+    if (testCase) {
+        testCase.remove();
+    }
+    
+    // Обновляем номера тестов
+    const testCases = document.querySelectorAll('.test-case');
+    testCases.forEach((testCase, i) => {
+        const header = testCase.querySelector('h6');
+        if (header) {
+            header.textContent = `Тест ${i + 1}`;
+        }
+        testCase.setAttribute('data-test-index', i);
+    });
+    
+    testCaseCounter = testCases.length;
+}
+
+
+// Обработка отправки формы
+document.querySelector('form').addEventListener('submit', function(e) {
+    console.log('Форма отправляется...');
+    // Можно добавить дополнительную валидацию здесь
+});
+</script>
+{% endblock %}

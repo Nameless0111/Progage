@@ -86,7 +86,7 @@
                     {% if enrollments %}
                         <div class="list-group list-group-flush">
                             {% for enrollment in enrollments %}
-                            <div class="list-group-item p-4">
+                            <div class="list-group-item p-4 clickable-card" onclick="window.location.href='{% url 'courses:course_detail' enrollment.course.id %}'">
                                 <div class="d-flex align-items-start">
                                     {% if enrollment.course.thumbnail %}
                                     <img src="{{ enrollment.course.thumbnail_url }}" alt="{{ enrollment.course.title }}" class="rounded me-3" style="width: 80px; height: 60px; object-fit: cover;">
@@ -98,7 +98,7 @@
                                     <div class="flex-grow-1">
                                         <div class="d-flex justify-content-between align-items-start mb-2">
                                             <h5 class="mb-1">
-                                                <a href="{% url 'courses:course_detail' enrollment.course.id %}" class="text-decoration-none">{{ enrollment.course.title }}</a>
+                                                <span class="text-primary fw-bold hover-link">{{ enrollment.course.title }}</span>
                                             </h5>
                                             <span class="badge bg-{{ enrollment.course.level }}">
                                                 {{ enrollment.course.get_level_display }}
@@ -113,7 +113,7 @@
                                         </div>
                                     </div>
                                     <div class="ms-3">
-                                        <a href="{% url 'courses:course_detail' enrollment.course.id %}" class="btn btn-outline-primary btn-sm">Продолжить</a>
+                                        <a href="{% url 'courses:course_detail' enrollment.course.id %}" class="btn btn-outline-primary btn-sm" onclick="event.stopPropagation()">Продолжить</a>
                                     </div>
                                 </div>
                             </div>
@@ -143,14 +143,13 @@
                     </div>
                     <hr>
                     <h6 class="mb-3">Последняя активность</h6>
-                    {% if recent_activities %}
-                        <div class="list-group list-group-flush">
-                            {% for activity in recent_activities %}
-                            <div class="list-group-item px-0">
-                                <small class="text-muted"><i class="fas fa-clock me-1"></i>{{ activity.timestamp|timesince }} назад</small>
-                                <p class="mb-0 small">{{ activity.description }}</p>
-                            </div>
-                            {% endfor %}
+                    {% if last_activity %}
+                        <div class="list-group-item px-0">
+                            <small class="text-muted"><i class="fas fa-clock me-1"></i>{{ last_activity|timesince }} назад</small>
+                            <p class="mb-0 small">Последняя запись на курс</p>
+                            {% if last_enrollment %}
+                            <p class="mb-0 small fw-bold">{{ last_enrollment.course.title }}</p>
+                            {% endif %}
                         </div>
                     {% else %}
                         <p class="text-muted small">Нет недавней активности</p>
@@ -190,4 +189,32 @@
         </div>
     </div>
 </div>
+
+<style>
+.hover-link:hover {
+    color: #0d6efd !important;
+    text-decoration: underline !important;
+    transition: all 0.3s ease;
+}
+
+.clickable-card {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.clickable-card:hover {
+    background-color: #f8f9fa !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+}
+
+.clickable-card a {
+    color: inherit;
+}
+
+.clickable-card a:hover {
+    color: #0d6efd !important;
+}
+</style>
+
 {% endblock %}

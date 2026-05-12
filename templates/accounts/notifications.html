@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Уведомления - {{ request.user.username }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>
+                    <i class="fas fa-bell me-2"></i>Уведомления
+                    {% if unread_count > 0 %}
+                    <span class="badge bg-danger ms-2">{{ unread_count }}</span>
+                    {% endif %}
+                </h1>
+                {% if notifications %}
+                    <form method="post" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="mark_all_read" value="1">
+                        <button type="submit" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-check-double me-1"></i>Отметить все как прочитанные
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+            
+            {% if notifications %}
+                <div class="list-group">
+                    {% for notification in notifications %}
+                    <div class="list-group-item {% if not notification.is_read %}unread-notification{% endif %}" data-notification-id="{{ notification.id }}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                {% if notification.notification_type == 'new_lesson' %}
+                                    {% if notification.lesson %}
+                                        <a href="{% url 'courses:lesson_view' notification.lesson.course.id notification.lesson.id %}" class="text-decoration-none notification-link">
+                                            <h6 class="mb-1">
+                                                <i class="fas fa-book-open text-primary me-2"></i>{{ notification.title }}
+                                            </h6>
+                                            <p class="mb-1 text-muted">{{ notification.message }}</p>
+                                        </a>
+                                    {% elif notification.course %}
+                                        <a href="{{ notification.course.get_absolute_url }}" class="text-decoration-none notification-link">
+                                            <h6 class="mb-1">
+                                                <i class="fas fa-book-open text-primary me-2"></i>{{ notification.title }}
+                                            </h6>
+                                            <p class="mb-1 text-muted">{{ notification.message }}</p>
+                                        </a>
+                                    {% else %}
+                                        <div class="notification-item">
+                                            <h6 class="mb-1">
+                                                <i class="fas fa-book-open text-primary me-2"></i>{{ notification.title }}
+                                            </h6>
+                                            <p class="mb-1 text-muted">{{ notification.message }}</p>
+                                        </div>
+                                    {% endif %}
+                                {% elif notification.notification_type == 'new_chat_message' %}
+                                    {% if notification.chat_room_id %}
+                                        <a href="{% url 'chat:chat_detail' notification.chat_room_id %}" class="text-decoration-none notification-link">
+                                            <h6 class="mb-1">
+                                                <i class="fas fa-comments text-success me-2"></i>{{ notification.title }}
+                                            </h6>
+                                            <p class="mb-1 text-muted">{{ notification.message }}</p>
+                                        </a>
+                                    {% else %}
+                                        <div class="notification-item">
+                                            <h6 class="mb-1">
+                                                <i class="fas fa-comments text-success me-2"></i>{{ notification.title }}
+                                            </h6>
+                                            <p class="mb-1 text-muted">{{ notification.message }}</p>
+                                        </div>
+                                    {% endif %}
+                                {% elif notification.notification_type == 'support_messages' %}
+                                    <a href="{% url 'chat:support' %}" class="text-decoration-none notification-link">
+                                        <h6 class="mb-1">
+                                            <i class="fas fa-headset text-info me-2"></i>{{ notification.title }}
+                                        </h6>
+                                        <p class="mb-1 text-muted">{{ notification.message }}</p>
+                                    </a>
+                                {% else %}
+                                    <h6 class="mb-1">
+                                        {% if notification.notification_type == 'new_chat' %}
+                                            <i class="fas fa-comment text-primary me-2"></i>
+                                        {% elif notification.notification_type == 'course_enrollment' %}
+                                            <i class="fas fa-graduation-cap text-success me-2"></i>
+                                        {% elif notification.notification_type == 'course_review' %}
+                                            <i class="fas fa-star text-warning me-2"></i>
+                                        {% elif notification.notification_type == 'system' %}
+                                            <i class="fas fa-cog text-secondary me-2"></i>
+                                        {% else %}
+                                            <i class="fas fa-bell text-primary me-2"></i>
+                                        {% endif %}
+                                        {{ notification.title }}
+                                    </h6>
+                                    <p class="mb-1 text-muted">{{ notification.message }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="d-flex flex-column align-items-end">
+                                <small class="text-muted">{{ notification.created_at|date:"d.m.Y H:i" }}</small>
+                                <div class="mt-1">
+                                    {% if not notification.is_read %}
+                                        <a href="{% url 'accounts:mark_notification_read' notification.id %}" 
+                                           class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-check"></i>
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">У вас нет уведомлений</h5>
+                    <p class="text-muted">Здесь появятся все уведомления о важных событиях</p>
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-cog me-2"></i>Настройки уведомлений
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <a href="{% url 'accounts:settings' %}#notifications" class="btn btn-outline-primary btn-sm w-100">
+                        <i class="fas fa-sliders-h me-2"></i>Настроить уведомления
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.unread-notification {
+    background-color: #f8f9fa;
+    border-left: 4px solid #007bff;
+}
+
+.notification-link {
+    color: inherit;
+}
+
+.notification-link:hover {
+    color: #007bff;
+}
+
+.notification-link h6 {
+    color: inherit;
+}
+
+.notification-link:hover h6 {
+    color: #007bff;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Автоматически отмечаем уведомления как прочитанные при клике
+    document.querySelectorAll('.notification-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            const notificationItem = this.closest('.list-group-item');
+            if (notificationItem && notificationItem.classList.contains('unread-notification')) {
+                // Получаем ID уведомления из data-атрибута
+                const notificationId = notificationItem.dataset.notificationId;
+                if (notificationId) {
+                    // Формируем URL для отметки как прочитанное
+                    const markReadUrl = `/accounts/notifications/${notificationId}/mark-read/`;
+                    
+                    // Отправляем запрос на отметку как прочитанное
+                    fetch(markReadUrl, {
+                        method: 'GET',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    }).then(response => {
+                        if (response.ok) {
+                            notificationItem.classList.remove('unread-notification');
+                            // Обновляем счетчик непрочитанных
+                            const unreadCount = document.querySelector('.badge.bg-danger');
+                            if (unreadCount && unreadCount.textContent > '0') {
+                                unreadCount.textContent = Math.max(0, parseInt(unreadCount.textContent) - 1);
+                                if (unreadCount.textContent === '0') {
+                                    unreadCount.style.display = 'none';
+                                }
+                            }
+                        }
+                    }).catch(error => {
+                        console.error('Error marking notification as read:', error);
+                    });
+                }
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

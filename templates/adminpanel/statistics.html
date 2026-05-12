@@ -4,6 +4,7 @@
 {% block title %}{{ title }} - Progage{% endblock %}
 
 {% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
     .stat-card {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -11,13 +12,28 @@
         border-radius: 15px;
         padding: 1.5rem;
         margin-bottom: 1rem;
+        transition: transform 0.3s ease;
     }
+    .stat-card:hover { transform: translateY(-5px); }
     .stat-card.success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
     .stat-card.info { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
     .stat-card.warning { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .stat-card.danger { background: linear-gradient(135deg, #fc4a1a 0%, #f7b733 100%); }
     .chart-container {
         height: 300px;
         position: relative;
+        margin-bottom: 2rem;
+    }
+    .chart-title {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 1rem;
+    }
+    .gradient-text {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
 </style>
 {% endblock %}
@@ -69,11 +85,81 @@
         </div>
     </div>
 
+    <!-- Графики -->
     <div class="row g-4 mb-4">
         <div class="col-lg-6">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white py-3">
-                    <h5 class="mb-0"><i class="fas fa-users text-primary me-2"></i>Пользователи по ролям</h5>
+                    <h5 class="mb-0 gradient-text"><i class="fas fa-chart-line me-2"></i>Регистрации пользователей (7 дней)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="registrationChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 gradient-text"><i class="fas fa-graduation-cap me-2"></i>Записи на курсы (7 дней)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="enrollmentChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 gradient-text"><i class="fas fa-tags me-2"></i>Топ категорий</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 gradient-text"><i class="fas fa-clock me-2"></i>Активность по часам</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="hourlyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 gradient-text"><i class="fas fa-layer-group me-2"></i>Уровни курсов</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="levelChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 gradient-text"><i class="fas fa-users text-primary me-2"></i>Пользователи по ролям</h5>
                 </div>
                 <div class="card-body">
                     <div class="row text-center">
@@ -85,7 +171,7 @@
                         </div>
                         <div class="col-4">
                             <div class="p-3 bg-info bg-opacity-10 rounded">
-                                <h4 class="text-info">{{ stats.authors_count|default:0 }}</h4>
+                                <h4 class="text-info">{{ teachers_count|default:0 }}</h4>
                                 <small class="text-muted">Преподавателей</small>
                             </div>
                         </div>
@@ -103,7 +189,7 @@
         <div class="col-lg-6">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white py-3">
-                    <h5 class="mb-0"><i class="fas fa-layer-group text-primary me-2"></i>Курсы по уровням</h5>
+                    <h5 class="mb-0 gradient-text"><i class="fas fa-layer-group text-primary me-2"></i>Курсы по уровням</h5>
                 </div>
                 <div class="card-body">
                     <div class="row text-center">
@@ -161,7 +247,7 @@
                             <td><span class="badge bg-danger">{{ course.like_count }}</span></td>
                             <td>
                                 <div class="progress" style="height: 8px;">
-                                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ course.popularity_score|div:10|default:0 }}%"></div>
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ course.popularity_score|default:0 }}%"></div>
                                 </div>
                             </td>
                         </tr>
@@ -197,4 +283,165 @@
         </div>
     </div>
 </div>
+
+    <!-- Топ популярных курсов -->
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 gradient-text"><i class="fas fa-trophy me-2"></i>Топ популярных курсов</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for course in popular_courses %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="p-3 bg-light rounded">
+                                <h6 class="fw-bold">{{ course.title|truncatechars:30 }}</h6>
+                                <div class="d-flex justify-content-between text-muted small">
+                                    <span><i class="fas fa-users me-1"></i>{{ course.enrollment_total }} студентов</span>
+                                    <span><i class="fas fa-heart me-1"></i>{{ course.like_count }} лайков</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // График регистраций пользователей
+    const registrationCtx = document.getElementById('registrationChart').getContext('2d');
+    new Chart(registrationCtx, {
+        type: 'line',
+        data: {
+            labels: [{% for item in registration_chart %}'{{ item.date }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+            datasets: [{
+                label: 'Регистрации',
+                data: [{% for item in registration_chart %}{{ item.count }}{% if not forloop.last %},{% endif %}{% endfor %}],
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+
+    // График записей на курсы
+    const enrollmentCtx = document.getElementById('enrollmentChart').getContext('2d');
+    new Chart(enrollmentCtx, {
+        type: 'bar',
+        data: {
+            labels: [{% for item in enrollment_chart %}'{{ item.date }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+            datasets: [{
+                label: 'Записи',
+                data: [{% for item in enrollment_chart %}{{ item.count }}{% if not forloop.last %},{% endif %}{% endfor %}],
+                backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+
+    // График категорий
+    const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+    new Chart(categoryCtx, {
+        type: 'doughnut',
+        data: {
+            labels: [{% for item in category_chart %}'{{ item.name }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+            datasets: [{
+                data: [{% for item in category_chart %}{{ item.count }}{% if not forloop.last %},{% endif %}{% endfor %}],
+                backgroundColor: [
+                    '#FF6384',
+                    '#36A2EB',
+                    '#FFCE56',
+                    '#4BC0C0',
+                    '#9966FF'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
+    // График активности по часам
+    const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
+    new Chart(hourlyCtx, {
+        type: 'line',
+        data: {
+            labels: [{% for item in hourly_activity %}'{{ item.hour }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+            datasets: [{
+                label: 'Активность',
+                data: [{% for item in hourly_activity %}{{ item.count }}{% if not forloop.last %},{% endif %}{% endfor %}],
+                borderColor: 'rgb(255, 99, 132)',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+
+    // График уровней курсов
+    const levelCtx = document.getElementById('levelChart').getContext('2d');
+    new Chart(levelCtx, {
+        type: 'pie',
+        data: {
+            labels: ['Начальный', 'Средний', 'Продвинутый'],
+            datasets: [{
+                data: [
+                    {{ level_stats.beginner|default:0 }},
+                    {{ level_stats.intermediate|default:0 }},
+                    {{ level_stats.advanced|default:0 }}
+                ],
+                backgroundColor: [
+                    '#28a745',
+                    '#ffc107',
+                    '#dc3545'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+});
+</script>
+
 {% endblock %}

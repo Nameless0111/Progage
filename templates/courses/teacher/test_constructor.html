@@ -1,0 +1,431 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Конструктор тестов - {{ lesson.title }} - Progage{% endblock %}
+
+{% block extra_css %}
+<style>
+    .question-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid transparent;
+    }
+    .question-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    .question-card.single-choice {
+        border-left-color: #007bff;
+    }
+    .question-card.multiple-choice {
+        border-left-color: #28a745;
+    }
+    .question-card.text-answer {
+        border-left-color: #ffc107;
+    }
+    .question-card.essay {
+        border-left-color: #6f42c1;
+    }
+    .answer-option {
+        padding: 8px 12px;
+        margin: 4px 0;
+        border-radius: 6px;
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+    }
+    .answer-option.correct {
+        background: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+    }
+    .answer-option.incorrect {
+        background: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+    }
+    .question-type-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+    .drag-handle {
+        cursor: move;
+        color: #6c757d;
+    }
+    .drag-handle:hover {
+        color: #495057;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-3">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'home' %}">Главная</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'courses:teacher_dashboard' %}">Панель преподавателя</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'courses:teacher_course_lessons' course.id %}">{{ course.title }}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'courses:teacher_edit_lesson' course.id lesson.id %}">{{ lesson.title }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Конструктор тестов</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Форма добавления вопроса -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-plus-circle text-primary me-2"></i>
+                        Добавить новый вопрос
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ question_form.question_text.id_for_label }}" class="form-label">Текст вопроса *</label>
+                            {{ question_form.question_text }}
+                            {% if question_form.question_text.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ question_form.question_text.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ question_form.question_type.id_for_label }}" class="form-label">Тип вопроса *</label>
+                                {{ question_form.question_type }}
+                                {% if question_form.question_type.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ question_form.question_type.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="{{ question_form.points.id_for_label }}" class="form-label">Баллы *</label>
+                                {{ question_form.points }}
+                                {% if question_form.points.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ question_form.points.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="form-check mt-4">
+                                    {{ question_form.is_required }}
+                                    <label class="form-check-label" for="{{ question_form.is_required.id_for_label }}">
+                                        Обязательный
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Динамические поля для ответов -->
+                        <div class="mb-3" id="answers-container">
+                            <label class="form-label">Варианты ответов *</label>
+                            <div id="answers-list">
+                                <div class="answer-item mb-2">
+                                    <div class="input-group">
+                                        <div class="input-group-text">
+                                            <input type="radio" name="correct_answer" value="0" checked>
+                                        </div>
+                                        <input type="text" name="answers[]" class="form-control" placeholder="Введите вариант ответа" required>
+                                        <button type="button" class="btn btn-outline-danger" onclick="removeAnswer(this)">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="answer-item mb-2">
+                                    <div class="input-group">
+                                        <div class="input-group-text">
+                                            <input type="radio" name="correct_answer" value="1">
+                                        </div>
+                                        <input type="text" name="answers[]" class="form-control" placeholder="Введите вариант ответа" required>
+                                        <button type="button" class="btn btn-outline-danger" onclick="removeAnswer(this)">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addAnswer()">
+                                <i class="fas fa-plus me-2"></i>Добавить вариант
+                            </button>
+                            <div class="form-text">Отметьте правильный ответ(ы) радиокнопкой</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ question_form.explanation.id_for_label }}" class="form-label">Пояснение к ответу</label>
+                            {{ question_form.explanation }}
+                            {% if question_form.explanation.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ question_form.explanation.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Необязательно. Показывается студенту после ответа на вопрос.</div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Добавить вопрос
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Список вопросов -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list text-primary me-2"></i>
+                        Вопросы теста ({{ questions.count }})
+                    </h5>
+                    <div class="text-muted">
+                        Всего баллов: {{ questions.total_points }}
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if questions %}
+                        {% for question in questions %}
+                        <div class="question-card card mb-3 {{ question.question_type }}-choice">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <span class="badge bg-{{ question.question_type|question_type_color }} question-type-badge me-2">
+                                                {{ question.get_question_type_display }}
+                                            </span>
+                                            <span class="badge bg-info me-2">{{ question.points }} балл{{ question.points|pluralize:"а,ов" }}</span>
+                                            {% if question.is_required %}
+                                                <span class="badge bg-warning">Обязательный</span>
+                                            {% endif %}
+                                        </div>
+                                        <h6 class="mb-2">{{ question.question_text }}</h6>
+                                        {% if question.explanation %}
+                                            <small class="text-muted">
+                                                <i class="fas fa-info-circle me-1"></i>{{ question.explanation }}
+                                            </small>
+                                        {% endif %}
+                                    </div>
+                                    <div class="btn-group">
+                                        <a href="{% url 'courses:edit_test_question' lesson.id question.id %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'courses:delete_test_question' lesson.id question.id %}" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                                
+                                {% if question.question_type == 'single' or question.question_type == 'multiple' %}
+                                    <div class="answers-list">
+                                        {% for answer in question.answers.all %}
+                                        <div class="answer-option {% if answer.is_correct %}correct{% else %}incorrect{% endif %}">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-{% if answer.is_correct %}check-circle text-success{% else %}times-circle text-danger{% endif %} me-2"></i>
+                                                <span>{{ answer.answer_text }}</span>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <div class="text-muted">
+                                        <i class="fas fa-pen me-2"></i>
+                                        {% if question.question_type == 'text' %}
+                                            Текстовый ответ
+                                        {% else %}
+                                            Развернутый ответ с проверкой
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-question-circle fa-3x text-muted mb-3"></i>
+                            <h5>Пока нет вопросов</h5>
+                            <p class="text-muted">Добавьте первый вопрос с помощью формы выше</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Информация о тесте -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle text-primary me-2"></i>
+                        Информация о тесте
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Урок:</strong> {{ lesson.title }}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Курс:</strong> {{ course.title }}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Количество вопросов:</strong> {{ questions.count }}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Всего баллов:</strong> {{ questions.total_points }}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Типы вопросов:</strong>
+                        <div class="mt-2">
+                            {% for question_type in questions.question_types %}
+                                <span class="badge bg-{{ question_type|question_type_color }} me-1">
+                                    {{ question_type }}
+                                </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Типы вопросов -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0">
+                        <i class="fas fa-question text-primary me-2"></i>
+                        Типы вопросов
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6 class="text-primary">Один вариант ответа</h6>
+                        <p class="small text-muted">Студент должен выбрать только один правильный вариант из предложенных.</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="text-success">Несколько вариантов ответа</h6>
+                        <p class="small text-muted">Студент может выбрать несколько правильных вариантов ответа.</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="text-warning">Свободный текстовый ответ</h6>
+                        <p class="small text-muted">Студент вводит текстовый ответ, система проверяет по ключевым словам.</p>
+                    </div>
+                    <div class="mb-0">
+                        <h6 class="text-purple">Развернутый ответ с проверкой</h6>
+                        <p class="small text-muted">Студент пишет развернутый ответ, который проверяет преподаватель.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Действия -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <a href="{% url 'courses:teacher_edit_lesson' course.id lesson.id %}" class="btn btn-outline-secondary w-100 mb-2">
+                        <i class="fas fa-arrow-left me-2"></i>Вернуться к уроку
+                    </a>
+                    <a href="{% url 'courses:teacher_course_lessons' course.id %}" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-list me-2"></i>Все уроки курса
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Функции для управления ответами
+let answerIndex = 2;
+
+function addAnswer() {
+    const answersList = document.getElementById('answers-list');
+    const answerItem = document.createElement('div');
+    answerItem.className = 'answer-item mb-2';
+    answerItem.innerHTML = `
+        <div class="input-group">
+            <div class="input-group-text">
+                <input type="radio" name="correct_answer" value="${answerIndex}">
+            </div>
+            <input type="text" name="answers[]" class="form-control" placeholder="Введите вариант ответа" required>
+            <button type="button" class="btn btn-outline-danger" onclick="removeAnswer(this)">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+    answersList.appendChild(answerItem);
+    answerIndex++;
+}
+
+function removeAnswer(button) {
+    const answerItem = button.closest('.answer-item');
+    const answersList = document.getElementById('answers-list');
+    
+    // Не удаляем, если осталось только 2 ответа
+    if (answersList.children.length > 2) {
+        answerItem.remove();
+        // Перенумеровываем индексы
+        const answers = answersList.querySelectorAll('input[name="correct_answer"]');
+        answers.forEach((radio, index) => {
+            radio.value = index;
+        });
+    } else {
+        alert('Должно быть минимум 2 варианта ответа');
+    }
+}
+
+// Обновление типа ответов в зависимости от типа вопроса
+function updateAnswerFields() {
+    const questionType = document.querySelector('select[name="question_type"]').value;
+    const answersContainer = document.getElementById('answers-container');
+    
+    if (questionType === 'single' || questionType === 'multiple') {
+        answersContainer.style.display = 'block';
+        // Для одиночного выбора - радио, для множественного - чекбоксы
+        const isMultiple = questionType === 'multiple';
+        document.querySelectorAll('#answers-list input[type="radio"]').forEach(radio => {
+            if (isMultiple) {
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.name = 'correct_answers[]';
+                checkbox.value = radio.value;
+                checkbox.checked = radio.checked;
+                radio.parentNode.replaceChild(checkbox, radio);
+            }
+        });
+    } else {
+        answersContainer.style.display = 'none';
+    }
+}
+
+// Функция для подсчета баллов
+document.addEventListener('DOMContentLoaded', function() {
+    // Обработчик изменения типа вопроса
+    const questionTypeSelect = document.querySelector('select[name="question_type"]');
+    if (questionTypeSelect) {
+        questionTypeSelect.addEventListener('change', updateAnswerFields);
+        updateAnswerFields(); // Инициализация
+    }
+    
+    function updateTotalPoints() {
+        const points = document.querySelectorAll('.question-card');
+        let total = 0;
+        points.forEach(card => {
+            const badge = card.querySelector('.badge.bg-info');
+            if (badge) {
+                const match = badge.textContent.match(/(\d+)/);
+                if (match) {
+                    total += parseInt(match[1]);
+                }
+            }
+        });
+        const totalElement = document.querySelector('.text-muted');
+        if (totalElement) {
+            totalElement.textContent = `Всего баллов: ${total}`;
+        }
+    }
+    
+    updateTotalPoints();
+});
+</script>
+{% endblock %}

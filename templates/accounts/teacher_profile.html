@@ -1,0 +1,1025 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}{{ teacher.get_full_name|default:teacher.username }} - Преподаватель - Progage{% endblock %}
+
+{% block extra_css %}
+<style>
+.profile-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 100px 0;
+    text-align: center;
+}
+
+.profile-avatar {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    border: 5px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+}
+
+.profile-name {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.profile-specialization {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    margin-bottom: 20px;
+}
+
+.stats-section {
+    background: #f8f9fa;
+    padding: 60px 0;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    text-align: center;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.stat-card:hover::before {
+    left: 100%;
+}
+
+.stat-number {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #667eea;
+    margin-bottom: 10px;
+}
+
+.stat-label {
+    font-size: 1.1rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.star-rating {
+    color: #ffc107;
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+}
+
+.star-rating-empty {
+    color: #ddd;
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+}
+
+.star-rating-small {
+    color: #ffc107;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+}
+
+.star-rating-small-empty {
+    color: #ddd;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+}
+
+.rating-options {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.rating-option {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.rating-option:hover {
+    border-color: #667eea;
+    background-color: #f8f9ff;
+}
+
+.rating-option input[type="radio"] {
+    display: none;
+}
+
+.rating-option input[type="radio"]:checked + label {
+    border-color: #667eea;
+    background-color: #f8f9ff;
+}
+
+.rating-option label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    margin: 0;
+    font-weight: 500;
+}
+
+.rating-number {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #667eea;
+    margin-top: 5px;
+}
+
+.rating-number-small {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #667eea;
+}
+
+.rating-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: #667eea;
+    color: white;
+    border-radius: 50%;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.rating-form-horizontal {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.rating-item-horizontal {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.rating-item-horizontal:hover {
+    border-color: #667eea;
+    background-color: #f8f9ff;
+}
+
+.rating-item-horizontal input[type="radio"] {
+    display: none;
+}
+
+.rating-item-horizontal input[type="radio"]:checked + label {
+    border-color: #667eea;
+    background-color: #f8f9ff;
+}
+
+.rating-item-horizontal label {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    cursor: pointer;
+    margin: 0;
+    font-weight: 500;
+    width: 100%;
+}
+
+.rating-badge-small {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    background: #667eea;
+    color: white;
+    border-radius: 50%;
+    font-weight: 600;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.rating-text {
+    font-size: 0.95rem;
+    color: #333;
+}
+
+.rating-form-dropdown {
+    margin-bottom: 15px;
+}
+
+.rating-form-dropdown select {
+    width: 100%;
+    padding: 15px 20px;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    background: white;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #333;
+    transition: all 0.3s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23667eea' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    background-size: 20px;
+    cursor: pointer;
+}
+
+.rating-form-dropdown select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.3rem rgba(102, 126, 234, 0.25);
+    outline: none;
+    transform: translateY(-2px);
+}
+
+.rating-form-dropdown select option {
+    padding: 15px;
+    background: white;
+    color: #333;
+    font-weight: 500;
+}
+
+.detailed-stats {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+}
+
+.detailed-stats h3 {
+    color: #333;
+    margin-bottom: 25px;
+    font-weight: 600;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.stat-item-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #667eea;
+    margin-bottom: 5px;
+}
+
+.stat-item-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.courses-section {
+    padding: 80px 0;
+}
+
+.section-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 50px;
+    color: #333;
+}
+
+.course-card {
+    border: none;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.course-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.course-image {
+    height: 200px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 3rem;
+}
+
+.course-body {
+    padding: 25px;
+}
+
+.course-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.course-category {
+    background: #e9ecef;
+    color: #6c757d;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    display: inline-block;
+    margin-bottom: 15px;
+}
+
+.course-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+}
+
+.course-stat {
+    text-align: center;
+}
+
+.course-stat-value {
+    font-weight: 600;
+    color: #333;
+    display: block;
+}
+
+.course-stat-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.course-link {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 500;
+    display: inline-block;
+    margin-top: 15px;
+}
+
+.course-link:hover {
+    color: #764ba2;
+    text-decoration: underline;
+}
+
+.top-courses {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+}
+
+.top-course-item {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    transition: background 0.3s ease;
+}
+
+.top-course-item:hover {
+    background: #e9ecef;
+}
+
+.top-course-rank {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #667eea;
+    margin-right: 20px;
+    min-width: 40px;
+    text-align: center;
+}
+
+.top-course-info {
+    flex-grow: 1;
+}
+
+.top-course-title {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.top-course-stats {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.rating-section {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+}
+
+.rating-chart {
+    margin: 20px 0;
+}
+
+.rating-bar {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.rating-label {
+    width: 60px;
+    font-weight: 500;
+    color: #333;
+}
+
+.rating-progress {
+    flex-grow: 1;
+    height: 25px;
+    background: #e9ecef;
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 0 15px;
+}
+
+.rating-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    border-radius: 12px;
+    transition: width 0.3s ease;
+}
+
+.rating-count {
+    width: 40px;
+    text-align: right;
+    font-weight: 500;
+    color: #6c757d;
+}
+
+.certificates-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 30px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+}
+
+.certificates-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+}
+
+.certificates-card h3 {
+    color: #333;
+    margin-bottom: 10px;
+    font-size: 1.2rem;
+}
+
+.certificates-description {
+    color: #666;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+}
+
+.certificates-link {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    color: white;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    z-index: 999;
+    border: none;
+    outline: none;
+    pointer-events: all;
+}
+
+.certificates-link:hover,
+.certificates-link:focus,
+.certificates-link:active {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    color: white;
+    text-decoration: none;
+}
+
+.certificates-link * {
+    pointer-events: none;
+}
+
+.certificates-icon {
+    width: 50px;
+    height: 50px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.certificates-icon i {
+    font-size: 1.5rem;
+}
+
+.certificates-text {
+    flex-grow: 1;
+}
+
+.certificates-count {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.certificates-subtitle {
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+.certificates-arrow {
+    margin-left: 15px;
+    flex-shrink: 0;
+    font-size: 1.2rem;
+}
+
+.recent-ratings {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+}
+
+.rating-item {
+    display: flex;
+    align-items: start;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+
+.rating-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #667eea;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.rating-content {
+    flex-grow: 1;
+}
+
+.rating-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.rating-student {
+    font-weight: 600;
+    color: #333;
+}
+
+.rating-stars-small {
+    color: #ffc107;
+    font-size: 0.9rem;
+}
+
+.rating-text {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-top: 5px;
+}
+
+.rating-date {
+    color: #999;
+    font-size: 0.8rem;
+}
+
+.rate-form {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+}
+
+.back-button {
+    margin-bottom: 30px;
+}
+
+@media (max-width: 768px) {
+    .profile-name {
+        font-size: 2rem;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+    }
+    
+    .section-title {
+        font-size: 2rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Messages -->
+{% if messages %}
+<div class="container mt-3">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Back Button -->
+<div class="container">
+    <div class="back-button">
+        <a href="{% url 'accounts:teachers_list' %}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i>К списку преподавателей
+        </a>
+    </div>
+</div>
+
+<!-- Profile Header -->
+<div class="profile-header">
+    <div class="container">
+        <div class="profile-avatar">
+            <i class="fas fa-user text-white fa-4x"></i>
+        </div>
+        <h1 class="profile-name">{{ teacher.get_full_name|default:teacher.username }}</h1>
+        <p class="profile-specialization">IT-специалист</p>
+        <p class="lead mb-4">Профессиональный преподаватель с опытом работы в IT-индустрии</p>
+    </div>
+</div>
+
+<!-- Main Stats Section -->
+<div class="stats-section">
+    <div class="container">
+        <div class="row g-4 mb-5">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-number">{{ total_courses }}</div>
+                    <div class="stat-label">всего курсов</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-number">{{ total_students }}</div>
+                    <div class="stat-label">всего студентов</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-number">{{ teacher_average_rating }}</div>
+                    <div class="stat-label">
+                        рейтинг преподавателя
+                        <div class="rating-number">
+                            {{ teacher_average_rating }}/5.0
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-number">{{ total_teacher_ratings }}</div>
+                    <div class="stat-label">оценок всего</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Stats -->
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="detailed-stats">
+                    <h3><i class="fas fa-chart-bar me-2"></i>Детальная статистика</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-item-value">{{ published_courses }}</div>
+                            <div class="stat-item-label">Опубликовано курсов</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-item-value">{{ draft_courses }}</div>
+                            <div class="stat-item-label">Черновиков</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-item-value">{{ total_likes }}</div>
+                            <div class="stat-item-label">Лайков всего</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-item-value">{{ total_reviews }}</div>
+                            <div class="stat-item-label">Отзывов всего</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rating Distribution Chart -->
+                <div class="rating-section">
+                    <h3><i class="fas fa-star me-2"></i>Распределение оценок</h3>
+                    <div class="rating-chart">
+                        <div class="rating-bar">
+                            <div class="rating-label">5 ⭐</div>
+                            <div class="rating-progress">
+                                <div class="rating-fill" style="width: {{ rating_distribution.5|mul:100|div:total_teacher_ratings|default:0 }}%"></div>
+                            </div>
+                            <div class="rating-count">{{ rating_distribution.5|default:0 }}</div>
+                        </div>
+                        <div class="rating-bar">
+                            <div class="rating-label">4 ⭐</div>
+                            <div class="rating-progress">
+                                <div class="rating-fill" style="width: {{ rating_distribution.4|mul:100|div:total_teacher_ratings|default:0 }}%"></div>
+                            </div>
+                            <div class="rating-count">{{ rating_distribution.4|default:0 }}</div>
+                        </div>
+                        <div class="rating-bar">
+                            <div class="rating-label">3 ⭐</div>
+                            <div class="rating-progress">
+                                <div class="rating-fill" style="width: {{ rating_distribution.3|mul:100|div:total_teacher_ratings|default:0 }}%"></div>
+                            </div>
+                            <div class="rating-count">{{ rating_distribution.3|default:0 }}</div>
+                        </div>
+                        <div class="rating-bar">
+                            <div class="rating-label">2 ⭐</div>
+                            <div class="rating-progress">
+                                <div class="rating-fill" style="width: {{ rating_distribution.2|mul:100|div:total_teacher_ratings|default:0 }}%"></div>
+                            </div>
+                            <div class="rating-count">{{ rating_distribution.2|default:0 }}</div>
+                        </div>
+                        <div class="rating-bar">
+                            <div class="rating-label">1 ⭐</div>
+                            <div class="rating-progress">
+                                <div class="rating-fill" style="width: {{ rating_distribution.1|mul:100|div:total_teacher_ratings|default:0 }}%"></div>
+                            </div>
+                            <div class="rating-count">{{ rating_distribution.1|default:0 }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="top-courses">
+                    <h3><i class="fas fa-trophy me-2"></i>Топ курсы</h3>
+                    {% for course_data in popular_courses %}
+                    <div class="top-course-item">
+                        <div class="top-course-rank">{{ forloop.counter }}</div>
+                        <div class="top-course-info">
+                            <div class="top-course-title">{{ course_data.course.title }}</div>
+                            <div class="top-course-stats">
+                                <i class="fas fa-user-graduate me-1"></i>{{ course_data.enrollment_count }} студентов
+                                {% if course_data.rating > 0 %}
+                                    • <i class="fas fa-star me-1"></i>{{ course_data.rating }}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted">Пока нет курсов со студентами</p>
+                    {% endfor %}
+                </div>
+
+                <!-- Certificates Card -->
+                <div class="certificates-card">
+                    <h3><i class="fas fa-certificate me-2"></i>Сертификаты</h3>
+                    <p class="certificates-description">Просмотрите доступные сертификаты и ваши достижения</p>
+                    <a href="{% url 'accounts:certificates' %}" class="certificates-link">
+                        <div class="certificates-icon">
+                            <i class="fas fa-award"></i>
+                        </div>
+                        <div class="certificates-text">
+                            <div class="certificates-count">6 сертификатов</div>
+                            <div class="certificates-subtitle">2 завершенных, 2 в процессе, 2 доступных</div>
+                        </div>
+                        <div class="certificates-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Recent Ratings -->
+                <div class="recent-ratings">
+                    <h3><i class="fas fa-comments me-2"></i>Последние оценки</h3>
+                    {% for rating in recent_ratings %}
+                    <div class="rating-item">
+                        <div class="rating-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="rating-content">
+                            <div class="rating-header">
+                                <div class="rating-student">{{ rating.student.get_full_name|default:rating.student.username }}</div>
+                                <div class="rating-number-small">
+                                    {{ rating.rating }}/5.0
+                                </div>
+                            </div>
+                            {% if rating.comment %}
+                            <div class="rating-text">{{ rating.comment|truncatewords:20 }}</div>
+                            {% endif %}
+                            <div class="rating-date">{{ rating.created_at|date:"d.m.Y H:i" }}</div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted">Пока нет оценок</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rate Teacher Section -->
+{% if can_rate %}
+<div class="container mb-5">
+    <div class="rate-form">
+        <h3><i class="fas fa-star me-2"></i>Оценить преподавателя</h3>
+        {% if user_rating %}
+        <p class="text-muted mb-3">Вы уже оценили этого преподавателя. Вы можете изменить свою оценку:</p>
+        {% else %}
+        <p class="text-muted mb-3">Поделитесь вашим опытом обучения с этим преподавателем:</p>
+        {% endif %}
+        
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label">{{ form.rating.label }}</label>
+                <div class="rating-form-dropdown">
+                    {{ form.rating }}
+                    {% if form.rating.errors %}
+                    <div class="text-danger">
+                        {{ form.rating.errors }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-warning mt-3">
+                        {{ form.non_field_errors }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="{{ form.comment.id_for_label }}" class="form-label">{{ form.comment.label }}</label>
+                {{ form.comment }}
+                {% if form.comment.errors %}
+                <div class="text-danger">
+                    {{ form.comment.errors }}
+                </div>
+                {% endif %}
+            </div>
+            
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-paper-plane me-2"></i>{% if user_rating %}Обновить оценку{% else %}Отправить оценку{% endif %}
+            </button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<!-- Courses Section -->
+<div class="courses-section">
+    <div class="container">
+        <h2 class="section-title">Все курсы преподавателя</h2>
+        
+        {% if courses %}
+        <div class="row g-4">
+            {% for course_data in courses_with_stats %}
+            <div class="col-lg-4 col-md-6">
+                <div class="card course-card">
+                    <div class="course-image">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <div class="course-body">
+                        <h3 class="course-title">{{ course_data.course.title }}</h3>
+                        <div class="course-category">
+                            <i class="fas fa-tag me-1"></i>{{ course_data.course.category.name|default:"Без категории" }}
+                        </div>
+                        <p class="text-muted">{{ course_data.course.description|truncatewords:20|default:"Описание курса отсутствует" }}</p>
+                        
+                        <div class="course-stats">
+                            <div class="course-stat">
+                                <span class="course-stat-value">{{ course_data.enrollment_count }}</span>
+                                <span class="course-stat-label">студентов</span>
+                            </div>
+                            <div class="course-stat">
+                                <span class="course-stat-value">{{ course_data.likes_count }}</span>
+                                <span class="course-stat-label">лайков</span>
+                            </div>
+                            <div class="course-stat">
+                                <span class="course-stat-value">{{ course_data.reviews_count }}</span>
+                                <span class="course-stat-label">отзывов</span>
+                            </div>
+                        </div>
+                        
+                        {% if course_data.rating > 0 %}
+                        <div class="mt-2">
+                            <div class="rating-number">
+                                {{ course_data.rating }}/5.0
+                            </div>
+                            <span class="ms-2">{{ course_data.rating }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        <a href="{% url 'courses:course_detail' course_data.course.id %}" class="course-link">
+                            Подробнее <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-graduation-cap fa-3x text-muted mb-4"></i>
+            <h4 class="text-muted">У этого преподавателя пока нет курсов</h4>
+            <p class="text-muted">Попробуйте выбрать другого преподавателя</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- CTA Section -->
+<div class="bg-light py-5">
+    <div class="container text-center">
+        <h3 class="mb-4">Хотите начать обучение?</h3>
+        <p class="text-muted mb-4">Изучите все доступные курсы и выберите подходящий</p>
+        <a href="{% url 'courses:course_list' %}" class="btn btn-primary btn-lg px-5">
+            <i class="fas fa-compass me-2"></i>Все курсы
+        </a>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const certificatesLink = document.querySelector('.certificates-link');
+    if (certificatesLink) {
+        certificatesLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = '{% url "accounts:certificates" %}';
+        });
+    }
+});
+</script>
+{% endblock %}

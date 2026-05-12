@@ -13,124 +13,136 @@
     </div>
 
     <div class="row g-4 mb-4">
-        <div class="col-md-2">
-            <div class="card border-0 shadow-sm bg-primary text-white">
-                <div class="card-body text-center">
-                    <i class="fas fa-users fa-2x mb-2 opacity-75"></i>
-                    <h4 class="mb-0">{{ stats.total_users|default:0 }}</h4>
-                    <small>Пользователей</small>
-                </div>
+
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card border-0 shadow-sm bg-primary text-white h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <i class="fas fa-users fa-2x mb-2 opacity-75"></i>
+                <h4 class="mb-1 fw-bold">{{ stats.total_users|default:0 }}</h4>
+                <small>Пользователей</small>
             </div>
         </div>
-        <div class="col-md-2">
-            <div class="card border-0 shadow-sm bg-success text-white">
-                <div class="card-body text-center">
-                    <i class="fas fa-user-graduate fa-2x mb-2 opacity-75"></i>
-                    <h4 class="mb-0">{{ stats.students|default:0 }}</h4>
-                    <small>Студентов</small>
-                </div>
+    </div>
+
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card border-0 shadow-sm bg-success text-white h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <i class="fas fa-user-graduate fa-2x mb-2 opacity-75"></i>
+                <h4 class="mb-1 fw-bold">{{ stats.students|default:0 }}</h4>
+                <small>Студентов</small>
             </div>
         </div>
-        <div class="col-md-2">
-            <div class="card border-0 shadow-sm bg-info text-white">
-                <div class="card-body text-center">
-                    <i class="fas fa-chalkboard-teacher fa-2x mb-2 opacity-75"></i>
-                    <h4 class="mb-0">{{ stats.authors|default:0 }}</h4>
-                    <small>Преподавателей</small>
-                </div>
+    </div>
+
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card border-0 shadow-sm bg-info text-white h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <i class="fas fa-chalkboard-teacher fa-2x mb-2 opacity-75"></i>
+                <h4 class="mb-1 fw-bold">{{ stats.teachers|default:0 }}</h4>
+                <small>Преподавателей</small>
             </div>
         </div>
-        <div class="col-md-2">
-            <div class="card border-0 shadow-sm bg-warning text-white">
-                <div class="card-body text-center">
-                    <i class="fas fa-book fa-2x mb-2 opacity-75"></i>
-                    <h4 class="mb-0">{{ stats.total_courses|default:0 }}</h4>
-                    <small>Курсов</small>
-                </div>
+    </div>
+
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card border-0 shadow-sm bg-warning text-white h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <i class="fas fa-book fa-2x mb-2 opacity-75"></i>
+                <h4 class="mb-1 fw-bold">{{ stats.total_courses|default:0 }}</h4>
+                <small>Курсов</small>
             </div>
         </div>
-        <div class="col-md-2">
-            <div class="card border-0 shadow-sm bg-danger text-white">
-                <div class="card-body text-center">
-                    <i class="fas fa-enrollment fa-2x mb-2 opacity-75"></i>
-                    <h4 class="mb-0">{{ stats.total_enrollments|default:0 }}</h4>
-                    <small>Записей</small>
-                </div>
+    </div>
+
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card border-0 shadow-sm bg-danger text-white h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <i class="fas fa-clipboard-list fa-2x mb-2 opacity-75"></i>
+                <h4 class="mb-1 fw-bold">{{ stats.total_enrollments|default:0 }}</h4>
+                <small>Записей</small>
             </div>
         </div>
-        <div class="col-md-2">
-            <div class="card border-0 shadow-sm bg-secondary text-white">
-                <div class="card-body text-center">
-                    <i class="fas fa-heart fa-2x mb-2 opacity-75"></i>
-                    <h4 class="mb-0">{{ stats.total_likes|default:0 }}</h4>
-                    <small>Лайков</small>
+    </div>
+
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card border-0 shadow-sm bg-secondary text-white h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <i class="fas fa-heart fa-2x mb-2 opacity-75"></i>
+                <h4 class="mb-1 fw-bold">{{ stats.total_likes|default:0 }}</h4>
+                <small>Лайков</small>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+    <div class="row g-4 mb-4">
+
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="flex-shrink-0">
+                    <div class="bg-success bg-opacity-10 rounded-circle p-3">
+                        <i class="fas fa-user-plus text-success fa-2x"></i>
+                    </div>
+                </div>
+                <div class="flex-grow-1 ms-3">
+                    <h5 class="mb-1 fw-bold">+{{ recent_stats.new_users|default:0 }}</h5>
+                    <small class="text-muted">Новых пользователей (7 дней)</small>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="row g-4 mb-4">
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body d-flex align-items-center">
-                    <div class="flex-shrink-0">
-                        <div class="bg-success bg-opacity-10 rounded-circle p-3">
-                            <i class="fas fa-user-plus text-success fa-2x"></i>
-                        </div>
-                    </div>
-                    <div class="flex-grow-1 ms-3">
-                        <h5 class="mb-0">+{{ recent_stats.new_users|default:0 }}</h5>
-                        <small class="text-muted">Новых пользователей (7 дней)</small>
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="flex-shrink-0">
+                    <div class="bg-primary bg-opacity-10 rounded-circle p-3">
+                        <i class="fas fa-user-check text-primary fa-2x"></i>
                     </div>
                 </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body d-flex align-items-center">
-                    <div class="flex-shrink-0">
-                        <div class="bg-primary bg-opacity-10 rounded-circle p-3">
-                            <i class="fas fa-user-check text-primary fa-2x"></i>
-                        </div>
-                    </div>
-                    <div class="flex-grow-1 ms-3">
-                        <h5 class="mb-0">{{ recent_stats.active_users|default:0 }}</h5>
-                        <small class="text-muted">Активных пользователей</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body d-flex align-items-center">
-                    <div class="flex-shrink-0">
-                        <div class="bg-info bg-opacity-10 rounded-circle p-3">
-                            <i class="fas fa-plus-circle text-info fa-2x"></i>
-                        </div>
-                    </div>
-                    <div class="flex-grow-1 ms-3">
-                        <h5 class="mb-0">+{{ recent_stats.new_enrollments|default:0 }}</h5>
-                        <small class="text-muted">Новых записей (7 дней)</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body d-flex align-items-center">
-                    <div class="flex-shrink-0">
-                        <div class="bg-warning bg-opacity-10 rounded-circle p-3">
-                            <i class="fas fa-exclamation-triangle text-warning fa-2x"></i>
-                        </div>
-                    </div>
-                    <div class="flex-grow-1 ms-3">
-                        <h5 class="mb-0">{{ recent_errors|default:0 }}</h5>
-                        <small class="text-muted">Ошибок (24 часа)</small>
-                    </div>
+                <div class="flex-grow-1 ms-3">
+                    <h5 class="mb-1 fw-bold">{{ recent_stats.active_users|default:0 }}</h5>
+                    <small class="text-muted">Активных пользователей</small>
                 </div>
             </div>
         </div>
     </div>
+
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="flex-shrink-0">
+                    <div class="bg-info bg-opacity-10 rounded-circle p-3">
+                        <i class="fas fa-plus-circle text-info fa-2x"></i>
+                    </div>
+                </div>
+                <div class="flex-grow-1 ms-3">
+                    <h5 class="mb-1 fw-bold">+{{ recent_stats.new_enrollments|default:0 }}</h5>
+                    <small class="text-muted">Новых записей (7 дней)</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="flex-shrink-0">
+                    <div class="bg-warning bg-opacity-10 rounded-circle p-3">
+                        <i class="fas fa-exclamation-triangle text-warning fa-2x"></i>
+                    </div>
+                </div>
+                <div class="flex-grow-1 ms-3">
+                    <h5 class="mb-1 fw-bold">{{ recent_stats.error_count|default:0 }}</h5>
+                    <small class="text-muted">Ошибок (24 часа)</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
 
     <div class="row g-4">
         <div class="col-lg-8">

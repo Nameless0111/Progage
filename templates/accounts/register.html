@@ -33,23 +33,56 @@
                         
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="id_username" class="form-label">Имя пользователя *</label>
-                                <input type="text" class="form-control" id="id_username" name="username" required>
+                                <label for="id_username" class="form-label">
+                                    Имя пользователя <span class="text-danger">*</span>
+                                    <small class="text-muted">(латинские буквы, цифры, _)</small>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                    <input type="text" class="form-control" id="id_username" name="username" required>
+                                </div>
+                                <div class="field-hint" id="username-hint">
+                                    <i class="fas fa-info-circle"></i>
+                                    <span>Минимум 3 символа</span>
+                                </div>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="id_email" class="form-label">Email *</label>
-                                <input type="email" class="form-control" id="id_email" name="email" required>
+                                <label for="id_email" class="form-label">
+                                    Email <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                    <input type="email" class="form-control" id="id_email" name="email" required>
+                                </div>
+                                <div class="field-hint" id="email-hint">
+                                    <i class="fas fa-info-circle"></i>
+                                    <span>Пример: user@example.com</span>
+                                </div>
                             </div>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="id_first_name" class="form-label">Имя</label>
-                                <input type="text" class="form-control" id="id_first_name" name="first_name">
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                    <input type="text" class="form-control" id="id_first_name" name="first_name" placeholder="Введите имя">
+                                </div>
+                                <div class="field-hint" id="firstname-hint">
+                                    <i class="fas fa-info-circle"></i>
+                                    <span>Только буквы</span>
+                                </div>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="id_last_name" class="form-label">Фамилия</label>
-                                <input type="text" class="form-control" id="id_last_name" name="last_name">
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                    <input type="text" class="form-control" id="id_last_name" name="last_name" placeholder="Введите фамилию">
+                                </div>
+                                <div class="field-hint" id="lastname-hint">
+                                    <i class="fas fa-info-circle"></i>
+                                    <span>Только буквы</span>
+                                </div>
                             </div>
                         </div>
 
@@ -62,13 +95,56 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="id_password1" class="form-label">Пароль *</label>
-                                <input type="password" class="form-control" id="id_password1" name="password1" required>
+                            <div class="col-12 mb-3">
+                                <label for="id_password1" class="form-label">
+                                    Пароль <span class="text-danger">*</span>
+                                    <small class="text-muted">(минимум 8 символов)</small>
+                                </label>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="id_password2" class="form-label">Подтверждение пароля *</label>
-                                <input type="password" class="form-control" id="id_password2" name="password2" required>
+                            <div class="col-12 mb-3">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                            <input type="password" class="form-control" id="id_password1" name="password1" required>
+                                            <button class="btn btn-outline-secondary" type="button" id="toggle-password1" title="Показать/скрыть пароль">
+                                                <i class="fas fa-eye" id="password1-icon"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="password-strength" id="password-strength"></div>
+                                    </div>
+                                </div>
+                                <div class="field-hint" id="password1-hint" style="margin-top: 0.5rem;">
+                                    <i class="fas fa-info-circle"></i>
+                                    <span>Заглавные буквы, строчные буквы, цифры</span>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12 mb-3">
+                                <label for="id_password2" class="form-label">
+                                    Подтверждение пароля <span class="text-danger">*</span>
+                                </label>
+                            </div>
+                            <div class="col-12 mb-3">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                            <input type="password" class="form-control" id="id_password2" name="password2" required>
+                                            <button class="btn btn-outline-secondary" type="button" id="toggle-password2" title="Показать/скрыть пароль">
+                                                <i class="fas fa-eye" id="password2-icon"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="password-match-indicator" id="password-match">
+                                            <i class="fas fa-times-circle"></i>
+                                            <span>Пароли не совпадают</span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -81,6 +157,33 @@
                         <div class="mb-3">
                             <label for="id_avatar" class="form-label">Аватар</label>
                             <input type="file" class="form-control" id="id_avatar" name="avatar" accept="image/*">
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="gdpr_consent" name="gdpr_consent" required onclick="return false;">
+                                <label class="form-check-label" for="gdpr_consent">
+                                    <span class="text-danger">*</span> Я даю согласие на обработку персональных данных в соответствии с 
+                                    <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#gdprModal">
+                                        Федеральным законом № 152-ФЗ "О персональных данных"
+                                    </a>
+                                </label>
+                                <div class="form-text text-muted">
+                                    Обязательно для регистрации. Нажмите на ссылку для ознакомления с условиями.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3" id="profile_visibility_section" style="display: none;">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="profile_public" name="profile_public">
+                                <label class="form-check-label" for="profile_public">
+                                    Я согласен(на) на публичное отображение моего профиля на странице преподавателей
+                                </label>
+                                <div class="form-text text-muted">
+                                    Необязательно. Если не отметить, ваш профиль будет анонимным и не будет отображаться в общем списке преподавателей.
+                                </div>
+                            </div>
                         </div>
 
                         <button type="submit" class="btn btn-primary w-100 btn-lg mb-3">
@@ -99,4 +202,652 @@
         </div>
     </div>
 </div>
+
+<!-- GDPR Modal -->
+<div class="modal fade" id="gdprModal" tabindex="-1" aria-labelledby="gdprModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="gdprModalLabel">
+                    <i class="fas fa-shield-alt me-2"></i>Согласие на обработку персональных данных
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6 class="text-primary mb-3">Федеральный закон № 152-ФЗ "О персональных данных"</h6>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Внимательно ознакомьтесь</strong> с условиями обработки персональных данных
+                </div>
+                
+                <h6 class="mb-2">1. Какие данные мы собираем:</h6>
+                <ul class="mb-3">
+                    <li>ФИО, email, имя пользователя</li>
+                    <li>Аватар (при загрузке)</li>
+                    <li>Учебная активность и результаты тестов</li>
+                    <li>IP-адрес и техническая информация</li>
+                </ul>
+                
+                <h6 class="mb-2">2. Цели обработки данных:</h6>
+                <ul class="mb-3">
+                    <li>Предоставление доступа к образовательной платформе</li>
+                    <li>Организация учебного процесса</li>
+                    <li>Улучшение качества услуг</li>
+                    <li>Обеспечение безопасности системы</li>
+                </ul>
+                
+                <h6 class="mb-2">3. Ваши права:</h6>
+                <ul class="mb-3">
+                    <li>Право на доступ к своим данным</li>
+                    <li>Право на исправление неточных данных</li>
+                    <li>Право на удаление своих данных</li>
+                    <li>Право отозвать согласие на обработку</li>
+                </ul>
+                
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Важно:</strong> Вы можете в любой момент отозвать свое согласие, 
+                    но это приведет к удалению вашего аккаунта и всех связанных с ним данных.
+                </div>
+                
+                <div class="form-check mb-3">
+                    <input type="checkbox" class="form-check-input" id="gdpr_read_confirm">
+                    <label class="form-check-label" for="gdpr_read_confirm">
+                        Я ознакомился(лась) с условиями обработки персональных данных
+                    </label>
+                </div>
+                
+                            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                <button type="button" class="btn btn-primary" id="gdpr_accept" disabled>
+                    <i class="fas fa-check me-2"></i>Принимаю условия
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Стили для индикаторов валидации */
+.form-control.is-valid {
+    border-color: #28a745;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4.1-.8.42-.42.67-.83.42-1.4 0-.56-.17-.92-.42L4.7 1.13c-.4-.08-.73.17-.73.42 0 .27.16.53.42.73l1.58 1.58c.27.27.65.27 1.06 0 .41-.17.78-.27 1.06-.59.42-1.06-.42-1.48 0-.55-.22-1.03-.42-1.48L5.27 2.52c-.32.36-.66.55-1.06.55-.79 0-1.44.35-1.88.75-.44.58-.75.44-1.48 0-.82.35-1.59.35-2.2 0-1.22-.18-2.09-.55-2.09-.7 0-.5.04-.91.04-1.4l-.01-1.98c-.01-.48-.16-.89-.47-1.29-.65-.19-.34-.39-.63-.39-1.01 0-.55.04-.82.04-1.28.01-.38.19-.77.19-1.24.01-.42.21-.78.21-1.23 0-.55-.13-1.06-.27-1.5.27-.94 0-1.48.08-1.85.08-.72.05-1.4.05-1.87.1-.5.05-.82.1-1.31.1-.98.1-1.74.01-.56.05-1.11.05-1.66.01-.47.01-.95.01-1.46-.01-.56.08-1.12.08-1.83.42-.78.52-1.64.52-2.31-.78-.83-1.72-.78-2.86.05-.48.05-1.4.05-2.31-.03-.63-.06-1.25-.06-2.19-.02-.36-.04-.73-.04-1.15-.02-.39-.02-.78-.02-1.24-.02-.65-.07-1.3-.07-2.07-.02-.62-.02-1.28-.02-2.05-.07-.26-.15-.59-.15-.98-.1-.54-.12-.96-.12-1.69-.07-.4.07-.82.07-1.3-.02-.39-.02-.76-.02-1.18-.01-.37-.02-.73-.02-1.12.01-.34-.02-.68-.02-1.06-.03-.33-.03-.67-.03-1.06-.01-.21-.04-.43-.04-.85-.04-1.27-.01-.2-.02-.4-.02-.82-.02-1.2-.01-.21-.03-.42-.04-.65-.04-1.06-.02-.22-.03-.44-.05-.87-.05-1.32-.01-.2-.03-.42-.04-.64-.04-1.04-.02-.22-.03-.44-.05-.87-.05-1.32-.01-.2-.03-.42-.04-.64-.04-1.04-.02-.22-.03-.44-.05-.87-.05-1.32-.01-.2-.03-.42-.04-.64-.04-1.04-.02-.22-.03-.44-.05-.87-.05-1.32-.01-.2-.03-.42-.04-.64-.04-1.04-.02-.22-.03-.44-.05-.87-.05-1.32z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    padding-right: 2.25rem;
+}
+
+.form-control.is-invalid {
+    border-color: #dc3545;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4l2-2V3.6z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    padding-right: 2.25rem;
+}
+
+/* Индикатор силы пароля */
+.password-strength {
+    height: 8px;
+    border-radius: 4px;
+    margin-top: 8px;
+    transition: all 0.3s ease;
+    background: #e9ecef;
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.password-strength::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: linear-gradient(90deg, #dc3545 0%, #dc3545 33%, #ffc107 33%, #ffc107 66%, #ffc107 100%);
+    transition: width 0.3s ease;
+    width: 0;
+    border-radius: 4px;
+}
+
+.password-strength.weak::after {
+    width: 33%;
+    background: linear-gradient(90deg, #dc3545 0%, #dc3545 33%, #ffc107 33%, #ffc107 100%);
+    animation: pulse 2s infinite;
+}
+
+.password-strength.medium::after {
+    width: 66%;
+    background: linear-gradient(90deg, #dc3545 0%, #dc3545 33%, #ffc107 33%, #ffc107 66%, #28a745 100%);
+    animation: none;
+}
+
+.password-strength.strong::after {
+    width: 100%;
+    background: linear-gradient(90deg, #dc3545 0%, #ffc107 33%, #ffc107 66%, #28a745 100%);
+    animation: none;
+}
+
+/* Анимация пульсации для слабого пароля */
+@keyframes pulse {
+    0% { 
+        box-shadow: inset 0 1px 3px rgba(220, 53, 69, 0.2);
+    }
+    50% { 
+        box-shadow: inset 0 1px 3px rgba(220, 53, 69, 0.4);
+    }
+    100% { 
+        box-shadow: inset 0 1px 3px rgba(220, 53, 69, 0.2);
+    }
+}
+
+/* Текст подсказки для полей */
+.field-hint {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+
+/* Выделение ссылки в чекбоксе */
+.form-check-label a {
+    text-decoration: underline !important;
+    color: #0d6efd !important;
+    font-weight: 500;
+}
+
+.form-check-label a:hover {
+    color: #0a58ca !important;
+}
+
+.field-hint i {
+    font-size: 0.75rem;
+}
+
+/* Анимация для обязательных полей */
+.form-label span {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+.form-label.valid span {
+    color: #28a745;
+}
+
+/* Улучшенные стили для input-group */
+.input-group .form-control {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.input-group .btn {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+/* Индикатор совпадения паролей */
+.password-match-indicator {
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.password-match-indicator.match {
+    color: #28a745;
+}
+
+.password-match-indicator.no-match {
+    color: #dc3545;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Функция для переключения видимости пароля
+    function setupPasswordToggle(toggleId, inputId, iconId) {
+        const toggle = document.getElementById(toggleId);
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        
+        if (toggle && input && icon) {
+            toggle.addEventListener('click', function() {
+                const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+                input.setAttribute('type', type);
+                
+                if (type === 'text') {
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                    toggle.setAttribute('title', 'Скрыть пароль');
+                } else {
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                    toggle.setAttribute('title', 'Показать пароль');
+                }
+            });
+        }
+    }
+    
+    // Настраиваем переключатели для обоих полей пароля
+    setupPasswordToggle('toggle-password1', 'id_password1', 'password1-icon');
+    setupPasswordToggle('toggle-password2', 'id_password2', 'password2-icon');
+    
+    // Валидация в реальном времени
+    const password1 = document.getElementById('id_password1');
+    const password2 = document.getElementById('id_password2');
+    const username = document.getElementById('id_username');
+    const email = document.getElementById('id_email');
+    
+    function validatePasswords() {
+        if (!password1.value || !password2.value) {
+            return;
+        }
+        
+        // Проверка совпадения паролей
+        const matchIndicator = document.getElementById('password-match');
+        if (password1.value !== password2.value) {
+            password2.setCustomValidity('Пароли не совпадают');
+            password2.classList.add('is-invalid');
+            matchIndicator.innerHTML = '<i class="fas fa-times-circle"></i><span>Пароли не совпадают</span>';
+            matchIndicator.className = 'password-match-indicator no-match';
+        } else {
+            password2.setCustomValidity('');
+            password2.classList.remove('is-invalid');
+            matchIndicator.innerHTML = '<i class="fas fa-check-circle"></i><span>Пароли совпадают</span>';
+            matchIndicator.className = 'password-match-indicator match';
+        }
+        
+        // Проверка сложности пароля
+        const strengthMeter = document.getElementById('password-strength');
+        const hint1 = document.getElementById('password1-hint');
+        let strength = 0;
+        let strengthText = '';
+        let strengthClass = '';
+        
+        if (password1.value.length < 8) {
+            password1.setCustomValidity('Пароль должен содержать минимум 8 символов');
+            password1.classList.add('is-invalid');
+            strengthText = 'Слишком короткий';
+            strengthClass = 'weak';
+        } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password1.value)) {
+            password1.setCustomValidity('Пароль должен содержать заглавные буквы, строчные буквы и цифры');
+            password1.classList.add('is-invalid');
+            strengthText = 'Слабый';
+            strengthClass = 'weak';
+        } else {
+            password1.setCustomValidity('');
+            password1.classList.remove('is-invalid');
+            
+            // Анализ силы пароля
+            if (password1.value.length >= 8) strength++;
+            if (/[a-z]/.test(password1.value)) strength++;
+            if (/[A-Z]/.test(password1.value)) strength++;
+            if (/\d/.test(password1.value)) strength++;
+            if (/[^a-zA-Z\d]/.test(password1.value)) strength++;
+            
+            if (strength <= 2) {
+                strengthText = 'Слабый';
+                strengthClass = 'weak';
+            } else if (strength === 3) {
+                strengthText = 'Средний';
+                strengthClass = 'medium';
+            } else {
+                strengthText = 'Сильный';
+                strengthClass = 'strong';
+            }
+        }
+        
+        // Обновляем индикатор силы
+        strengthMeter.className = `password-strength ${strengthClass}`;
+        strengthMeter.title = `Сила пароля: ${strengthText}`;
+        
+        // Обновляем подсказку
+        if (hint1) {
+            if (strengthClass === 'weak') {
+                hint1.innerHTML = '<i class="fas fa-exclamation-triangle text-warning"></i><span>Добавьте цифры и заглавные буквы</span>';
+            } else if (strengthClass === 'medium') {
+                hint1.innerHTML = '<i class="fas fa-info-circle text-info"></i><span>Хороший пароль, можно добавить спецсимволы</span>';
+            } else if (strengthClass === 'strong') {
+                hint1.innerHTML = '<i class="fas fa-check-circle text-success"></i><span>Отличный пароль!</span>';
+            }
+        }
+    }
+    
+    // Добавляем обработчики для валидации обоих полей
+    if (password1) {
+        password1.addEventListener('input', function() {
+            updatePasswordStrengthAndHints();
+            validatePasswords();
+        });
+    }
+    if (password2) {
+        password2.addEventListener('input', validatePasswords);
+    }
+    
+    // Функция для обновления индикатора силы пароля и подсказок
+    function updatePasswordStrengthAndHints() {
+        const password = password1.value;
+        const strengthMeter = document.getElementById('password-strength');
+        
+        if (!strengthMeter) return;
+        
+        let strength = 0;
+        let strengthClass = '';
+        
+        if (password.length < 8) {
+            strengthClass = 'weak';
+            strength = 0;
+        } else {
+            if (password.length >= 8) strength++;
+            if (/[a-z]/.test(password)) strength++;
+            if (/[A-Z]/.test(password)) strength++;
+            if (/\d/.test(password)) strength++;
+            if (/[^a-zA-Z\d]/.test(password)) strength++;
+            
+            if (strength <= 2) {
+                strengthClass = 'weak';
+            } else if (strength === 3) {
+                strengthClass = 'medium';
+            } else {
+                strengthClass = 'strong';
+            }
+        }
+        
+        // Обновляем индикатор силы
+        strengthMeter.className = `password-strength ${strengthClass}`;
+        
+        // Обновляем подсказки
+        updatePasswordHints(strength, password);
+    }
+    
+    // Функция для расчета силы пароля
+    function getPasswordStrength(password) {
+        if (password.length < 8) return 0;
+        
+        let strength = 0;
+        if (password.length >= 8) strength++;
+        if (/[a-z]/.test(password)) strength++;
+        if (/[A-Z]/.test(password)) strength++;
+        if (/\d/.test(password)) strength++;
+        if (/[^a-zA-Z\d]/.test(password)) strength++;
+        
+        return strength;
+    }
+    
+    // Валидация имени пользователя (только латинские буквы, цифры и _)
+    if (username) {
+        username.addEventListener('input', function() {
+            const value = username.value;
+            if (!/^[a-zA-Z0-9_]+$/.test(value) && value.length > 0) {
+                username.setCustomValidity('Имя пользователя может содержать только латинские буквы, цифры и знак подчеркивания');
+                username.classList.add('is-invalid');
+                updateFieldHint('username-hint', false, 'Разрешены только: a-z, A-Z, 0-9, _');
+            } else if (value.length < 3) {
+                username.setCustomValidity('Имя пользователя должно содержать минимум 3 символа');
+                username.classList.add('is-invalid');
+                updateFieldHint('username-hint', false, `Слишком коротко (${value.length}/3 символов)`);
+            } else if (value.length > 30) {
+                username.setCustomValidity('Имя пользователя не должно превышать 30 символов');
+                username.classList.add('is-invalid');
+                updateFieldHint('username-hint', false, `Слишком длинно (${value.length}/30 символов)`);
+            } else {
+                username.setCustomValidity('');
+                username.classList.remove('is-invalid');
+                updateFieldHint('username-hint', true, `Отлично! (${value.length}/30 символов)`);
+            }
+        });
+    }
+    
+    // Валидация имени
+    const firstName = document.getElementById('id_first_name');
+    if (firstName) {
+        firstName.addEventListener('input', function() {
+            const value = firstName.value;
+            if (!/^[a-zA-Zа-яА-ЯёЁ\s-]+$/.test(value) && value.length > 0) {
+                firstName.setCustomValidity('Имя может содержать только буквы');
+                firstName.classList.add('is-invalid');
+                updateFieldHint('firstname-hint', false, 'Разрешены только буквы (включая кириллицу)');
+            } else if (value.length > 50) {
+                firstName.setCustomValidity('Имя не должно превышать 50 символов');
+                firstName.classList.add('is-invalid');
+                updateFieldHint('firstname-hint', false, `Слишком длинно (${value.length}/50 символов)`);
+            } else if (value.length > 0 && value.length < 2) {
+                firstName.setCustomValidity('Имя слишком короткое');
+                firstName.classList.add('is-invalid');
+                updateFieldHint('firstname-hint', false, `Слишком коротко (${value.length}/2 символов)`);
+            } else {
+                firstName.setCustomValidity('');
+                firstName.classList.remove('is-invalid');
+                updateFieldHint('firstname-hint', true, `Отлично! (${value.length}/50 символов)`);
+            }
+        });
+    }
+    
+    // Валидация фамилии
+    const lastName = document.getElementById('id_last_name');
+    if (lastName) {
+        lastName.addEventListener('input', function() {
+            const value = lastName.value;
+            if (!/^[a-zA-Zа-яА-ЯёЁ\s-]+$/.test(value) && value.length > 0) {
+                lastName.setCustomValidity('Фамилия может содержать только буквы');
+                lastName.classList.add('is-invalid');
+                updateFieldHint('lastname-hint', false, 'Разрешены только буквы (включая кириллицу)');
+            } else if (value.length > 50) {
+                lastName.setCustomValidity('Фамилия не должна превышать 50 символов');
+                lastName.classList.add('is-invalid');
+                updateFieldHint('lastname-hint', false, `Слишком длинно (${value.length}/50 символов)`);
+            } else if (value.length > 0 && value.length < 2) {
+                lastName.setCustomValidity('Фамилия слишком короткая');
+                lastName.classList.add('is-invalid');
+                updateFieldHint('lastname-hint', false, `Слишком коротко (${value.length}/2 символов)`);
+            } else {
+                lastName.setCustomValidity('');
+                lastName.classList.remove('is-invalid');
+                updateFieldHint('lastname-hint', true, `Отлично! (${value.length}/50 символов)`);
+            }
+        });
+    }
+    
+    // Функция обновления подсказок
+    function updateFieldHint(hintId, isValid, message) {
+        const hint = document.getElementById(hintId);
+        if (hint) {
+            // Всегда показываем подсказку с текущим состоянием
+            if (isValid) {
+                hint.innerHTML = `<span class="text-success">${message}</span>`;
+                hint.style.color = '#28a745'; // Зеленый цвет для валидного состояния
+            } else {
+                hint.innerHTML = `<span class="text-danger">${message}</span>`;
+                hint.style.color = '#dc3545'; // Красный цвет для ошибки
+            }
+        }
+    }
+    
+    // Инициализация подсказок при загрузке страницы
+    
+    // Показываем начальные подсказки
+    updateFieldHint('username-hint', false, 'Минимум 3 символа');
+    updateFieldHint('email-hint', false, 'Пример: user@example.com');
+    updateFieldHint('firstname-hint', false, 'Только буквы');
+    updateFieldHint('lastname-hint', false, 'Только буквы');
+    updateFieldHint('password1-hint', false, 'Минимум 8 символов');
+    
+    // GDPR обработчики
+    const gdprModal = document.getElementById('gdprModal');
+    const gdprAcceptBtn = document.getElementById('gdpr_accept');
+    const gdprCheckbox = document.getElementById('gdpr_consent');
+    const gdprReadConfirm = document.getElementById('gdpr_read_confirm');
+    const roleSelect = document.getElementById('id_role');
+    const profileVisibilitySection = document.getElementById('profile_visibility_section');
+
+    // Обновление видимости настроек преподавателя
+    function updateTeacherOptions() {
+        const isTeacher = roleSelect && roleSelect.value === 'teacher';
+
+        if (profileVisibilitySection) {
+            profileVisibilitySection.style.display = isTeacher ? 'block' : 'none';
+        }
+    }
+
+    // Инициализация
+    updateTeacherOptions();
+
+    // Изменение роли
+    if (roleSelect) {
+        roleSelect.addEventListener('change', updateTeacherOptions);
+    }
+
+    // Кнопка "Принимаю условия" активируется только после галочки
+    gdprReadConfirm.addEventListener('change', function () {
+        gdprAcceptBtn.disabled = !this.checked;
+    });
+
+    // Полный запрет ручного клика по основной галочке
+    gdprCheckbox.addEventListener('click', function (e) {
+        if (!gdprCheckbox.dataset.accepted) {
+            e.preventDefault();
+
+            const modal = new bootstrap.Modal(gdprModal);
+            modal.show();
+        }
+    });
+
+    // Кнопка принятия условий
+    gdprAcceptBtn.addEventListener('click', function () {
+
+        // Отмечаем согласие
+        gdprCheckbox.checked = true;
+
+        // Помечаем что согласие принято
+        gdprCheckbox.dataset.accepted = 'true';
+
+        
+        // Закрываем модалку
+        const modalInstance = bootstrap.Modal.getInstance(gdprModal);
+        modalInstance.hide();
+
+        // Сбрасываем backdrop вручную
+        document.body.classList.remove('modal-open');
+
+        document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+    });
+    
+    // Валидация email
+    if (email) {
+        email.addEventListener('input', function() {
+            const value = email.value;
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(value) && value.length > 0) {
+                email.setCustomValidity('Введите корректный email адрес');
+                email.classList.add('is-invalid');
+                if (!value.includes('@')) {
+                    updateFieldHint('email-hint', false, 'Отсутствует символ @');
+                } else if (!value.includes('.')) {
+                    updateFieldHint('email-hint', false, 'Отсутствует домен (.com, .ru и т.д.)');
+                } else {
+                    updateFieldHint('email-hint', false, 'Некорректный формат email');
+                }
+            } else if (value.length > 254) {
+                email.setCustomValidity('Email слишком длинный');
+                email.classList.add('is-invalid');
+                updateFieldHint('email-hint', false, `Слишком длинный (${value.length}/254 символов)`);
+            } else {
+                email.setCustomValidity('');
+                email.classList.remove('is-invalid');
+                updateFieldHint('email-hint', true, `Отлично! (${value.length}/254 символов)`);
+            }
+        });
+    }
+    
+    // Обновляем подсказки для паролей с деталями
+    function updatePasswordHints(strength, password) {
+        const hint1 = document.getElementById('password1-hint');
+        if (!hint1) return;
+        
+        if (password.length < 8) {
+            updateFieldHint('password1-hint', false, `Требуется минимум 8 символов (${password.length}/8)`);
+        } else if (!/[a-z]/.test(password)) {
+            updateFieldHint('password1-hint', false, 'Добавьте строчные буквы (a-z)');
+        } else if (!/[A-Z]/.test(password)) {
+            updateFieldHint('password1-hint', false, 'Добавьте заглавные буквы (A-Z)');
+        } else if (!/\d/.test(password)) {
+            updateFieldHint('password1-hint', false, 'Добавьте цифры (0-9)');
+        } else if (strength <= 2) {
+            updateFieldHint('password1-hint', false, 'Слабый пароль. Добавьте спецсимволы (!@#$%)');
+        } else if (strength === 3) {
+            updateFieldHint('password1-hint', true, 'Хороший пароль! Можно добавить спецсимволы для усиления');
+        } else {
+            updateFieldHint('password1-hint', true, 'Отличный пароль! Максимальная безопасность');
+        }
+    }
+    
+    // Обновляем функцию validatePasswords с детальными подсказками
+    function validatePasswords() {
+        if (!password1.value || !password2.value) {
+            return;
+        }
+        
+        const pwd1 = password1.value;
+        const pwd2 = password2.value;
+        
+        // Проверка совпадения паролей
+        const matchIndicator = document.getElementById('password-match');
+        if (pwd1 !== pwd2) {
+            password2.setCustomValidity('Пароли не совпадают');
+            password2.classList.add('is-invalid');
+            matchIndicator.innerHTML = '<span class="text-danger">Пароли не совпадают</span>';
+            matchIndicator.className = 'password-match-indicator no-match';
+        } else {
+            password2.setCustomValidity('');
+            password2.classList.remove('is-invalid');
+            matchIndicator.innerHTML = '<span class="text-success">Пароли совпадают ✓</span>';
+            matchIndicator.className = 'password-match-indicator match';
+        }
+        
+        // Анализ силы пароля
+        const strengthMeter = document.getElementById('password-strength');
+        let strength = 0;
+        let strengthClass = '';
+        
+        if (pwd1.length < 8) {
+            strengthClass = 'weak';
+            strength = 0;
+        } else {
+            if (pwd1.length >= 8) strength++;
+            if (/[a-z]/.test(pwd1)) strength++;
+            if (/[A-Z]/.test(pwd1)) strength++;
+            if (/\d/.test(pwd1)) strength++;
+            if (/[^a-zA-Z\d]/.test(pwd1)) strength++;
+            
+            if (strength <= 2) {
+                strengthClass = 'weak';
+            } else if (strength === 3) {
+                strengthClass = 'medium';
+            } else {
+                strengthClass = 'strong';
+            }
+        }
+        
+        // Обновляем индикатор силы
+        strengthMeter.className = `password-strength ${strengthClass}`;
+        
+        // Обновляем подсказки
+        updatePasswordHints(strength, pwd1);
+    }
+});
+</script>
 {% endblock %}
