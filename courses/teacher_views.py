@@ -87,11 +87,21 @@ def delete_course(request, course_id):
     course = get_object_or_404(Course, id=course_id, instructor=request.user)
     
     if request.method == 'POST':
+        title = course.title
         course.delete()
-        messages.success(request, 'Курс успешно удален!')
+        messages.success(request, f'Курс "{title}" успешно удален.')
         return redirect('courses:teacher_dashboard')
-    
-    return render(request, 'courses/teacher/delete_course.html', {'course': course})
+
+    course_stats = {
+        'lessons_count': course.lessons.count(),
+        'students_count': course.enrollments.count(),
+        'avg_rating': course.reviews.aggregate(avg_rating=Avg('rating'))['avg_rating'] or 0,
+    }
+
+    return render(request, 'courses/teacher/delete_course.html', {
+        'course': course,
+        'course_stats': course_stats,
+    })
 
 @login_required
 def course_lessons(request, course_id):

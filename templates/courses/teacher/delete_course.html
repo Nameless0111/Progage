@@ -27,9 +27,9 @@
                     <div class="mt-4">
                         <strong>Информация о курсе:</strong>
                         <ul class="list-unstyled mt-2">
-                            <li><i class="fas fa-book-open me-2"></i>Уроков: {{ course.lessons.count }}</li>
-                            <li><i class="fas fa-users me-2"></i>Студентов: {{ course.enrollments.count }}</li>
-                            <li><i class="fas fa-star me-2"></i>Рейтинг: {{ course.reviews.aggregate(avg_rating=models.Avg('rating')).avg_rating|default:0|floatformat:1 }}</li>
+                            <li><i class="fas fa-book-open me-2"></i>Уроков: {{ course_stats.lessons_count }}</li>
+                            <li><i class="fas fa-users me-2"></i>Студентов: {{ course_stats.students_count }}</li>
+                            <li><i class="fas fa-star me-2"></i>Рейтинг: {{ course_stats.avg_rating|floatformat:1 }}</li>
                         </ul>
                     </div>
                     
