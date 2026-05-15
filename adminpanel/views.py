@@ -29,7 +29,7 @@ from .models import ActivityLog, SystemLog, BackupLog, UserSession, PopularConte
 from accounts.models import User
 from accounts.models import Profile, UserNotifications, UserPrivacy
 
-from courses.models import Course, CourseEnrollment, CourseLike, CourseReview, Lesson, Category
+from courses.models import Course, CourseEnrollment, CourseLike, CourseReview, Lesson, Category, LessonComment
 
 from chat.models import Message, SupportChat
 
@@ -1939,4 +1939,62 @@ def review_delete(request, review_id):
     }
 
     return render(request, 'adminpanel/review_delete.html', context)
+
+
+# Комментарии к урокам
+
+@admin_required
+
+def comment_list(request):
+
+    """Список комментариев к урокам"""
+
+    comments = LessonComment.objects.select_related(
+        'user', 'lesson', 'lesson__course'
+    ).order_by('-created_at')
+
+    context = {
+
+        'comments': comments,
+
+        'title': 'Комментарии к урокам',
+
+    }
+
+    return render(request, 'adminpanel/comment_list.html', context)
+
+
+
+@admin_required
+
+def comment_delete(request, comment_id):
+
+    """Удаление комментария к уроку"""
+
+    comment = get_object_or_404(
+        LessonComment.objects.select_related('user', 'lesson', 'lesson__course'),
+        id=comment_id
+    )
+
+    if request.method == 'POST':
+
+        lesson_title = comment.lesson.title
+
+        user_username = comment.user.username
+
+        comment.delete()
+
+        messages.success(request, f'Комментарий {user_username} к уроку "{lesson_title}" удален.')
+
+        return redirect('adminpanel:comment_list')
+
+    context = {
+
+        'comment': comment,
+
+        'title': 'Удаление комментария',
+
+    }
+
+    return render(request, 'adminpanel/comment_delete.html', context)
 

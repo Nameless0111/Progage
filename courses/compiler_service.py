@@ -10,6 +10,7 @@ import shutil
 import time
 import re
 import shlex
+import sys
 
 from typing import Dict, List, Tuple
 from .models import SecurityConfig
@@ -21,7 +22,7 @@ class CodeCompiler:
     DEFAULT_CONFIGS = {
         'python': {
             'compile_command': '',
-            'run_command': 'python {file}',
+            'run_command': 'python3 {file}',
             'file_extension': 'py',
             'max_execution_time': 5,
             'max_memory': 256,
@@ -344,6 +345,23 @@ class CodeCompiler:
                 'timeout': False,
             }
 
+    def _normalize_command_for_runtime(self, command: str, language: str) -> str:
+        if language != 'python':
+            return command
+
+        try:
+            command_args = shlex.split(command, posix=os.name != 'nt')
+        except ValueError:
+            return command
+
+        if command_args and command_args[0].lower() in {'python', 'python3', 'py'}:
+            command_args[0] = sys.executable
+            if os.name == 'nt':
+                return subprocess.list2cmdline(command_args)
+            return ' '.join(shlex.quote(part) for part in command_args)
+
+        return command
+
     def _parse_javascript_error(self, stderr: str) -> str:
         """Красивый вывод ошибок JavaScript"""
 
@@ -592,6 +610,10 @@ class CodeCompiler:
                     ''
                 )
             )
+            run_command = self._normalize_command_for_runtime(
+                run_command,
+                language
+            )
 
             result = self._execute_in_sandbox(
                 run_command,
@@ -689,12 +711,10 @@ class CodeCompiler:
             'passed_tests': 0,
             'failed_tests': 0,
             'test_results': [],
-            'overall_status': 'success'
+            'overall_status': 'wrong'
         }
 
         for index, test_case in enumerate(test_cases):
-
-            input_data = test_case.get('input', '')
 
             expected_output = (
                 test_case.get(
@@ -708,7 +728,7 @@ class CodeCompiler:
             result = self.compile_and_run(
                 code,
                 language,
-                input_data,
+                '',
                 timeout
             )
 
@@ -717,14 +737,21 @@ class CodeCompiler:
                 ''
             ).strip()
 
+            normalized_actual = '\n'.join(
+                line.rstrip() for line in actual_output.splitlines()
+            ).strip()
+            normalized_expected = '\n'.join(
+                line.rstrip() for line in expected_output.splitlines()
+            ).strip()
+
             test_passed = (
-                actual_output == expected_output and
+                normalized_actual == normalized_expected and
                 result.get('success', False)
             )
 
             test_result = {
                 'test_number': index + 1,
-                'input': input_data,
+                'input': '',
                 'expected_output': expected_output,
                 'actual_output': actual_output,
                 'passed': test_passed,
@@ -750,7 +777,11 @@ class CodeCompiler:
                 results['passed_tests'] += 1
             else:
                 results['failed_tests'] += 1
-                results['overall_status'] = 'wrong'
+
+        if results['passed_tests'] > 0:
+            results['overall_status'] = 'success'
+        elif any(item.get('status') == 'error' for item in results['test_results']):
+            results['overall_status'] = 'error'
 
         return results
 

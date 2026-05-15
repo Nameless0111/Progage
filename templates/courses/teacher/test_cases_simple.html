@@ -19,16 +19,8 @@
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
-                <div class="row">
-                    <div class="col-md-6 mb-2">
-                        <label class="form-label">Входные данные <small class="text-muted">(опционально)</small></label>
-                        <textarea name="test_input_{{ forloop.counter0 }}" class="form-control" rows="2" placeholder="Входные данные...">{{ test_case.input }}</textarea>
-                    </div>
-                    <div class="col-md-6 mb-2">
-                        <label class="form-label">Ожидаемый вывод <small class="text-danger">*</small></label>
-                        <textarea name="test_output_{{ forloop.counter0 }}" class="form-control" rows="2" placeholder="Ожидаемый вывод..." required>{{ test_case.expected_output }}</textarea>
-                    </div>
-                </div>
+                <label class="form-label">Ожидаемый вывод <small class="text-danger">*</small></label>
+                <textarea name="test_output_{{ forloop.counter0 }}" class="form-control" rows="2" placeholder="Ожидаемый вывод..." required>{{ test_case.expected_output }}</textarea>
             </div>
             {% endfor %}
         </div>
@@ -66,16 +58,8 @@ function addTestCase() {
                 <i class="fas fa-trash"></i>
             </button>
         </div>
-        <div class="row">
-            <div class="col-md-6 mb-2">
-                <label class="form-label">Входные данные <small class="text-muted">(опционально)</small></label>
-                <textarea name="test_input_${testCaseCounter}" class="form-control" rows="2" placeholder="Входные данные..."></textarea>
-            </div>
-            <div class="col-md-6 mb-2">
-                <label class="form-label">Ожидаемый вывод <small class="text-danger">*</small></label>
-                <textarea name="test_output_${testCaseCounter}" class="form-control" rows="2" placeholder="Ожидаемый вывод..." required></textarea>
-            </div>
-        </div>
+        <label class="form-label">Ожидаемый вывод <small class="text-danger">*</small></label>
+        <textarea name="test_output_${testCaseCounter}" class="form-control" rows="2" placeholder="Ожидаемый вывод..." required></textarea>
     `;
     
     container.appendChild(testCaseDiv);

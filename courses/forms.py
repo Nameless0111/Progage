@@ -187,11 +187,6 @@ class PracticeAssignmentForm(forms.ModelForm):
 
 class TestCaseForm(forms.Form):
     """Форма для добавления тестовых случаев"""
-    input_data = forms.CharField(
-        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Входные данные...'}),
-        label='Входные данные',
-        required=False
-    )
     expected_output = forms.CharField(
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Ожидаемый вывод...'}),
         label='Ожидаемый вывод',

@@ -4,8 +4,11 @@ from django.contrib import messages
 from django.utils import timezone
 from django.db import models
 from django.db.models import Count, Avg
-from .models import Course, Lesson, Category, TestQuestion, TestAnswer, PracticeAssignment, CodeSubmission
-from .forms import CourseForm, LessonForm, TestQuestionForm, TestAnswerFormSet, PracticeAssignmentForm, TestCaseForm
+from .models import (
+    Course, Lesson, Category, TestQuestion, TestAnswer, TestSubmission,
+    TestAnswerSubmission, PracticeAssignment, CodeSubmission,
+)
+from .forms import CourseForm, LessonForm, TestQuestionForm, TestAnswerFormSet, PracticeAssignmentForm
 
 @login_required
 def teacher_dashboard(request):
@@ -129,6 +132,9 @@ def course_lessons(request, course_id):
             test_questions = TestQuestion.objects.filter(lesson=lesson)
             lesson_info['has_test_questions'] = test_questions.exists()
             lesson_info['test_question_count'] = test_questions.count()
+            test_submissions = TestSubmission.objects.filter(lesson=lesson)
+            lesson_info['test_submission_count'] = test_submissions.count()
+            lesson_info['pending_test_review_count'] = test_submissions.filter(needs_review=True).count()
         
         # Проверяем наличие практического задания
         if lesson.lesson_type == 'practice':
@@ -253,21 +259,33 @@ def test_constructor(request, lesson_id):
             question.save()
             
             # Обрабатываем ответы
-            answers = request.POST.getlist('answers[]')
-            correct_answer = request.POST.get('correct_answer')
-            correct_answers = request.POST.getlist('correct_answers[]')
-            
-            for i, answer_text in enumerate(answers):
-                if answer_text.strip():  # Пропускаем пустые ответы
-                    answer = TestAnswer.objects.create(
+            if question.question_type in {'single', 'multiple'}:
+                answers = request.POST.getlist('answers[]')
+                correct_answer = request.POST.get('correct_answer')
+                correct_answers = request.POST.getlist('correct_answers[]')
+                clean_answers = [(i, answer_text.strip()) for i, answer_text in enumerate(answers) if answer_text.strip()]
+
+                for order, (original_index, answer_text) in enumerate(clean_answers):
+                    TestAnswer.objects.create(
                         question=question,
-                        answer_text=answer_text.strip(),
+                        answer_text=answer_text,
+                        order=order,
                         is_correct=(
-                            str(i) == correct_answer or  # Для одиночного выбора
-                            str(i) in correct_answers     # Для множественного выбора
+                            str(original_index) == correct_answer or
+                            str(original_index) in correct_answers
                         )
                     )
-            
+
+                if not question.answers.exists():
+                    question.delete()
+                    messages.error(request, 'Для вопроса с вариантами ответа нужно добавить минимум один вариант.')
+                    return redirect('courses:test_constructor', lesson_id=lesson.id)
+
+                if not question.answers.filter(is_correct=True).exists():
+                    question.delete()
+                    messages.error(request, 'Отметьте правильный вариант ответа.')
+                    return redirect('courses:test_constructor', lesson_id=lesson.id)
+
             messages.success(request, 'Вопрос добавлен!')
             return redirect('courses:test_constructor', lesson_id=lesson.id)
     else:
@@ -277,7 +295,15 @@ def test_constructor(request, lesson_id):
     
     # Добавляем статистику
     total_points = sum(question.points for question in questions)
-    question_types = list(set(question.question_type for question in questions))
+    question_type_labels = dict(TestQuestion.QUESTION_TYPES)
+    question_types = [
+        {
+            'value': question_type,
+            'label': question_type_labels.get(question_type, question_type),
+            'count': questions.filter(question_type=question_type).count(),
+        }
+        for question_type in sorted(set(question.question_type for question in questions))
+    ]
     
     context = {
         'lesson': lesson,
@@ -300,11 +326,31 @@ def edit_test_question(request, lesson_id, question_id):
     
     if request.method == 'POST':
         question_form = TestQuestionForm(request.POST, instance=question)
+        posted_type = request.POST.get('question_type', question.question_type)
         answer_formset = TestAnswerFormSet(request.POST, instance=question)
         
-        if question_form.is_valid() and answer_formset.is_valid():
-            question_form.save()
-            answer_formset.save()
+        if posted_type in {'single', 'multiple'}:
+            forms_valid = question_form.is_valid() and answer_formset.is_valid()
+        else:
+            forms_valid = question_form.is_valid()
+
+        if forms_valid:
+            question = question_form.save()
+            if question.question_type in {'single', 'multiple'}:
+                answer_formset.save()
+                if not question.answers.filter(answer_text__gt='').exists():
+                    messages.error(request, 'Для вопроса с вариантами ответа нужен хотя бы один ответ.')
+                    return redirect('courses:edit_test_question', lesson_id=lesson.id, question_id=question.id)
+                if not question.answers.filter(is_correct=True).exists():
+                    messages.error(request, 'Отметьте правильный вариант ответа.')
+                    return redirect('courses:edit_test_question', lesson_id=lesson.id, question_id=question.id)
+                if question.question_type == 'single':
+                    correct_answers = list(question.answers.filter(is_correct=True).order_by('order', 'id'))
+                    for extra_answer in correct_answers[1:]:
+                        extra_answer.is_correct = False
+                        extra_answer.save(update_fields=['is_correct'])
+            else:
+                question.answers.all().delete()
             messages.success(request, 'Вопрос обновлен!')
             return redirect('courses:test_constructor', lesson_id=lesson.id)
     else:
@@ -319,6 +365,71 @@ def edit_test_question(request, lesson_id, question_id):
         'answer_formset': answer_formset,
     }
     return render(request, 'courses/teacher/edit_test_question.html', context)
+
+
+@login_required
+def test_submissions(request, lesson_id):
+    if request.user.role != 'teacher':
+        messages.error(request, 'Доступ только для преподавателей')
+        return redirect('home')
+
+    lesson = get_object_or_404(Lesson, id=lesson_id, course__instructor=request.user)
+    submissions = (
+        TestSubmission.objects
+        .filter(lesson=lesson)
+        .select_related('user')
+        .prefetch_related('answer_submissions__question', 'answer_submissions__selected_answers')
+        .order_by('-submitted_at')
+    )
+
+    return render(request, 'courses/teacher/test_submissions.html', {
+        'course': lesson.course,
+        'lesson': lesson,
+        'submissions': submissions,
+    })
+
+
+@login_required
+def review_test_submission(request, submission_id):
+    if request.user.role != 'teacher':
+        messages.error(request, 'Доступ только для преподавателей')
+        return redirect('home')
+
+    submission = get_object_or_404(
+        TestSubmission.objects.select_related('lesson__course', 'user'),
+        id=submission_id,
+        lesson__course__instructor=request.user,
+    )
+
+    if request.method != 'POST':
+        return redirect('courses:test_submissions', lesson_id=submission.lesson.id)
+
+    reviewable_answers = submission.answer_submissions.filter(
+        question__question_type='essay'
+    ).select_related('question')
+
+    for answer in reviewable_answers:
+        raw_score = request.POST.get(f'score_{answer.id}', '').strip()
+        feedback = request.POST.get(f'feedback_{answer.id}', '').strip()
+
+        try:
+            score = int(raw_score)
+        except ValueError:
+            score = 0
+
+        max_points = answer.question.points or 0
+        answer.score = max(0, min(score, max_points))
+        answer.feedback = feedback
+        answer.is_correct = answer.score > 0
+        answer.needs_review = False
+        answer.save()
+
+    submission.score = sum(item.score for item in submission.answer_submissions.all())
+    submission.needs_review = submission.answer_submissions.filter(needs_review=True).exists()
+    submission.save()
+
+    messages.success(request, 'Оценка развернутого ответа сохранена.')
+    return redirect('courses:test_submissions', lesson_id=submission.lesson.id)
 
 @login_required
 def delete_test_question(request, lesson_id, question_id):
@@ -393,19 +504,16 @@ def practice_assignment(request, lesson_id):
             # Собираем все тестовые случаи с индексами
             i = 0
             while True:
-                input_key = f'test_input_{i}'
                 output_key = f'test_output_{i}'
                 
                 if output_key not in request.POST:
                     break  # Больше нет тестов
                 
-                input_data = request.POST.get(input_key, '').strip()
                 output_data = request.POST.get(output_key, '').strip()
                 
                 # Сохраняем только если есть выходные данные
                 if output_data:
                     test_cases.append({
-                        'input': input_data,
                         'expected_output': output_data
                     })
                 
@@ -490,18 +598,15 @@ def practice_assignment_manual(request, lesson_id):
             # Собираем все тестовые случаи с индексами
             i = 0
             while True:
-                input_key = f'test_input_{i}'
                 output_key = f'test_output_{i}'
                 
                 if output_key not in request.POST:
                     break  # Больше нет тестов
                 
-                input_data = request.POST.get(input_key, '').strip()
                 output_data = request.POST.get(output_key, '').strip()
                 
                 if output_data:  # Сохраняем только если есть выходные данные
                     test_cases.append({
-                        'input': input_data,
                         'expected_output': output_data
                     })
                 
@@ -598,9 +703,11 @@ def review_submission(request, submission_id):
         # Обновляем статус в зависимости от действия
         if action == 'approve':
             submission.status = 'approved'
+            submission.is_correct = True
             messages.success(request, 'Работа принята')
         elif action == 'reject':
             submission.status = 'rejected'
+            submission.is_correct = False
             messages.success(request, 'Работа отклонена')
         elif action == 'save':
             submission.status = 'reviewed'
@@ -676,11 +783,11 @@ def submit_code(request, lesson_id):
             # Запускаем на тестовых случаях
             results = compiler.run_test_cases(code, assignment.programming_language, test_cases)
             
-            # Обновляем отправку
-            submission.status = results['overall_status']
+            # Обновляем отправку. Для обычной автопроверки достаточно пройти хотя бы один тестовый случай.
+            submission.status = 'pending' if assignment.require_manual_review else results['overall_status']
             submission.test_cases_passed = results['passed_tests']
             submission.total_test_cases = results['total_tests']
-            submission.is_correct = results['overall_status'] == 'success'
+            submission.is_correct = False if assignment.require_manual_review else results['overall_status'] == 'success'
             submission.executed_at = timezone.now()
             
             # Сохраняем детали тестов
@@ -689,24 +796,48 @@ def submit_code(request, lesson_id):
                 for test_result in results['test_results']:
                     test_output.append(f"Тест {test_result['test_number']}: {'пройден' if test_result['passed'] else 'не пройден'}")
                     if not test_result['passed']:
-                        test_output.append(f"  Ввод: {test_result['input']}")
                         test_output.append(f"  Ожидаемый: {test_result['expected_output']}")
                         test_output.append(f"  Полученный: {test_result['actual_output']}")
                 submission.output = '\n'.join(test_output)
         else:
             # Простое выполнение без тестов
             result = compiler.compile_and_run(code, assignment.programming_language)
-            submission.status = result['status']
+            expected_output = (assignment.expected_output or '').strip()
+            actual_output = (result.get('stdout', '') or '').strip()
+            has_expected_output = bool(expected_output)
+            output_matches = (
+                '\n'.join(line.rstrip() for line in actual_output.splitlines()).strip() ==
+                '\n'.join(line.rstrip() for line in expected_output.splitlines()).strip()
+            )
+
+            if assignment.require_manual_review:
+                submission.status = 'pending'
+            elif has_expected_output and result.get('success'):
+                submission.status = 'success' if output_matches else 'wrong'
+            else:
+                submission.status = result['status']
+
             submission.output = result.get('stdout', '') + result.get('stderr', '')
             submission.execution_time = result.get('execution_time')
-            submission.is_correct = result['success']
+            submission.is_correct = False if assignment.require_manual_review else (
+                output_matches if has_expected_output and result.get('success') else result['success']
+            )
+            submission.test_cases_passed = 1 if has_expected_output and output_matches else 0
+            submission.total_test_cases = 1 if has_expected_output else 0
+            if has_expected_output and not output_matches:
+                submission.output = (
+                    f"Ожидаемый: {expected_output}\n"
+                    f"Полученный: {actual_output or result.get('stderr', '')}"
+                )
             submission.executed_at = timezone.now()
         
         submission.save()
         
         # Сообщение о результате
-        if submission.is_correct:
-            messages.success(request, 'Решение верное. Все тесты пройдены.')
+        if assignment.require_manual_review:
+            messages.success(request, 'Решение отправлено преподавателю на ручную проверку.')
+        elif submission.is_correct:
+            messages.success(request, 'Решение зачтено. Вывод совпал минимум с одним тестовым случаем.')
         else:
             messages.warning(request, f'Решение неверное. Пройдено {submission.test_cases_passed} из {submission.total_test_cases} тестов.')
         

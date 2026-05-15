@@ -75,6 +75,9 @@
                                     <a href="{% url 'adminpanel:course_edit' course.id %}" class="btn btn-outline-secondary" title="Редактировать">
                                         <i class="fas fa-edit"></i>
                                     </a>
+                                    <a href="{% url 'adminpanel:course_delete' course.id %}" class="btn btn-outline-danger" title="Удалить" onclick="return confirm('Вы уверены, что хотите удалить этот курс?')">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
                                 </div>
                             </td>
                         </tr>

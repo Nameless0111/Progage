@@ -600,11 +600,14 @@ function filterSubmissions(status) {
 }
 
 // Функции для управления тестовыми случаями
-let testCaseCounter = 0;
+let testCaseCounter = {{ test_cases|length }};
 
 function addTestCase() {
     const container = document.getElementById('test-cases-container');
     const addDiv = document.querySelector('.add-test-case');
+    const testCaseDiv = document.createElement('div');
+    testCaseDiv.className = 'test-case';
+    testCaseDiv.dataset.testIndex = testCaseCounter;
     
     testCaseDiv.innerHTML = `
         <div class="test-case-header">
@@ -613,16 +616,8 @@ function addTestCase() {
                 <i class="fas fa-trash"></i>
             </button>
         </div>
-        <div class="row">
-            <div class="col-md-6 mb-2">
-                <label class="form-label">Входные данные <small class="text-muted">(опционально)</small></label>
-                <textarea name="test_input_${testCaseCounter}" class="form-control code-editor" rows="2" placeholder="Входные данные (если не требуются, оставьте пустым)..."></textarea>
-            </div>
-            <div class="col-md-6 mb-2">
-                <label class="form-label">Ожидаемый вывод *</label>
-                <textarea name="test_output_${testCaseCounter}" class="form-control code-editor" rows="2" placeholder="Ожидаемый вывод..." required></textarea>
-            </div>
-        </div>
+        <label class="form-label">Ожидаемый вывод *</label>
+        <textarea name="test_output_${testCaseCounter}" class="form-control code-editor" rows="2" placeholder="Ожидаемый вывод..." required></textarea>
     `;
     
     if (addDiv) {

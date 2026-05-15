@@ -26,6 +26,8 @@ urlpatterns = [
     
     # URL для конструктора тестов
     path('teacher/lessons/<int:lesson_id>/test/', teacher_views.test_constructor, name='test_constructor'),
+    path('teacher/lessons/<int:lesson_id>/test/submissions/', teacher_views.test_submissions, name='test_submissions'),
+    path('teacher/test-submissions/<int:submission_id>/review/', teacher_views.review_test_submission, name='review_test_submission'),
     path('teacher/lessons/<int:lesson_id>/test/<int:question_id>/edit/', teacher_views.edit_test_question, name='edit_test_question'),
     path('teacher/lessons/<int:lesson_id>/test/<int:question_id>/delete/', teacher_views.delete_test_question, name='delete_test_question'),
     

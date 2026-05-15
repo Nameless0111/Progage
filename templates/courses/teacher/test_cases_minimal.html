@@ -16,16 +16,8 @@
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
-                <div class="row">
-                    <div class="col-md-6">
-                        <label class="form-label">Входные данные</label>
-                        <textarea name="test_input_{{ forloop.counter0 }}" class="form-control" rows="2">{{ test_case.input }}</textarea>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Ожидаемый вывод</label>
-                        <textarea name="test_output_{{ forloop.counter0 }}" class="form-control" rows="2">{{ test_case.expected_output }}</textarea>
-                    </div>
-                </div>
+                <label class="form-label">Ожидаемый вывод</label>
+                <textarea name="test_output_{{ forloop.counter0 }}" class="form-control" rows="2" placeholder="Например: Hello, world!" required>{{ test_case.expected_output }}</textarea>
             </div>
             {% endfor %}
         </div>
@@ -56,16 +48,8 @@ function addNewTest() {
                 <i class="fas fa-trash"></i>
             </button>
         </div>
-        <div class="row">
-            <div class="col-md-6">
-                <label class="form-label">Входные данные</label>
-                <textarea name="test_input_${currentCount}" class="form-control" rows="2"></textarea>
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Ожидаемый вывод</label>
-                <textarea name="test_output_${currentCount}" class="form-control" rows="2"></textarea>
-            </div>
-        </div>
+        <label class="form-label">Ожидаемый вывод</label>
+        <textarea name="test_output_${currentCount}" class="form-control" rows="2" placeholder="Например: Hello, world!" required></textarea>
     `;
     
     container.appendChild(newTest);

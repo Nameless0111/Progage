@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}Результаты теста - {{ lesson.title }} - {{ course.title }}{% endblock %}
 
@@ -25,6 +26,11 @@
     .result-header.failed {
         background: linear-gradient(135deg, #dc3545, #fd7e14);
         color: white;
+    }
+
+    .result-header.pending {
+        background: linear-gradient(135deg, #ffc107, #fd7e14);
+        color: #212529;
     }
     
     .score-display {
@@ -170,9 +176,11 @@
         </nav>
         
         <!-- Заголовок результатов -->
-        <div class="result-header {% if passed %}passed{% else %}failed{% endif %}">
+        <div class="result-header {% if submission.needs_review %}pending{% elif passed %}passed{% else %}failed{% endif %}">
             <h2 class="mb-3">
-                {% if passed %}
+                {% if submission.needs_review %}
+                    <i class="fas fa-clock me-2"></i>Тест ожидает проверки
+                {% elif passed %}
                     <i class="fas fa-trophy me-2"></i>Тест пройден!
                 {% else %}
                     <i class="fas fa-times-circle me-2"></i>Тест не пройден
@@ -185,7 +193,9 @@
                 {{ percentage }}%
             </div>
             <p class="mb-0">
-                {% if passed %}
+                {% if submission.needs_review %}
+                    Развернутые ответы еще должен оценить преподаватель.
+                {% elif passed %}
                     Поздравляем! Вы успешно сдали тест.
                 {% else %}
                 К сожалению, набрано недостаточно баллов для сдачи теста. Требуется 60%.
@@ -223,25 +233,21 @@
                 </div>
                 <div>
                     <span class="question-points">{{ question.points }} балл{{ question.points|pluralize:"а,ов" }}</span>
-                    {% if question.id in answers_by_question %}
-                        {% with user_answer=None %}
-                            {% for q_id, answer in answers_by_question.items %}
-                                {% if q_id == question.id %}
-                                    {% with user_answer=answer %}
-                                        {% if question.question_type == 'text' %}
-                                            <span class="result-badge pending ms-2">На проверке</span>
-                                        {% elif user_answer.is_correct %}
-                                            <span class="result-badge correct ms-2">Верно</span>
-                                        {% else %}
-                                            <span class="result-badge incorrect ms-2">Неверно</span>
-                                        {% endif %}
-                                    {% endwith %}
-                                {% endif %}
-                            {% endfor %}
-                        {% endwith %}
+                    {% with user_answer=answers_by_question|lookup:question.id %}
+                    {% if user_answer %}
+                        {% if question.question_type == 'text' %}
+                            <span class="result-badge correct ms-2">Засчитано</span>
+                        {% elif user_answer.needs_review %}
+                            <span class="result-badge pending ms-2">На проверке</span>
+                        {% elif user_answer.is_correct %}
+                            <span class="result-badge correct ms-2">Верно</span>
+                        {% else %}
+                            <span class="result-badge incorrect ms-2">Неверно</span>
+                        {% endif %}
                     {% else %}
                         <span class="result-badge incorrect ms-2">Нет ответа</span>
                     {% endif %}
+                    {% endwith %}
                 </div>
             </div>
             
@@ -296,27 +302,36 @@
                 
             {% elif question.question_type == 'text' or question.question_type == 'essay' %}
                 <!-- Текстовый ответ -->
-                {% if question.id in answers_by_question %}
-                    {% with user_answer=None %}
-                        {% for q_id, answer in answers_by_question.items %}
-                            {% if q_id == question.id %}
-                                {% with user_answer=answer %}
-                                    <div class="text-answer">
-                                        Ответ отправлен на проверку
-                                    </div>
-                                    <small class="text-muted mt-2 d-block">
-                                        <i class="fas fa-info-circle me-1"></i>
-                                        Текстовые ответы проверяются преподавателем
-                                    </small>
-                                {% endwith %}
-                            {% endif %}
-                        {% endfor %}
-                    {% endwith %}
+                {% with user_answer=answers_by_question|lookup:question.id %}
+                {% if user_answer %}
+                    <div class="text-answer">{{ user_answer.text_answer|default:"Ответ не заполнен" }}</div>
+                    {% if question.question_type == 'text' %}
+                    <small class="text-success mt-2 d-block">
+                        <i class="fas fa-check-circle me-1"></i>
+                        Свободный ответ засчитан автоматически: {{ user_answer.score }}/{{ question.points }} балл{{ question.points|pluralize:"а,ов" }}.
+                    </small>
+                    {% elif user_answer.needs_review %}
+                    <small class="text-warning mt-2 d-block">
+                        <i class="fas fa-clock me-1"></i>
+                        Развернутый ответ ожидает проверки преподавателя.
+                    </small>
+                    {% else %}
+                    <small class="text-muted mt-2 d-block">
+                        <i class="fas fa-check-circle me-1"></i>
+                        Проверено преподавателем: {{ user_answer.score }}/{{ question.points }} балл{{ question.points|pluralize:"а,ов" }}.
+                    </small>
+                    {% if user_answer.feedback %}
+                    <div class="alert alert-light border mt-2 mb-0">
+                        <strong>Комментарий преподавателя:</strong> {{ user_answer.feedback }}
+                    </div>
+                    {% endif %}
+                    {% endif %}
                 {% else %}
                     <div class="text-answer text-muted">
                         Нет ответа
                     </div>
                 {% endif %}
+                {% endwith %}
             {% endif %}
             
             {% if question.explanation %}

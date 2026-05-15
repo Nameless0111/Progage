@@ -185,7 +185,7 @@
                         Вопросы теста ({{ questions.count }})
                     </h5>
                     <div class="text-muted">
-                        Всего баллов: {{ questions.total_points }}
+                        Всего баллов: {{ total_points }}
                     </div>
                 </div>
                 <div class="card-body">
@@ -276,15 +276,17 @@
                         <strong>Количество вопросов:</strong> {{ questions.count }}
                     </div>
                     <div class="mb-3">
-                        <strong>Всего баллов:</strong> {{ questions.total_points }}
+                        <strong>Всего баллов:</strong> {{ total_points }}
                     </div>
                     <div class="mb-3">
                         <strong>Типы вопросов:</strong>
                         <div class="mt-2">
-                            {% for question_type in questions.question_types %}
-                                <span class="badge bg-{{ question_type|question_type_color }} me-1">
-                                    {{ question_type }}
+                            {% for question_type in question_types %}
+                                <span class="badge bg-{{ question_type.value|question_type_color }} me-1">
+                                    {{ question_type.label }}: {{ question_type.count }}
                                 </span>
+                            {% empty %}
+                                <span class="text-muted small">Пока нет вопросов</span>
                             {% endfor %}
                         </div>
                     </div>
@@ -310,7 +312,7 @@
                     </div>
                     <div class="mb-3">
                         <h6 class="text-warning">Свободный текстовый ответ</h6>
-                        <p class="small text-muted">Студент вводит текстовый ответ, система проверяет по ключевым словам.</p>
+                        <p class="small text-muted">Студент пишет свободный ответ. Ответ автоматически считается верным и получает баллы.</p>
                     </div>
                     <div class="mb-0">
                         <h6 class="text-purple">Развернутый ответ с проверкой</h6>
@@ -338,22 +340,53 @@
 // Функции для управления ответами
 let answerIndex = 2;
 
-function addAnswer() {
-    const answersList = document.getElementById('answers-list');
-    const answerItem = document.createElement('div');
-    answerItem.className = 'answer-item mb-2';
-    answerItem.innerHTML = `
-        <div class="input-group">
-            <div class="input-group-text">
-                <input type="radio" name="correct_answer" value="${answerIndex}">
+function getQuestionType() {
+    const select = document.querySelector('select[name="question_type"]');
+    return select ? select.value : 'single';
+}
+
+function correctInputMarkup(index, checked = false) {
+    const isMultiple = getQuestionType() === 'multiple';
+    const type = isMultiple ? 'checkbox' : 'radio';
+    const name = isMultiple ? 'correct_answers[]' : 'correct_answer';
+    return `<input type="${type}" name="${name}" value="${index}" ${checked ? 'checked' : ''}>`;
+}
+
+function answerItemMarkup(index, checked = false, value = '') {
+    return `
+        <div class="answer-item mb-2">
+            <div class="input-group">
+                <div class="input-group-text">
+                    ${correctInputMarkup(index, checked)}
+                </div>
+                <input type="text" name="answers[]" class="form-control" placeholder="Введите вариант ответа" value="${value}" required>
+                <button type="button" class="btn btn-outline-danger" onclick="removeAnswer(this)">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
-            <input type="text" name="answers[]" class="form-control" placeholder="Введите вариант ответа" required>
-            <button type="button" class="btn btn-outline-danger" onclick="removeAnswer(this)">
-                <i class="fas fa-times"></i>
-            </button>
         </div>
     `;
-    answersList.appendChild(answerItem);
+}
+
+function resetAnswers() {
+    const answersList = document.getElementById('answers-list');
+    answersList.innerHTML = answerItemMarkup(0, true) + answerItemMarkup(1, false);
+    answerIndex = 2;
+}
+
+function setAnswerInputsEnabled(enabled) {
+    document.querySelectorAll('#answers-list input').forEach(input => {
+        input.disabled = !enabled;
+        if (input.name === 'answers[]') {
+            input.required = enabled;
+        }
+    });
+}
+
+function addAnswer() {
+    const answersList = document.getElementById('answers-list');
+    answersList.insertAdjacentHTML('beforeend', answerItemMarkup(answerIndex));
+    setAnswerInputsEnabled(true);
     answerIndex++;
 }
 
@@ -365,9 +398,9 @@ function removeAnswer(button) {
     if (answersList.children.length > 2) {
         answerItem.remove();
         // Перенумеровываем индексы
-        const answers = answersList.querySelectorAll('input[name="correct_answer"]');
-        answers.forEach((radio, index) => {
-            radio.value = index;
+        const controls = answersList.querySelectorAll('input[type="radio"], input[type="checkbox"]');
+        controls.forEach((control, index) => {
+            control.value = index;
         });
     } else {
         alert('Должно быть минимум 2 варианта ответа');
@@ -376,25 +409,21 @@ function removeAnswer(button) {
 
 // Обновление типа ответов в зависимости от типа вопроса
 function updateAnswerFields() {
-    const questionType = document.querySelector('select[name="question_type"]').value;
+    const questionType = getQuestionType();
     const answersContainer = document.getElementById('answers-container');
+    const helpText = answersContainer.querySelector('.form-text');
     
     if (questionType === 'single' || questionType === 'multiple') {
         answersContainer.style.display = 'block';
-        // Для одиночного выбора - радио, для множественного - чекбоксы
-        const isMultiple = questionType === 'multiple';
-        document.querySelectorAll('#answers-list input[type="radio"]').forEach(radio => {
-            if (isMultiple) {
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.name = 'correct_answers[]';
-                checkbox.value = radio.value;
-                checkbox.checked = radio.checked;
-                radio.parentNode.replaceChild(checkbox, radio);
-            }
-        });
+        resetAnswers();
+        setAnswerInputsEnabled(true);
+        helpText.textContent = questionType === 'multiple'
+            ? 'Отметьте один или несколько правильных вариантов.'
+            : 'Отметьте один правильный вариант.';
     } else {
         answersContainer.style.display = 'none';
+        resetAnswers();
+        setAnswerInputsEnabled(false);
     }
 }
 
@@ -406,26 +435,6 @@ document.addEventListener('DOMContentLoaded', function() {
         questionTypeSelect.addEventListener('change', updateAnswerFields);
         updateAnswerFields(); // Инициализация
     }
-    
-    function updateTotalPoints() {
-        const points = document.querySelectorAll('.question-card');
-        let total = 0;
-        points.forEach(card => {
-            const badge = card.querySelector('.badge.bg-info');
-            if (badge) {
-                const match = badge.textContent.match(/(\d+)/);
-                if (match) {
-                    total += parseInt(match[1]);
-                }
-            }
-        });
-        const totalElement = document.querySelector('.text-muted');
-        if (totalElement) {
-            totalElement.textContent = `Всего баллов: ${total}`;
-        }
-    }
-    
-    updateTotalPoints();
 });
 </script>
 {% endblock %}

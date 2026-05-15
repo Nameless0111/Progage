@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Результаты теста - {{ lesson.title }} - Progage{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-3">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'home' %}">Главная</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'courses:teacher_dashboard' %}">Панель преподавателя</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'courses:teacher_course_lessons' course.id %}">{{ course.title }}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'courses:test_constructor' lesson.id %}">{{ lesson.title }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Результаты теста</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-clipboard-check text-primary me-2"></i>
+                Результаты теста
+            </h1>
+            <div class="text-muted">{{ lesson.title }}</div>
+        </div>
+        <a href="{% url 'courses:test_constructor' lesson.id %}" class="btn btn-outline-primary">
+            <i class="fas fa-edit me-2"></i>Конструктор теста
+        </a>
+    </div>
+
+    {% if submissions %}
+        {% for submission in submissions %}
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <div class="row align-items-center g-3">
+                    <div class="col-md-4">
+                        <strong>{{ submission.user.public_display_name }}</strong>
+                        <div class="small text-muted">
+                            {% if submission.user.is_anonymous_public %}
+                                Профиль скрыт
+                            {% else %}
+                                {{ submission.user.email|default:submission.user.username }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="badge {% if submission.needs_review %}bg-warning text-dark{% else %}bg-success{% endif %}">
+                            {% if submission.needs_review %}Требует проверки{% else %}Проверено{% endif %}
+                        </span>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>{{ submission.score }}/{{ submission.max_score }}</strong>
+                        <span class="text-muted">({{ submission.percentage|floatformat:0 }}%)</span>
+                    </div>
+                    <div class="col-md-2 text-md-end">
+                        <small class="text-muted">{{ submission.submitted_at|date:"d.m.Y H:i" }}</small>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{% url 'courses:review_test_submission' submission.id %}">
+                    {% csrf_token %}
+                    {% for answer in submission.answer_submissions.all %}
+                    <div class="border rounded p-3 mb-3">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <strong>Вопрос {{ answer.question.order }}.</strong>
+                                {{ answer.question.question_text }}
+                            </div>
+                            <span class="badge bg-secondary">{{ answer.score }}/{{ answer.question.points }}</span>
+                        </div>
+
+                        {% if answer.question.question_type == 'single' or answer.question.question_type == 'multiple' %}
+                            <div class="small text-muted mb-2">Выбранные варианты:</div>
+                            {% for option in answer.selected_answers.all %}
+                                <span class="badge {% if option.is_correct %}bg-success{% else %}bg-danger{% endif %} me-1">
+                                    {{ option.answer_text }}
+                                </span>
+                            {% empty %}
+                                <span class="text-muted">Нет ответа</span>
+                            {% endfor %}
+                        {% else %}
+                            <div class="small text-muted mb-2">Ответ студента:</div>
+                            <div class="bg-light border rounded p-3" style="white-space: pre-wrap;">{{ answer.text_answer|default:"Нет ответа" }}</div>
+                        {% endif %}
+
+                        {% if answer.question.question_type == 'text' %}
+                            <div class="alert alert-success mt-3 mb-0">
+                                <i class="fas fa-check-circle me-2"></i>
+                                Свободный ответ засчитан автоматически.
+                            </div>
+                        {% elif answer.question.question_type == 'essay' %}
+                            <div class="row mt-3">
+                                <div class="col-md-3">
+                                    <label for="score-{{ answer.id }}" class="form-label">Баллы</label>
+                                    <input type="number"
+                                           class="form-control"
+                                           id="score-{{ answer.id }}"
+                                           name="score_{{ answer.id }}"
+                                           min="0"
+                                           max="{{ answer.question.points }}"
+                                           value="{{ answer.score }}">
+                                </div>
+                                <div class="col-md-9">
+                                    <label for="feedback-{{ answer.id }}" class="form-label">Комментарий преподавателя</label>
+                                    <textarea class="form-control"
+                                              id="feedback-{{ answer.id }}"
+                                              name="feedback_{{ answer.id }}"
+                                              rows="2">{{ answer.feedback }}</textarea>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'courses:test_result' lesson.id submission.id %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-eye me-2"></i>Открыть результат
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Сохранить проверку
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                <h5>Результатов пока нет</h5>
+                <p class="text-muted mb-0">Когда студенты пройдут тест, их ответы появятся здесь.</p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

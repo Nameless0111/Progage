@@ -79,6 +79,16 @@
                                                 <span class="badge bg-success">
                                                     <i class="fas fa-check-circle me-1"></i>{{ data.test_question_count }} вопросов
                                                 </span>
+                                                {% if data.test_submission_count %}
+                                                <span class="badge bg-info ms-1">
+                                                    <i class="fas fa-users me-1"></i>{{ data.test_submission_count }} результатов
+                                                </span>
+                                                {% endif %}
+                                                {% if data.pending_test_review_count %}
+                                                <span class="badge bg-warning ms-1">
+                                                    <i class="fas fa-clock me-1"></i>{{ data.pending_test_review_count }} на проверке
+                                                </span>
+                                                {% endif %}
                                                 {% else %}
                                                 <span class="badge bg-warning">
                                                     <i class="fas fa-exclamation-triangle me-1"></i>Нет вопросов
@@ -105,9 +115,15 @@
                                                 <a href="{% url 'courses:lesson_view' course.id data.lesson.id %}" class="btn btn-sm btn-outline-primary" target="_blank">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
-                                                {% if data.lesson.lesson_type == 'test' and data.has_test_questions %}
+                                                {% if data.lesson.lesson_type == 'test' %}
                                                 <a href="{% url 'courses:test_constructor' data.lesson.id %}" class="btn btn-sm btn-outline-info" title="Редактировать тест">
                                                     <i class="fas fa-question-circle"></i>
+                                                </a>
+                                                <a href="{% url 'courses:test_submissions' data.lesson.id %}" class="btn btn-sm btn-outline-success" title="Результаты теста">
+                                                    <i class="fas fa-clipboard-check"></i>
+                                                    {% if data.pending_test_review_count %}
+                                                    <span class="badge bg-warning text-dark ms-1">{{ data.pending_test_review_count }}</span>
+                                                    {% endif %}
                                                 </a>
                                                 {% elif data.lesson.lesson_type == 'practice' %}
                                                 <a href="{% url 'courses:practice_assignment' data.lesson.id %}" class="btn btn-sm btn-outline-info" title="Редактировать задание">

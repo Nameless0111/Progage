@@ -141,7 +141,7 @@ def main() -> int:
         programming_language="python",
         starter_code="print('OK')",
         expected_output="OK",
-        test_cases=[{"input": "", "expected_output": "OK"}],
+        test_cases=[{"expected_output": "OK"}],
         max_attempts=3,
     )
 
@@ -408,7 +408,6 @@ def main() -> int:
                 "max_attempts": "3",
                 "max_grade": "100",
                 "is_published": "on",
-                "test_input_0": "",
                 "test_output_0": "OK",
             },
             follow=True,
@@ -436,6 +435,7 @@ def main() -> int:
         ("admin enrollments", reverse("adminpanel:enrollment_list")),
         ("admin likes", reverse("adminpanel:like_list")),
         ("admin reviews", reverse("adminpanel:review_list")),
+        ("admin comments", reverse("adminpanel:comment_list")),
         ("admin statistics", reverse("adminpanel:statistics")),
         ("admin activity logs", reverse("adminpanel:activity_logs")),
         ("admin system logs", reverse("adminpanel:system_logs")),

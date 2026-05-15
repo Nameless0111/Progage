@@ -49,6 +49,8 @@ urlpatterns = [
     # Reviews
     path('reviews/', views.review_list, name='review_list'),
     path('reviews/<int:review_id>/delete/', views.review_delete, name='review_delete'),
+    path('comments/', views.comment_list, name='comment_list'),
+    path('comments/<int:comment_id>/delete/', views.comment_delete, name='comment_delete'),
     
     # Chat Management
     path('chats/', views.chat_management, name='chat_management'),

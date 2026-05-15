@@ -307,7 +307,7 @@ def submit_test(request, lesson_id):
                     answer_submission = TestAnswerSubmission.objects.create(
                         submission=submission,
                         question=question,
-                        score=question.points or 0,
+                        score=(question.points or 0) if answer.is_correct else 0,
                         is_correct=answer.is_correct,
                         needs_review=False
                     )
@@ -341,16 +341,18 @@ def submit_test(request, lesson_id):
                 
         elif question.question_type == 'text':
             text_answer = request.POST.get(f'question_{question.id}', '')
+            text_answer = text_answer.strip()
+            awarded_score = question.points or 0
             TestAnswerSubmission.objects.create(
                 submission=submission,
                 question=question,
-                text_answer=text_answer.strip(),
-                score=0,
-                is_correct=False,
-                needs_review=True  # Текстовые ответы требуют проверки
+                text_answer=text_answer,
+                score=awarded_score,
+                is_correct=True,
+                needs_review=False
             )
-            # Для текстовых ответов нужно ручная проверка
-            pass
+            score += awarded_score
+
         elif question.question_type == 'essay':
             text_answer = request.POST.get(f'question_{question.id}', '')
             TestAnswerSubmission.objects.create(
@@ -361,6 +363,7 @@ def submit_test(request, lesson_id):
                 is_correct=False,
                 needs_review=True
             )
+            submission.needs_review = True
     
     # Обновляем оценку
     submission.score = score
@@ -387,7 +390,13 @@ def submit_test(request, lesson_id):
 @login_required
 def test_result(request, lesson_id, submission_id):
     lesson = get_object_or_404(Lesson, id=lesson_id)
-    submission = get_object_or_404(TestSubmission, id=submission_id, lesson=lesson, user=request.user)
+    submission = get_object_or_404(TestSubmission, id=submission_id, lesson=lesson)
+
+    if request.user != submission.user and (
+        request.user.role != 'teacher' or lesson.course.instructor_id != request.user.id
+    ):
+        messages.error(request, 'У вас нет доступа к этим результатам')
+        return redirect('courses:lesson_view', course_id=lesson.course.id, lesson_id=lesson.id)
     
     # Получаем ответы студента
     submission_answers = submission.answer_submissions.all().select_related('question')
