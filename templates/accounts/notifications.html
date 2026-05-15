@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Уведомления - {{ request.user.username }}{% endblock %}
+{% block title %}Уведомления - {{ request.user.public_display_name }}{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
@@ -187,8 +187,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             notificationItem.classList.remove('unread-notification');
                             // Обновляем счетчик непрочитанных
                             const unreadCount = document.querySelector('.badge.bg-danger');
-                            if (unreadCount && unreadCount.textContent > '0') {
-                                unreadCount.textContent = Math.max(0, parseInt(unreadCount.textContent) - 1);
+                            if (unreadCount && parseInt(unreadCount.textContent, 10) > 0) {
+                                unreadCount.textContent = Math.max(0, parseInt(unreadCount.textContent, 10) - 1);
                                 if (unreadCount.textContent === '0') {
                                     unreadCount.style.display = 'none';
                                 }

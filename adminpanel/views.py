@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
+from django.http import Http404
 
 from django.contrib import messages
 
@@ -15,14 +16,18 @@ from django.utils import timezone
 from datetime import timedelta, datetime
 
 from django.http import JsonResponse, HttpResponse
+from django.conf import settings
 
 from django.core.paginator import Paginator
+import csv
+import json
 
 from .decorators import admin_required
 
 from .models import ActivityLog, SystemLog, BackupLog, UserSession, PopularContent, ErrorLog
 
 from accounts.models import User
+from accounts.models import Profile, UserNotifications, UserPrivacy
 
 from courses.models import Course, CourseEnrollment, CourseLike, CourseReview, Lesson, Category
 
@@ -61,6 +66,11 @@ def dashboard(request):
         'total_likes': CourseLike.objects.count(),
 
         'total_reviews': CourseReview.objects.count(),
+        'total_lessons': Lesson.objects.count(),
+        'published_courses': Course.objects.filter(is_published=True).count(),
+        'free_courses': Course.objects.filter(price=0).count(),
+        'messages': Message.objects.count(),
+        'open_chats': SupportChat.objects.filter(status='open').count(),
 
     }
 
@@ -89,6 +99,8 @@ def dashboard(request):
         'new_courses': Course.objects.filter(created_at__gte=week_ago).count(),
 
         'error_count': ErrorLog.objects.filter(timestamp__gte=timezone.now() - timedelta(hours=24)).count(),  # ИСПРАВЛЕНО: правильный ключ
+        'new_messages': Message.objects.filter(created_at__gte=week_ago).count(),
+        'new_reviews': CourseReview.objects.filter(created_at__gte=week_ago).count(),
 
     }
 
@@ -110,6 +122,15 @@ def dashboard(request):
 
     recent_activities = ActivityLog.objects.select_related('user').order_by('-action_time')[:10]
 
+    platform_pulse = {
+        'avg_lessons_per_course': round(stats['total_lessons'] / stats['total_courses'], 1) if stats['total_courses'] else 0,
+        'avg_students_per_course': round(stats['total_enrollments'] / stats['total_courses'], 1) if stats['total_courses'] else 0,
+        'publication_rate': round(stats['published_courses'] / stats['total_courses'] * 100, 1) if stats['total_courses'] else 0,
+        'free_rate': round(stats['free_courses'] / stats['total_courses'] * 100, 1) if stats['total_courses'] else 0,
+        'review_activity': recent_stats['new_reviews'],
+        'message_activity': recent_stats['new_messages'],
+    }
+
     
 
     context = {
@@ -121,6 +142,7 @@ def dashboard(request):
         'popular_courses': popular_courses,
 
         'recent_activities': recent_activities,
+        'platform_pulse': platform_pulse,
 
         'title': 'Админ-панель',
 
@@ -962,6 +984,82 @@ def statistics(request):
     return render(request, 'adminpanel/statistics.html', context)
 
 
+def _admin_export_payload():
+    stats = {
+        'users': User.objects.count(),
+        'students': User.objects.filter(role='student').count(),
+        'teachers': User.objects.filter(role='teacher').count(),
+        'admins': User.objects.filter(role='admin').count(),
+        'courses': Course.objects.count(),
+        'published_courses': Course.objects.filter(is_published=True).count(),
+        'free_courses': Course.objects.filter(price=0).count(),
+        'lessons': Lesson.objects.count(),
+        'enrollments': CourseEnrollment.objects.count(),
+        'likes': CourseLike.objects.count(),
+        'reviews': CourseReview.objects.count(),
+        'messages': Message.objects.count(),
+        'support_chats': SupportChat.objects.count(),
+        'open_chats': SupportChat.objects.filter(status='open').count(),
+        'errors_24h': ErrorLog.objects.filter(timestamp__gte=timezone.now() - timedelta(hours=24)).count(),
+        'exported_at': timezone.now().isoformat(),
+    }
+    courses = list(
+        Course.objects.select_related('instructor', 'category')
+        .annotate(enrollments_total=Count('enrollments'), lessons_total=Count('lessons'), likes_total=Count('likes'))
+        .order_by('title')
+        .values(
+            'id', 'title', 'level', 'price', 'is_published',
+            'instructor__username', 'category__name',
+            'enrollments_total', 'lessons_total', 'likes_total'
+        )
+    )
+    users = list(
+        User.objects.order_by('username').values(
+            'id', 'username', 'email', 'role', 'is_active', 'date_joined', 'last_login'
+        )
+    )
+    return {'stats': stats, 'courses': courses, 'users': users}
+
+
+@admin_required
+def export_data(request, file_format):
+    payload = _admin_export_payload()
+    export_dir = os.path.join(settings.BASE_DIR, 'exports', 'adminpanel')
+    os.makedirs(export_dir, exist_ok=True)
+    timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
+
+    if file_format == 'json':
+        filename = f'admin_export_{timestamp}.json'
+        path = os.path.join(export_dir, filename)
+        data = json.dumps(payload, ensure_ascii=False, default=str, indent=2)
+        with open(path, 'w', encoding='utf-8') as export_file:
+            export_file.write(data)
+        response = HttpResponse(data, content_type='application/json; charset=utf-8')
+    elif file_format == 'csv':
+        filename = f'admin_export_{timestamp}.csv'
+        path = os.path.join(export_dir, filename)
+        rows = [{'section': 'stats', 'key': key, 'value': value} for key, value in payload['stats'].items()]
+        for course in payload['courses']:
+            rows.append({'section': 'course', 'key': course['title'], 'value': json.dumps(course, ensure_ascii=False, default=str)})
+        for user in payload['users']:
+            rows.append({'section': 'user', 'key': user['username'], 'value': json.dumps(user, ensure_ascii=False, default=str)})
+
+        with open(path, 'w', encoding='utf-8-sig', newline='') as export_file:
+            writer = csv.DictWriter(export_file, fieldnames=['section', 'key', 'value'])
+            writer.writeheader()
+            writer.writerows(rows)
+
+        with open(path, 'r', encoding='utf-8-sig') as export_file:
+            data = export_file.read()
+        response = HttpResponse(data, content_type='text/csv; charset=utf-8')
+    else:
+        raise Http404("Формат экспорта не найден")
+
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    messages.success(request, f'Экспорт сохранен: exports/adminpanel/{filename}')
+    return response
+
+
 # Управление чатами поддержки
 @admin_required
 def chat_management(request):
@@ -1003,13 +1101,15 @@ def reopen_chat(request, chat_id):
     )
     
     # Уведомляем пользователя о переоткрытии
-    from accounts.models import Notification
-    Notification.objects.create(
-        user=chat.user,
-        notification_type='new_chat_message',
-        title='Чат переоткрыт',
-        message=f'Администратор {request.user.get_full_name() or request.user.username} переоткрыл ваш чат "{chat.subject}"'
-    )
+    from accounts.models import Notification, UserNotifications
+    notification_settings, _ = UserNotifications.objects.get_or_create(user=chat.user)
+    if notification_settings.support_messages:
+        Notification.objects.create(
+            user=chat.user,
+            notification_type='new_chat_message',
+            title='Чат переоткрыт',
+            message=f'Администратор {request.user.get_full_name() or request.user.username} переоткрыл ваш чат "{chat.subject}"'
+        )
     
     messages.success(request, f'Чат с {chat.user.username} успешно переоткрыт')
     return redirect('adminpanel:chat_management')
@@ -1054,6 +1154,9 @@ def user_create(request):
             user.set_password(form.cleaned_data['password'])
 
             user.save()
+            Profile.objects.get_or_create(user=user)
+            UserNotifications.objects.get_or_create(user=user)
+            UserPrivacy.objects.get_or_create(user=user)
 
             
 
@@ -1545,11 +1648,11 @@ def download_backup(request, filename):
 
         backup_system = SystemBackup()
 
-        backup_path = os.path.join(backup_system.backup_dir, filename)
+        backup_path = backup_system.get_backup_path(filename)
 
         
 
-        if os.path.exists(backup_path) and filename.endswith('.zip'):
+        if backup_system.backup_exists(filename):
 
             # Логируем скачивание
 

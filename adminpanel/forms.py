@@ -81,14 +81,12 @@ class CourseForm(forms.ModelForm):
     class Meta:
         model = Course
         fields = [
-            'title', 'description', 'instructor', 'category', 'level', 'price',
-            'thumbnail', 'is_published'
+            'title', 'description', 'instructor', 'category', 'level', 'thumbnail'
         ]
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
             'level': forms.Select(attrs={'class': 'form-control'}),
-            'price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'instructor': forms.Select(attrs={'class': 'form-control'}),
             'category': forms.Select(attrs={'class': 'form-control'}),
             'thumbnail': forms.FileInput(attrs={'class': 'form-control'}),
@@ -99,9 +97,7 @@ class CourseForm(forms.ModelForm):
             'instructor': 'Преподаватель',
             'category': 'Категория',
             'level': 'Уровень сложности',
-            'price': 'Цена (₽)',
             'thumbnail': 'Превью',
-            'is_published': 'Опубликован',
         }
     
     def __init__(self, *args, **kwargs):

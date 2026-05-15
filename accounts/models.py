@@ -46,6 +46,31 @@ class User(AbstractUser):
         except Exception:
             return fallback
 
+    @property
+    def is_anonymous_public(self):
+        try:
+            return bool(self.privacy_settings.anonymous_mode)
+        except UserPrivacy.DoesNotExist:
+            return False
+
+    @property
+    def public_display_name(self):
+        if self.is_anonymous_public:
+            return "Аноним"
+        return self.get_full_name() or self.username
+
+    @property
+    def public_username_label(self):
+        if self.is_anonymous_public:
+            return "Анонимный профиль"
+        return f"@{self.username}"
+
+    @property
+    def public_avatar_url(self):
+        if self.is_anonymous_public:
+            return "https://ui-avatars.com/api/?background=6C757D&color=fff&name=%D0%90%D0%BD%D0%BE%D0%BD%D0%B8%D0%BC&size=128"
+        return self.avatar_url
+
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name='Пользователь')
     bio = models.TextField(max_length=500, blank=True, null=True, verbose_name='Биография')
@@ -152,6 +177,7 @@ class Notification(models.Model):
         ('course_enrollment', 'Запись на курс'),
         ('course_review', 'Отзыв на курс'),
         ('new_lesson', 'Новый урок'),
+        ('support_messages', 'Сообщение поддержки'),
         ('system', 'Системное уведомление'),
     ]
     
@@ -176,13 +202,14 @@ class Notification(models.Model):
         return f"{self.title} - {self.user.username}"
     
     @classmethod
-    def create_notification(cls, user, type, title, message):
+    def create_notification(cls, user, notification_type, title, message, **kwargs):
         """Создать уведомление"""
         return cls.objects.create(
             user=user,
-            type=type,
+            notification_type=notification_type,
             title=title,
-            message=message
+            message=message,
+            **kwargs
         )
 
 class UserNotifications(models.Model):
@@ -204,6 +231,8 @@ class UserPrivacy(models.Model):
     public_profile = models.BooleanField(default=False, verbose_name='Публичный профиль')
     show_email = models.BooleanField(default=False, verbose_name='Показывать email')
     show_progress = models.BooleanField(default=True, verbose_name='Показывать прогресс обучения')
+    anonymous_mode = models.BooleanField(default=False, verbose_name='Анонимный режим')
+    show_in_teachers_list = models.BooleanField(default=True, verbose_name='Показывать в списке преподавателей')
     
     class Meta:
         verbose_name = 'Настройки приватности'

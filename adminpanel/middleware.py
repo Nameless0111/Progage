@@ -11,6 +11,8 @@ import uuid
 logger = logging.getLogger(__name__)
 
 class LoggingMiddleware(MiddlewareMixin):
+    SENSITIVE_HEADERS = {'authorization', 'cookie', 'x-csrftoken'}
+
     def process_request(self, request):
         request.request_id = str(uuid.uuid4())
         request.start_time = timezone.now()
@@ -63,7 +65,7 @@ class LoggingMiddleware(MiddlewareMixin):
                     'content_type': request.content_type,
                     'user_agent': request.META.get('HTTP_USER_AGENT', ''),
                     'request_type': request_type,
-                    'headers': dict(request.headers),
+                    'headers': self._safe_headers(request),
                 }
             )
             
@@ -181,6 +183,16 @@ class LoggingMiddleware(MiddlewareMixin):
         else:
             ip = request.META.get('REMOTE_ADDR')
         return ip
+
+    def _safe_headers(self, request):
+        """Возвращает заголовки без секретов сессии и авторизации."""
+        headers = {}
+        for name, value in request.headers.items():
+            if name.lower() in self.SENSITIVE_HEADERS:
+                headers[name] = '[redacted]'
+            else:
+                headers[name] = value
+        return headers
 
 
 class ExceptionLoggingMiddleware(MiddlewareMixin):

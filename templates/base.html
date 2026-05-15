@@ -55,9 +55,9 @@
                         <li class="nav-item position-relative">
                             <a class="nav-link fw-semibold" href="{% url 'accounts:notifications' %}" style="color: rgba(255,255,255,0.95) !important; padding: 0.5rem 1rem;">
                                 <i class="fas fa-bell me-1"></i>Уведомления
-                                {% if request.user.unread_notifications_count > 0 %}
+                                {% if request.unread_notifications_count > 0 %}
                                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6em;">
-                                    {{ request.user.unread_notifications_count }}
+                                    {{ request.unread_notifications_count }}
                                 </span>
                                 {% endif %}
                             </a>
@@ -129,24 +129,23 @@
             <div class="row">
                 <div class="col-md-4">
                     <h5><i class="fas fa-graduation-cap me-2"></i>Progage</h5>
-                    <p class="text-muted">Современная образовательная платформа для онлайн-обучения программированию и не только.</p>
+                    <p>Современная образовательная платформа для онлайн-обучения программированию и не только.</p>
                 </div>
                 <div class="col-md-4">
                     <h5>Ссылки</h5>
                     <ul class="list-unstyled">
-                        <li><a href="{% url 'courses:course_list' %}" class="text-muted text-decoration-none">Все курсы</a></li>
-                        <li><a href="{% url 'home' %}" class="text-muted text-decoration-none">О платформе</a></li>
+                        <li><a href="{% url 'courses:course_list' %}" class="text-decoration-none">Все курсы</a></li>
+                        <li><a href="{% url 'home' %}" class="text-decoration-none">О платформе</a></li>
                     </ul>
                 </div>
                 <div class="col-md-4">
                     <h5>Контакты</h5>
-                    <p class="text-muted"><i class="fas fa-envelope me-2"></i>pashokbilashenko335@gmail.com</p>
-                    <p class="text-muted"><i class="fas fa-envelope me-2"></i>support@progage.com</p>
-                    <p class="text-muted"><i class="fas fa-phone me-2"></i>+7 (999) 123-45-67</p>
+                    <p><i class="fas fa-user me-2"></i>Пашок</p>
+                    <p><i class="fas fa-phone me-2"></i>+7 980161 88 85</p>
                 </div>
             </div>
             <hr class="my-3">
-            <div class="text-center text-muted">
+            <div class="text-center">
                 <small>&copy; {% now "Y" %} Progage. Все права защищены.</small>
             </div>
         </div>

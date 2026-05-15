@@ -3,7 +3,7 @@
 # Deployment script for Progage
 set -e
 
-echo "🚀 Starting deployment..."
+echo "Starting deployment..."
 
 # Update system
 sudo apt update && sudo apt upgrade -y
@@ -32,12 +32,19 @@ sudo -u postgres createuser --interactive
 # When prompted, create a user with same name as your Linux user
 
 # Copy environment file
-cp .env.example .env
+if [ ! -f .env.local ]; then
+    cp .env.example .env.local
+fi
 # Edit .env with your actual values
-nano .env
+nano .env.local
+
+# Runtime directories
+sudo mkdir -p /var/log/gunicorn /var/log/daphne /var/log/progage /var/backups/progage
+sudo chown -R www-data:www-data /var/log/gunicorn /var/log/daphne /var/log/progage /var/backups/progage
 
 # Django setup
 export DJANGO_SETTINGS_MODULE=progage.production
+export LOAD_ENV_LOCAL=1
 python manage.py collectstatic --noinput
 python manage.py migrate
 python manage.py createsuperuser
@@ -68,7 +75,7 @@ server {
     
     # WebSocket support for Django Channels
     location /ws/ {
-        proxy_pass http://127.0.0.1:8000;
+        proxy_pass http://127.0.0.1:8001;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection "upgrade";
@@ -95,7 +102,7 @@ autostart=true
 autorestart=true
 redirect_stderr=true
 stdout_logfile=/var/log/gunicorn/progage.log
-environment=DJANGO_SETTINGS_MODULE=progage.production
+environment=DJANGO_SETTINGS_MODULE=progage.production,LOAD_ENV_LOCAL=1
 EOF
 
 # Setup Supervisor for Daphne (WebSocket server)
@@ -108,7 +115,7 @@ autostart=true
 autorestart=true
 redirect_stderr=true
 stdout_logfile=/var/log/daphne/progage.log
-environment=DJANGO_SETTINGS_MODULE=progage.production
+environment=DJANGO_SETTINGS_MODULE=progage.production,LOAD_ENV_LOCAL=1
 EOF
 
 # Start services
@@ -137,11 +144,11 @@ sudo tee /etc/logrotate.d/progage > /dev/null <<EOF
 }
 EOF
 
-echo "✅ Deployment complete!"
-echo "🌐 Your site should be available at: https://your-domain.com"
-echo "📝 Don't forget to:"
+echo "Deployment complete."
+echo "Your site should be available at: https://your-domain.com"
+echo "Don't forget to:"
 echo "   1. Update your-domain.com in all config files"
-echo "   2. Set up reCAPTCHA keys in .env"
+echo "   2. Configure production variables in .env.local"
 echo "   3. Configure email settings"
 echo "   4. Set up SSL certificate renewal: sudo crontab -e"
 echo "      Add: 0 12 * * * /usr/bin/certbot renew --quiet"

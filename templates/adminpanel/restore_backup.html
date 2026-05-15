@@ -18,30 +18,30 @@
                     <div class="alert alert-warning d-flex align-items-center" role="alert">
                         <i class="fas fa-exclamation-triangle me-3 fa-2x"></i>
                         <div>
-                            <strong>⚠️ ВНИМАНИЕ!</strong><br>
+                            <strong>ВНИМАНИЕ!</strong><br>
                             Восстановление из бэкапа <strong>полностью удалит</strong> все текущие данные:
                             пользователей, курсы, уроки, настройки и медиафайлы.
                         </div>
                     </div>
 
                     <div class="mb-4">
-                        <h6>📁 Файл бэкапа:</h6>
+                        <h6>Файл бэкапа:</h6>
                         <div class="p-3 bg-light rounded">
                             <code class="text-primary">backups/{{ filename }}</code>
                         </div>
                         <div class="mt-2">
-                            <strong>🚀 Быстрый запуск:</strong>
+                            <strong>Команды на сервере:</strong>
                             <div class="bg-dark text-light p-2 rounded mt-2">
-                                <code>python restore_backup.py {{ filename }}</code>
+                                <code>unzip backups/{{ filename }}</code>
                             </div>
                             <small class="text-muted">
-                                Скрипт автоматически найдет файл в папке backups/
+                                Восстановление выполняется вручную из распакованного архива.
                             </small>
                         </div>
                     </div>
 
                     <div class="mb-4">
-                        <h6>📋 Что будет восстановлено:</h6>
+                        <h6>Что будет восстановлено:</h6>
                         <ul class="list-unstyled">
                             <li><i class="fas fa-check text-success me-2"></i>База данных (пользователи, курсы, уроки)</li>
                             <li><i class="fas fa-check text-success me-2"></i>Медиафайлы (аватары, изображения, файлы)</li>
@@ -51,7 +51,7 @@
                     </div>
 
                     <div class="mb-4">
-                        <h6>🔄 Пошаговая инструкция восстановления:</h6>
+                        <h6>Пошаговая инструкция восстановления на Ubuntu:</h6>
                         
                         <div class="card mb-3">
                             <div class="card-body">
@@ -60,11 +60,11 @@
                                     Шаг 1: Подготовка системы
                                 </h6>
                                 <div class="alert alert-warning">
-                                    <strong>⚠️ ВНИМАНИЕ!</strong> Это удалит все текущие данные!
+                                    <strong>ВНИМАНИЕ!</strong> Это удалит все текущие данные!
                                 </div>
                                 <ol>
-                                    <li>Остановите Django сервер: <code>Ctrl+C</code></li>
-                                    <li>Откройте командную строку в папке проекта: <code>cd c:/Progage</code></li>
+                                    <li>Остановите сервис приложения: <code>sudo systemctl stop progage</code></li>
+                                    <li>Перейдите в папку проекта: <code>cd /var/www/progage</code></li>
                                     <li>Сделайте текущий бэкап (если нужно сохранить данные):
                                         <div class="bg-light p-2 mt-2 rounded">
                                             <code>python manage.py shell -c "from adminpanel.backup_utils import SystemBackup; SystemBackup().create_full_backup()"</code>
@@ -83,7 +83,7 @@
                                 <ol>
                                     <li>Удалите текущую базу данных:
                                         <div class="bg-light p-2 mt-2 rounded">
-                                            <code>del db.sqlite3</code>
+                                            <code>dropdb progage_db && createdb progage_db</code>
                                         </div>
                                     </li>
                                     <li>Распакуйте бэкап архив:
@@ -93,7 +93,7 @@
                                     </li>
                                     <li>Восстановите базу данных из дампа:
                                         <div class="bg-light p-2 mt-2 rounded">
-                                            <code>sqlite3 db.sqlite3 < database/database_dump_*.sql</code>
+                                            <code>python manage.py loaddata database/database_dump_*.json</code>
                                         </div>
                                     </li>
                                 </ol>
@@ -109,12 +109,12 @@
                                 <ol>
                                     <li>Сделайте резервную копию текущих медиафайлов (если нужно):
                                         <div class="bg-light p-2 mt-2 rounded">
-                                            <code>move media media_backup</code>
+                                            <code>mv media media_backup_$(date +%Y%m%d_%H%M%S)</code>
                                         </div>
                                     </li>
-                                    <li>Скопируйте медиафайлы из бэкапа:
+                                    <li>После распаковки проверьте права на папку media:
                                         <div class="bg-light p-2 mt-2 rounded">
-                                            <code>xcopy backup\media media /E /I</code>
+                                            <code>sudo chown -R www-data:www-data media</code>
                                         </div>
                                     </li>
                                 </ol>
@@ -130,14 +130,14 @@
                                 <ol>
                                     <li>Резервная копия настроек:
                                         <div class="bg-light p-2 mt-2 rounded">
-                                            <code>copy progage\settings.py progage\settings.py.backup</code><br>
-                                            <code>copy .env .env.backup</code>
+                                            <code>cp progage/settings.py progage/settings.py.backup</code><br>
+                                            <code>cp .env .env.backup</code>
                                         </div>
                                     </li>
                                     <li>Восстановление из бэкапа:
                                         <div class="bg-light p-2 mt-2 rounded">
-                                            <code>copy backup\config\progage\settings.py progage\settings.py</code><br>
-                                            <code>copy backup\config\.env .env</code>
+                                            <code>cp config/progage/settings.py progage/settings.py</code><br>
+                                            <code>cp config/.env.example .env.example</code>
                                         </div>
                                     </li>
                                 </ol>
@@ -153,7 +153,7 @@
                                 <ol>
                                     <li>Установка зависимостей:
                                         <div class="bg-light p-2 mt-2 rounded">
-                                            <code>pip install -r backup\config\requirements.txt</code>
+                                            <code>pip install -r config/requirements.txt</code>
                                         </div>
                                     </li>
                                     <li>Применение миграций:
@@ -168,7 +168,7 @@
                                     </li>
                                     <li>Запуск сервера:
                                         <div class="bg-light p-2 mt-2 rounded">
-                                            <code>python manage.py runserver</code>
+                                            <code>sudo systemctl start progage</code>
                                         </div>
                                     </li>
                                 </ol>
@@ -179,7 +179,7 @@
                     <div class="alert alert-danger d-flex align-items-center" role="alert">
                         <i class="fas fa-exclamation-triangle me-3 fa-2x"></i>
                         <div>
-                            <strong>⚠️ ВНИМАНИЕ!</strong><br>
+                            <strong>ВНИМАНИЕ!</strong><br>
                             Восстановление бэкапа - это <strong>ручная операция</strong>, которая требует выполнения команд в командной строке.<br>
                             <strong>Не используйте автоматическое восстановление</strong> без полного понимания процесса.
                         </div>

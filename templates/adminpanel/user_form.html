@@ -94,7 +94,12 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="id_password" class="form-label">{% if edited_user %}Новый пароль (оставьте пустым, чтобы не менять){% else %}Пароль{% endif %}</label>
-                                <input type="password" class="form-control" id="id_password" name="password" {% if not edited_user %}required{% endif %}>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="id_password" name="password" {% if not edited_user %}required{% endif %}>
+                                    <button class="btn btn-outline-secondary" type="button" data-password-toggle="id_password" title="Показать пароль">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <div class="form-check mt-4">
@@ -120,4 +125,22 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.querySelectorAll('[data-password-toggle]').forEach(function(button) {
+    button.addEventListener('click', function() {
+        const input = document.getElementById(button.dataset.passwordToggle);
+        const icon = button.querySelector('i');
+        if (!input || !icon) return;
+
+        const visible = input.type === 'text';
+        input.type = visible ? 'password' : 'text';
+        icon.classList.toggle('fa-eye', visible);
+        icon.classList.toggle('fa-eye-slash', !visible);
+        button.title = visible ? 'Показать пароль' : 'Скрыть пароль';
+    });
+});
+</script>
 {% endblock %}

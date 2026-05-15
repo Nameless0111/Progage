@@ -4,7 +4,7 @@ from .models import CourseReview, Course, Lesson, Category, TestQuestion, TestAn
 
 class CourseReviewForm(forms.ModelForm):
     rating = forms.ChoiceField(
-        choices=[(i, f'{i} ⭐') for i in range(1, 6)],
+        choices=[(i, str(i)) for i in range(1, 6)],
         widget=forms.RadioSelect(attrs={'class': 'rating-input'}),
         label='Рейтинг'
     )
@@ -27,16 +27,14 @@ class CourseReviewForm(forms.ModelForm):
 class CourseForm(forms.ModelForm):
     class Meta:
         model = Course
-        fields = ['title', 'description', 'category', 'level', 'programming_language', 'price', 'thumbnail', 'is_published']
+        fields = ['title', 'description', 'category', 'level', 'programming_language', 'thumbnail']
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
             'category': forms.Select(attrs={'class': 'form-select'}),
             'level': forms.Select(attrs={'class': 'form-select'}),
             'programming_language': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Например: Python, JavaScript, C++'}),
-            'price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'thumbnail': forms.FileInput(attrs={'class': 'form-control'}),
-            'is_published': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
     
     def __init__(self, *args, **kwargs):
@@ -48,14 +46,13 @@ class CourseForm(forms.ModelForm):
 class LessonForm(forms.ModelForm):
     class Meta:
         model = Lesson
-        fields = ['title', 'lesson_type', 'content', 'attachment', 'order', 'is_free']
+        fields = ['title', 'lesson_type', 'content', 'attachment', 'order']
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'lesson_type': forms.Select(attrs={'class': 'form-select'}),
             'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 10, 'placeholder': 'Введите содержание лекции...'}),
             'attachment': forms.FileInput(attrs={'class': 'form-control'}),
             'order': forms.NumberInput(attrs={'class': 'form-control'}),
-            'is_free': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
         labels = {
             'content': 'Содержание лекции',

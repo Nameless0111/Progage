@@ -1,6 +1,53 @@
 from django.db import migrations, models
 
 
+def get_columns(schema_editor, table_name):
+    cursor = schema_editor.connection.cursor()
+    return {
+        column.name
+        for column in schema_editor.connection.introspection.get_table_description(
+            cursor,
+            table_name,
+        )
+    }
+
+
+def sync_chat_columns(apps, schema_editor):
+    support_columns = get_columns(schema_editor, "chat_supportchat")
+    if "subject" not in support_columns:
+        schema_editor.execute(
+            "ALTER TABLE chat_supportchat "
+            "ADD COLUMN subject varchar(255) NOT NULL DEFAULT ''"
+        )
+
+    message_columns = get_columns(schema_editor, "chat_message")
+    if "content" not in message_columns and "text" in message_columns:
+        schema_editor.execute("ALTER TABLE chat_message RENAME COLUMN text TO content")
+
+    message_columns = get_columns(schema_editor, "chat_message")
+    if "created_at" not in message_columns and "timestamp" in message_columns:
+        schema_editor.execute("ALTER TABLE chat_message RENAME COLUMN timestamp TO created_at")
+
+
+def add_subject_column_if_missing(apps, schema_editor):
+    """Backward-compatible wrapper kept for old migration references."""
+    table_name = "chat_supportchat"
+    existing_columns = {
+        column.name
+        for column in schema_editor.connection.introspection.get_table_description(
+            schema_editor.connection.cursor(),
+            table_name,
+        )
+    }
+    if "subject" in existing_columns:
+        return
+
+    schema_editor.execute(
+        "ALTER TABLE chat_supportchat "
+        "ADD COLUMN subject varchar(255) NOT NULL DEFAULT ''"
+    )
+
+
 class Migration(migrations.Migration):
     dependencies = [
         ("chat", "0001_initial"),
@@ -9,26 +56,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.SeparateDatabaseAndState(
             database_operations=[
-                # DB уже содержит chat_message(content, created_at) и chat_supportchat без subject.
-                migrations.RunSQL(
-                    sql=[
-                        """
-                        DO $$
-                        BEGIN
-                            IF NOT EXISTS (
-                                SELECT 1
-                                FROM information_schema.columns
-                                WHERE table_name='chat_supportchat'
-                                  AND column_name='subject'
-                            ) THEN
-                                ALTER TABLE chat_supportchat
-                                ADD COLUMN subject varchar(255) NOT NULL DEFAULT '';
-                            END IF;
-                        END $$;
-                        """,
-                    ],
-                    reverse_sql=migrations.RunSQL.noop,
-                )
+                migrations.RunPython(sync_chat_columns, migrations.RunPython.noop)
             ],
             state_operations=[
                 migrations.AddField(

@@ -14,40 +14,6 @@ from .models import (
 )
 
 def course_list(request):
-    # Временно принудительно обновляем категории при каждом заходе
-    # Получаем все категории
-    python_cat = Category.objects.filter(name__icontains='python').first()
-    js_cat = Category.objects.filter(name__icontains='javascript').first()
-    java_cat = Category.objects.filter(name__icontains='java').first()
-    ds_cat = Category.objects.filter(name__icontains='data science').first()
-    web_cat = Category.objects.filter(name__icontains='web development').first()
-    
-    # Обновляем все курсы
-    all_courses = Course.objects.filter(is_published=True)
-    
-    for course in all_courses:
-        title_lower = course.title.lower()
-        desc_lower = course.description.lower()
-        
-        # Определяем категорию на основе названия и описания
-        assigned_category = None
-        if 'python' in title_lower or 'python' in desc_lower:
-            assigned_category = python_cat
-        elif 'javascript' in title_lower or 'javascript' in desc_lower or 'js' in title_lower:
-            assigned_category = js_cat
-        elif 'java' in title_lower and 'javascript' not in title_lower:
-            assigned_category = java_cat
-        elif 'data science' in desc_lower or 'data' in title_lower or 'science' in title_lower:
-            assigned_category = ds_cat
-        elif 'web' in title_lower or 'django' in title_lower or 'development' in desc_lower:
-            assigned_category = web_cat
-        else:
-            # По умолчанию Python
-            assigned_category = python_cat or Category.objects.first()
-        
-        course.category = assigned_category
-        course.save()
-    
     courses = Course.objects.filter(is_published=True).select_related('instructor', 'category').prefetch_related('likes', 'reviews')
     categories = Category.objects.all()
     
@@ -56,30 +22,17 @@ def course_list(request):
     category_id = request.GET.get('category')
     level = request.GET.get('level')
     
-    print(f"DEBUG: search='{search_query}', category={category_id}, level={level}")
-    
     # Поиск по названию
     if search_query:
-        courses_before_search = courses.count()
         courses = courses.filter(title__icontains=search_query)
-        courses_after_search = courses.count()
-        print(f"DEBUG: Search '{search_query}': {courses_before_search} -> {courses_after_search} courses")
     
     # Фильтрация по категории
     if category_id:
-        courses_before_cat = courses.count()
         courses = courses.filter(category_id=category_id)
-        courses_after_cat = courses.count()
-        print(f"DEBUG: Category {category_id}: {courses_before_cat} -> {courses_after_cat} courses")
     
     # Фильтрация по уровню
     if level:
-        courses_before_level = courses.count()
         courses = courses.filter(level=level)
-        courses_after_level = courses.count()
-        print(f"DEBUG: Level {level}: {courses_before_level} -> {courses_after_level} courses")
-    
-    print(f"DEBUG: Final result: {courses.count()} courses")
     
     # Получаем популярные курсы (топ 5 по лайкам)
     popular_courses = Course.objects.filter(is_published=True).annotate(
@@ -167,8 +120,21 @@ def toggle_like(request, course_id):
 @require_POST
 def submit_review(request, course_id):
     course = get_object_or_404(Course, id=course_id, is_published=True)
-    rating = int(request.POST.get('rating'))
-    comment = request.POST.get('comment')
+    comment = request.POST.get('comment', '').strip()
+
+    try:
+        rating = int(request.POST.get('rating', ''))
+    except (TypeError, ValueError):
+        messages.error(request, 'Выберите оценку от 1 до 5')
+        return redirect('courses:course_detail', course_id=course_id)
+
+    if rating < 1 or rating > 5:
+        messages.error(request, 'Оценка должна быть от 1 до 5')
+        return redirect('courses:course_detail', course_id=course_id)
+
+    if not comment:
+        messages.error(request, 'Комментарий не может быть пустым')
+        return redirect('courses:course_detail', course_id=course_id)
     
     review, created = CourseReview.objects.update_or_create(
         user=request.user,
@@ -226,6 +192,8 @@ def lesson_view(request, course_id, lesson_id):
         required_questions_count = lesson.test_questions.filter(is_required=True).count()
     elif lesson.lesson_type == 'practice':
         has_correct_submission = user_submissions.filter(is_correct=True).exists() if user_submissions else False
+
+    comments = lesson.comments.select_related('user', 'user__privacy_settings').all()
     
     context = {
         'course': course,
@@ -235,7 +203,7 @@ def lesson_view(request, course_id, lesson_id):
         'next_lesson': next_lesson,
         'is_enrolled': is_enrolled,
         'course_progress': enrollment.progress if enrollment else 0,
-        'comments': [],  # Временно отключено до создания миграций
+        'comments': comments,
         'user_submissions': user_submissions,
         'total_points': total_points,
         'required_questions_count': required_questions_count,
@@ -292,9 +260,31 @@ def submit_test(request, lesson_id):
     
     if request.method != 'POST':
         return JsonResponse({'error': 'Метод не разрешен'}, status=405)
+
+    if not CourseEnrollment.objects.filter(user=request.user, course=lesson.course, is_active=True).exists():
+        return JsonResponse({'error': 'Вы не записаны на этот курс'}, status=403)
     
     # Получаем вопросы
     questions = lesson.test_questions.all()
+    if not questions.exists():
+        return JsonResponse({'error': 'В тесте пока нет вопросов'}, status=400)
+
+    existing_submission = TestSubmission.objects.filter(lesson=lesson, user=request.user).first()
+    if existing_submission:
+        return JsonResponse({
+            'success': True,
+            'already_submitted': True,
+            'score': existing_submission.score,
+            'total_points': existing_submission.max_score,
+            'percentage': int(
+                (existing_submission.score / existing_submission.max_score * 100)
+                if existing_submission.max_score > 0 else 0
+            ),
+            'redirect_url': reverse(
+                'courses:test_result',
+                kwargs={'lesson_id': lesson.id, 'submission_id': existing_submission.id}
+            )
+        })
     
     # Создаем submission
     max_score = sum(q.points or 0 for q in questions)
@@ -361,6 +351,16 @@ def submit_test(request, lesson_id):
             )
             # Для текстовых ответов нужно ручная проверка
             pass
+        elif question.question_type == 'essay':
+            text_answer = request.POST.get(f'question_{question.id}', '')
+            TestAnswerSubmission.objects.create(
+                submission=submission,
+                question=question,
+                text_answer=text_answer.strip(),
+                score=0,
+                is_correct=False,
+                needs_review=True
+            )
     
     # Обновляем оценку
     submission.score = score

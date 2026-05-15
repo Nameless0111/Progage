@@ -4,8 +4,14 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.utils import timezone
+from datetime import timedelta
 from .models import SupportChat, Message
-from accounts.models import User
+from accounts.models import User, UserNotifications
+
+
+def wants_support_notification(user):
+    settings, _ = UserNotifications.objects.get_or_create(user=user)
+    return settings.support_messages
 
 @login_required
 def chat_list(request):
@@ -49,13 +55,17 @@ def send_message(request, chat_id):
         messages.error(request, 'У вас нет доступа к этому чату')
         return redirect('chat:chat_detail', chat_id=chat_id)
     
-    content = request.POST.get('content')
+    content = (request.POST.get('content') or '').strip()
     
-    if content.strip():
+    if chat.status == 'closed':
+        messages.error(request, 'Чат закрыт. Создайте новое обращение или попросите администратора открыть чат.')
+        return redirect('chat:chat_detail', chat_id=chat_id)
+
+    if content:
         message = Message.objects.create(
             chat=chat,
             sender=request.user,
-            content=content.strip()
+            content=content
         )
         chat.updated_at = message.created_at
         chat.save()
@@ -67,24 +77,30 @@ def send_message(request, chat_id):
         if request.user.role != 'admin':
             admins = User.objects.filter(role='admin')
             for admin in admins:
+                if not wants_support_notification(admin):
+                    continue
                 notification = Notification(
                     user=admin,
                     notification_type='new_chat_message',
                     title=f'Новое сообщение в чате "{chat.subject}"',
-                    message=f'Пользователь {request.user.get_full_name() or request.user.username} отправил сообщение: {content.strip()[:100]}...',
+                    message=f'Пользователь {request.user.get_full_name() or request.user.username} отправил сообщение: {content[:100]}...',
                     chat_room_id=str(chat_id)
                 )
                 notification.save()
         # Если сообщение от админа - уведомляем пользователя чата
         else:
-            notification = Notification(
-                user=chat.user,
-                notification_type='new_chat_message',
-                title=f'Ответ администратора в чате "{chat.subject}"',
-                message=f'Администратор {request.user.get_full_name() or request.user.username} ответил: {content.strip()[:100]}...',
-                chat_room_id=str(chat_id)
-            )
-            notification.save()
+            if wants_support_notification(chat.user):
+                notification = Notification(
+                    user=chat.user,
+                    notification_type='new_chat_message',
+                    title=f'Ответ администратора в чате "{chat.subject}"',
+                    message=f'Администратор {request.user.get_full_name() or request.user.username} ответил: {content[:100]}...',
+                    chat_room_id=str(chat_id)
+                )
+                notification.save()
+    else:
+        messages.error(request, 'Сообщение не может быть пустым')
+        return redirect('chat:chat_detail', chat_id=chat_id)
     
     messages.success(request, 'Сообщение отправлено')
     return redirect('chat:chat_detail', chat_id=chat_id)
@@ -99,7 +115,7 @@ def refresh_chat(request, chat_id):
         return JsonResponse({'success': False, 'error': 'Access denied'})
     
     # Получаем последние сообщения (за последние 5 минут)
-    five_minutes_ago = timezone.now() - timezone.timedelta(minutes=5)
+    five_minutes_ago = timezone.now() - timedelta(minutes=5)
     recent_messages = chat.messages.filter(
         created_at__gte=five_minutes_ago
     ).order_by('created_at').values(
@@ -128,11 +144,11 @@ def start_chat(request):
         return redirect('chat:chat_list')
     
     if request.method == 'POST':
-        subject = request.POST.get('subject')
-        if subject.strip():
+        subject = (request.POST.get('subject') or '').strip()
+        if subject:
             chat = SupportChat.objects.create(
                 user=request.user,
-                subject=subject.strip()
+                subject=subject
             )
             
             # Уведомляем администраторов о новом чате
@@ -140,6 +156,8 @@ def start_chat(request):
             
             admins = User.objects.filter(role='admin')
             for admin in admins:
+                if not wants_support_notification(admin):
+                    continue
                 notification = Notification(
                     user=admin,
                     notification_type='new_chat',
@@ -150,6 +168,7 @@ def start_chat(request):
             
             messages.success(request, 'Чат создан')
             return redirect('chat:chat_detail', chat_id=chat.id)
+        messages.error(request, 'Тема обращения не может быть пустой')
     
     return render(request, 'chat/start_chat.html')
 

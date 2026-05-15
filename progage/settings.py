@@ -15,18 +15,47 @@ import os
 from decouple import config
 import dj_database_url
 
-# Загрузка переменных окружения из .env.local (если существует)
-try:
-    from dotenv import load_dotenv
-    env_file = Path(__file__).resolve().parent.parent / '.env.local'
-    if env_file.exists():
-        load_dotenv(env_file)
-        print("Loaded variables from .env.local")
-except ImportError:
-    print("Warning: python-dotenv not installed, using default values")
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+def load_env_local(path):
+    """Load .env.local before python-decouple reads settings."""
+    if not path.exists():
+        return
+
+    try:
+        from dotenv import load_dotenv
+
+        load_dotenv(path, override=True)
+        return
+    except ImportError:
+        pass
+
+    for raw_line in path.read_text(encoding='utf-8').splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith('#') or '=' not in line:
+            continue
+
+        key, value = line.split('=', 1)
+        key = key.strip()
+        value = value.strip()
+
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in {'"', "'"}:
+            value = value[1:-1]
+
+        os.environ[key] = value
+
+
+# .env.local is the primary local/server runtime config for this project.
+# Docker sets LOAD_ENV_LOCAL=0 so container env variables are not overwritten.
+if os.environ.get('LOAD_ENV_LOCAL', '1').lower() not in {'0', 'false', 'no'}:
+    load_env_local(BASE_DIR / '.env.local')
+
+
+def csv_config(name, default=''):
+    """Read a comma-separated env variable into a clean list."""
+    value = config(name, default=default)
+    return [item.strip() for item in value.split(',') if item.strip()]
 
 
 # Quick-start development settings - unsuitable for production
@@ -36,9 +65,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-y&92ie9klnr&01t!pq#kg017f&)+78m_3#n+8r+)i0ejvie%#l')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=True, cast=bool)
 
-    # Получаем локальный IP и добавляем в ALLOWED_HOSTS
+# Получаем локальный IP и добавляем в ALLOWED_HOSTS для разработки
 import socket
 try:
     local_ip = socket.gethostbyname(socket.gethostname())
@@ -49,19 +78,14 @@ try:
 except:
     allowed_hosts = 'localhost,127.0.0.1'
 
-ALLOWED_HOSTS = ['*']
-# CSRF Trusted Origins - для всех возможных портов разработки
-CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:8000',
-    'http://127.0.0.1:8000',
-    'http://localhost:8080',
-    'http://127.0.0.1:8080',
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'http://localhost:55095',
-    'http://127.0.0.1:55095',
-    'https://*.lhr.life',
-]
+ALLOWED_HOSTS = csv_config('ALLOWED_HOSTS', allowed_hosts)
+
+CSRF_TRUSTED_ORIGINS = csv_config(
+    'CSRF_TRUSTED_ORIGINS',
+    'http://localhost:8000,http://127.0.0.1:8000,'
+    'http://localhost:8080,http://127.0.0.1:8080,'
+    'http://localhost:3000,http://127.0.0.1:3000'
+)
 
 
 # Application definition
@@ -102,6 +126,13 @@ MIDDLEWARE = [
     'adminpanel.middleware.ExceptionLoggingMiddleware',
 ]
 
+try:
+    import whitenoise  # noqa: F401
+
+    MIDDLEWARE.insert(2, 'whitenoise.middleware.WhiteNoiseMiddleware')
+except ImportError:
+    pass
+
 ROOT_URLCONF = 'progage.urls'
 
 TEMPLATES = [
@@ -125,6 +156,23 @@ WSGI_APPLICATION = 'progage.wsgi.application'
 
 # ASGI
 ASGI_APPLICATION = 'progage.asgi.application'
+
+REDIS_URL = config('REDIS_URL', default='')
+if REDIS_URL:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {
+                'hosts': [REDIS_URL],
+            },
+        },
+    }
+else:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        },
+    }
 
 
 # Database
@@ -176,6 +224,13 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+BACKUP_ROOT = Path(config('BACKUP_ROOT', default=str(BASE_DIR / 'backups')))
+LOG_DIR = Path(config('LOG_DIR', default=str(BASE_DIR / 'logs')))
+try:
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+except OSError:
+    pass
+
 # REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -190,12 +245,11 @@ REST_FRAMEWORK = {
 }
 
 # CORS settings
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:8080",
-    "http://127.0.0.1:8080",
-]
+CORS_ALLOWED_ORIGINS = csv_config(
+    'CORS_ALLOWED_ORIGINS',
+    'http://localhost:3000,http://127.0.0.1:3000,'
+    'http://localhost:8080,http://127.0.0.1:8080'
+)
 
 CORS_ALLOW_CREDENTIALS = True
 
@@ -203,13 +257,31 @@ CORS_ALLOW_CREDENTIALS = True
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  # Для реальной отправки
 EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
-EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='pashokbilashenko335@gmail.com')
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
 EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=False, cast=bool)
 EMAIL_TIMEOUT = 60  # Большой таймаут
 EMAIL_USE_LOCALTIME = True  # Добавлено для SMTP
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='pashokbilashenko335@gmail.com')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default=EMAIL_HOST_USER or 'noreply@localhost')
+
+# Security settings controlled by environment for VPS/production deployments
+SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=False, cast=bool)
+SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=not DEBUG, cast=bool)
+CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=not DEBUG, cast=bool)
+SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=0, cast=int)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = config('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=False, cast=bool)
+SECURE_HSTS_PRELOAD = config('SECURE_HSTS_PRELOAD', default=False, cast=bool)
+if config('USE_X_FORWARDED_PROTO', default=not DEBUG, cast=bool):
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Rate limits are intentionally moderate: reviewers often click through many
+# admin and course pages quickly during a local or VPS demonstration.
+RATE_LIMIT_ENABLED = config('RATE_LIMIT_ENABLED', default=True, cast=bool)
+RATE_LIMIT_GLOBAL_REQUESTS = config('RATE_LIMIT_GLOBAL_REQUESTS', default=600, cast=int)
+RATE_LIMIT_AUTHENTICATED_REQUESTS = config('RATE_LIMIT_AUTHENTICATED_REQUESTS', default=1200, cast=int)
+RATE_LIMIT_API_REQUESTS = config('RATE_LIMIT_API_REQUESTS', default=180, cast=int)
+RATE_LIMIT_WINDOW_SECONDS = config('RATE_LIMIT_WINDOW_SECONDS', default=60, cast=int)
 
 # Password reset settings
 PASSWORD_RESET_TIMEOUT = 86400  # 24 часа в секундах

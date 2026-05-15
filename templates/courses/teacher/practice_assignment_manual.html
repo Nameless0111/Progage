@@ -281,13 +281,8 @@
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <div class="form-check">
-                                {{ form.is_published }}
-                                <label class="form-check-label" for="{{ form.is_published.id_for_label }}">
-                                    Опубликовать задание (студенты смогут его видеть и отправлять решения)
-                                </label>
-                            </div>
+                        <div class="alert alert-info">
+                            Практическое задание публикуется сразу после сохранения.
                         </div>
 
                         <div class="mb-3">
@@ -347,9 +342,9 @@
                             <div class="submission-header">
                                 <div class="row align-items-center">
                                     <div class="col-md-3">
-                                        <strong>{{ submission.user.get_full_name|default:submission.user.username }}</strong>
+                                        <strong>{{ submission.user.public_display_name }}</strong>
                                         <br>
-                                        <small class="text-muted">{{ submission.user.email }}</small>
+                                        <small class="text-muted">{% if submission.user.is_anonymous_public %}Профиль скрыт{% else %}{{ submission.user.email }}{% endif %}</small>
                                     </div>
                                     <div class="col-md-2">
                                         <span class="language-badge">{{ submission.programming_language|upper }}</span>
@@ -674,9 +669,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         method: 'POST',
                         body: formData
                     }).then(response => {
-                        if (response.ok) {
-                            console.log('Автосохранение выполнено');
-                        }
+                        return response.ok;
                     });
                 }, 2000); // Сохраняем через 2 секунды после последнего изменения
             }

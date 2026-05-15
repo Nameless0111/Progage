@@ -324,7 +324,7 @@
                                                 <i class="fas fa-history me-2"></i>
                                                 Ваши попытки: {{ user_submissions.count }}/{{ lesson.practice_assignment.max_attempts }}
                                                 {% if has_correct_submission %}
-                                                    <span class="badge bg-success ms-2">✅ Решено!</span>
+                                                    <span class="badge bg-success ms-2">Решено</span>
                                                 {% endif %}
                                             </div>
                                             
@@ -335,7 +335,7 @@
                                                         <div>
                                                             <span class="badge bg-{{ submission.status|submission_color }}">Попытка {{ submission.attempt_number }}</span>
                                                             {% if submission.is_correct %}
-                                                                <span class="badge bg-success ms-1">✅ Верно</span>
+                                                                <span class="badge bg-success ms-1">Верно</span>
                                                             {% endif %}
                                                             {% if submission.execution_time %}
                                                                 <small class="text-muted ms-2">{{ submission.execution_time|floatformat:2 }}с</small>
@@ -429,22 +429,16 @@
                     <h5 class="mb-0"><i class="fas fa-comments text-primary me-2"></i>Комментарии и вопросы</h5>
                 </div>
                 <div class="card-body">
-                    {% if lesson.comments %}
+                    {% if comments %}
                         <div class="list-group list-group-flush mb-4">
-                            {% for comment in lesson.comments.all %}
+                            {% for comment in comments %}
                             <div class="list-group-item px-0">
                                 <div class="d-flex">
                                     <div class="flex-shrink-0">
-                                        {% if comment.user.avatar %}
-                                        <img src="{{ comment.user.avatar_url }}" alt="" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
-                                        {% else %}
-                                        <div class="bg-secondary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                            <i class="fas fa-user text-secondary"></i>
-                                        </div>
-                                        {% endif %}
+                                        <img src="{{ comment.user.public_avatar_url }}" alt="" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
                                     </div>
                                     <div class="flex-grow-1 ms-3">
-                                        <h6 class="mb-1">{{ comment.user.get_full_name|default:comment.user.username }}</h6>
+                                        <h6 class="mb-1">{{ comment.user.public_display_name }}</h6>
                                         <p class="mb-1">{{ comment.content }}</p>
                                         <small class="text-muted">{{ comment.created_at|timesince }} назад</small>
                                     </div>
@@ -456,11 +450,15 @@
                         <p class="text-muted text-center">Пока нет комментариев. Будьте первым!</p>
                     {% endif %}
                     
-                    <!-- Комментарии временно отключены до создания миграций -->
                     {% if user.is_authenticated %}
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>Функция комментариев временно отключена
-                    </div>
+                    <form method="post" action="{% url 'courses:add_comment' lesson.course.id lesson.id %}">
+                        {% csrf_token %}
+                        <label for="lesson-comment" class="form-label">Ваш комментарий</label>
+                        <textarea id="lesson-comment" name="content" class="form-control mb-3" rows="3" maxlength="1000" placeholder="Напишите вопрос или комментарий к уроку..." required></textarea>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane me-2"></i>Отправить
+                        </button>
+                    </form>
                     {% endif %}
                 </div>
             </div>

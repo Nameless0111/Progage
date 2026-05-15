@@ -1,86 +1,105 @@
-# Progage - Образовательная платформа
+# Progage
 
-Progage - это современная образовательная платформа для создания и прохождения курсов.
+Progage - образовательная платформа на Django для курсов, уроков, тестов, практических заданий, чата поддержки и административной панели.
 
-## 🚀 Быстрый старт
+## Локальный запуск через Docker
 
-### Требования
-- Python 3.8+
-- Django 4.2+
-- Node.js (для фронтенда)
-- PostgreSQL или SQLite
+Этот способ подходит для Windows, Linux и macOS. Нужен только Docker Desktop или Docker Engine с Docker Compose.
 
-### Установка
 ```bash
-# Клонируйте репозиторий
 git clone <repository-url>
-cd progage
-
-# Создайте виртуальное окружение
-python -m venv venv
-source venv/bin/activate  # Для Windows
-# или
-venv\Scripts\activate  # Для Windows
-
-# Установите зависимости
-pip install -r requirements.txt
-
-# Настройте переменные окружения
-cp .env.example .env
-# Отредактируйте .env с вашими настройками
-
-# Выполните миграции
-python manage.py migrate
-
-# Создайте суперпользователя
-python manage.py createsuperuser
-
-# Запустите сервер
-python manage.py runserver
+cd Progage
+docker compose up --build
 ```
 
-## 📁 Структура проекта
+После запуска сайт будет доступен по адресу:
 
-```
-progage/
-├── accounts/          # Пользователи и аутентификация
-├── adminpanel/         # Админ-панель
-├── courses/            # Курсы и уроки
-├── progage/             # Основное приложение
-├── chat/                # Чат и поддержка
-├── templates/           # HTML шаблоны
-├── static/              # Статические файлы
-├── media/               # Медиафайлы пользователей
-└── backups/             # Бэкапы системы
+```text
+http://localhost:8000
 ```
 
-## 🔧 Разработка
+Миграции применяются автоматически при старте контейнера. База данных PostgreSQL и Redis запускаются отдельными контейнерами.
 
-### Основные команды
+Создание администратора:
+
 ```bash
-# Создание миграций
-python manage.py makemigrations
+docker compose exec web python manage.py createsuperuser
+```
 
-# Применение миграций
+Остановка:
+
+```bash
+docker compose down
+```
+
+Полная очистка локальной Docker-базы:
+
+```bash
+docker compose down -v
+```
+
+## Локальный запуск без Docker
+
+Для ручного запуска нужен Python 3.11, PostgreSQL и Redis.
+
+```bash
+python -m venv venv
+venv\Scripts\activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
 python manage.py migrate
-
-# Создание суперпользователя
-python manage.py createsuperuser
-
-# Запуск тестов
-python manage.py test
-
-# Сбор статики
-python manage.py collectstatic
-
-# Запуск сервера разработки
 python manage.py runserver
 ```
 
-## 📚 Документация
+На Windows проект читает настройки из `.env.local`, если файл существует. Если после обновления проекта появляется ошибка импорта зависимости, выполните:
 
-Подробная документация находится в директории `docs/`.
+```bash
+pip install -r requirements.txt
+```
 
-## 🤝 Поддержка
+## Production на Ubuntu/VPS
 
-Если у вас есть вопросы или проблемы, создайте issue в репозитории.
+Основной сценарий деплоя:
+
+```bash
+git pull
+source venv/bin/activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py collectstatic --noinput
+sudo systemctl restart progage
+```
+
+Для production укажите в `.env.local` или переменных окружения:
+
+```text
+DEBUG=False
+SECRET_KEY=<strong-secret>
+ALLOWED_HOSTS=example.com,www.example.com,<server-ip>
+CSRF_TRUSTED_ORIGINS=https://example.com,https://www.example.com
+DATABASE_URL=postgresql://user:password@localhost:5432/progage_db
+REDIS_URL=redis://localhost:6379/0
+BACKUP_ROOT=/var/backups/progage
+LOG_DIR=/var/log/progage
+```
+
+## Структура проекта
+
+```text
+accounts/      Пользователи, роли, профиль, 2FA, уведомления
+adminpanel/    Внутренняя админ-панель, логи, бэкапы
+chat/          Чат поддержки
+courses/       Курсы, уроки, тесты, практические задания
+progage/       Настройки, URL, WSGI/ASGI
+templates/     HTML-шаблоны
+static/        CSS и статические файлы
+media/         Пользовательские файлы
+backups/       Локальные архивы бэкапов
+```
+
+## Проверка проекта
+
+```bash
+python manage.py check
+python manage.py showmigrations
+```

@@ -340,6 +340,10 @@ def practice_assignment(request, lesson_id):
     logger.info(f"user: {request.user}")
     logger.info(f"method: {request.method}")
     
+    if request.user.role != 'teacher':
+        messages.error(request, 'Доступ только для преподавателей')
+        return redirect('home')
+
     lesson = get_object_or_404(Lesson, id=lesson_id, course__instructor=request.user)
     logger.info(f"lesson found: {lesson.title} (type: {lesson.lesson_type})")
     
@@ -452,6 +456,10 @@ def practice_assignment(request, lesson_id):
 @login_required
 def practice_assignment_manual(request, lesson_id):
     """Создание и редактирование практического задания с ручной проверкой"""
+    if request.user.role != 'teacher':
+        messages.error(request, 'Доступ только для преподавателей')
+        return redirect('home')
+
     lesson = get_object_or_404(Lesson, id=lesson_id, course__instructor=request.user)
     
     try:
@@ -517,7 +525,7 @@ def practice_assignment_manual(request, lesson_id):
         # Вычисляем среднюю оценку
         graded_submissions = assignment.submissions.filter(grade__isnull=False)
         if graded_submissions.exists():
-            avg_grade = graded_submissions.aggregate(avg=models.Avg('grade'))['avg__avg']
+            avg_grade = graded_submissions.aggregate(avg=models.Avg('grade'))['avg'] or 0
         else:
             avg_grade = 0
     
@@ -543,10 +551,14 @@ def practice_assignment_manual(request, lesson_id):
 @login_required
 def review_submission(request, submission_id):
     """Проверка отправки кода"""
+    if request.user.role != 'teacher':
+        messages.error(request, 'Доступ только для преподавателей')
+        return redirect('home')
+
     submission = get_object_or_404(CodeSubmission, id=submission_id)
     
     # Проверяем, что преподаватель имеет доступ к этому заданию
-    if submission.assignment.lesson.course.teacher != request.user:
+    if submission.assignment.lesson.course.instructor != request.user:
         messages.error(request, 'У вас нет доступа к этому заданию')
         return redirect('courses:teacher_dashboard')
     
@@ -554,9 +566,21 @@ def review_submission(request, submission_id):
         action = request.POST.get('action')
         grade = request.POST.get('grade')
         feedback = request.POST.get('feedback')
+        grade_value = None
+
+        if grade:
+            try:
+                grade_value = int(grade)
+            except (TypeError, ValueError):
+                messages.error(request, 'Оценка должна быть числом')
+                return redirect('courses:review_submission', submission_id=submission.id)
+
+            if grade_value < 0 or grade_value > submission.assignment.max_grade:
+                messages.error(request, f'Оценка должна быть от 0 до {submission.assignment.max_grade}')
+                return redirect('courses:review_submission', submission_id=submission.id)
         
         # Обновляем данные проверки
-        submission.grade = grade if grade else None
+        submission.grade = grade_value
         submission.feedback = feedback
         submission.reviewed_by = request.user
         submission.reviewed_at = timezone.now()
@@ -653,7 +677,7 @@ def submit_code(request, lesson_id):
             if results['test_results']:
                 test_output = []
                 for test_result in results['test_results']:
-                    test_output.append(f"Тест {test_result['test_number']}: {'✓' if test_result['passed'] else '✗'}")
+                    test_output.append(f"Тест {test_result['test_number']}: {'пройден' if test_result['passed'] else 'не пройден'}")
                     if not test_result['passed']:
                         test_output.append(f"  Ввод: {test_result['input']}")
                         test_output.append(f"  Ожидаемый: {test_result['expected_output']}")
@@ -672,9 +696,9 @@ def submit_code(request, lesson_id):
         
         # Сообщение о результате
         if submission.is_correct:
-            messages.success(request, '✅ Решение верное! Все тесты пройдены.')
+            messages.success(request, 'Решение верное. Все тесты пройдены.')
         else:
-            messages.warning(request, f'❌ Решение неверное. Пройдено {submission.test_cases_passed} из {submission.total_test_cases} тестов.')
+            messages.warning(request, f'Решение неверное. Пройдено {submission.test_cases_passed} из {submission.total_test_cases} тестов.')
         
         return redirect('courses:lesson_view', lesson.course.id, lesson.id)
     

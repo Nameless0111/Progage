@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:15
@@ -34,6 +32,10 @@ services:
       - redis
     environment:
       - DJANGO_SETTINGS_MODULE=progage.production
+      - LOAD_ENV_LOCAL=0
+      - DATABASE_URL=postgresql://postgres:${DB_PASSWORD}@db:5432/progage
+      - REDIS_URL=redis://redis:6379/0
+      - DJANGO_COLLECTSTATIC=1
     env_file:
       - .env
     restart: unless-stopped
@@ -53,6 +55,10 @@ services:
       - redis
     environment:
       - DJANGO_SETTINGS_MODULE=progage.production
+      - LOAD_ENV_LOCAL=0
+      - DATABASE_URL=postgresql://postgres:${DB_PASSWORD}@db:5432/progage
+      - REDIS_URL=redis://redis:6379/0
+      - DJANGO_COLLECTSTATIC=0
     env_file:
       - .env
     restart: unless-stopped

@@ -41,5 +41,6 @@ urlpatterns = [
     path('lessons/<int:lesson_id>/submit/', teacher_views.submit_code, name='submit_code'),
     
     # API URLs
+    path('api/test-page/', api_views.api_test_page, name='api_test_page'),
     path('api/test-code/', api_views.test_code, name='test_code_api'),
 ]

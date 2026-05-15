@@ -29,6 +29,8 @@ db.sqlite3-journal
 
 # Environment variables
 .env
+.env.local
+.env.*
 .venv
 env/
 venv/
@@ -56,6 +58,7 @@ docker-compose.override.yml
 /staticfiles/
 /mediafiles/
 logs/
+exports/
 ssl/
 *.pem
 *.key
@@ -70,3 +73,29 @@ ssl/
 dump.json
 progage_site.*
 Progage.*
+
+# Diploma/document generation workspace
+diplom_progage/
+*.docx
+*.pptx
+*.pdf
+~$*
+
+# Local temporary and backup artifacts
+.tmp/
+temp_restore/
+media_backup_*/
+db.sqlite3.backup_*
+manage.py.backup_*
+requirements.txt.backup_*
+progage/settings.py.backup_*
+*.backup_*
+
+# One-off debug/test scripts kept out of the production repo
+test_*.py
+debug_*.py
+check_*.py
+delete_user*.py
+load_test*.py
+clean_*.py
+restore_*.py

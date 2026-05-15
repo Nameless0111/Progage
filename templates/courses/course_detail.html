@@ -35,15 +35,9 @@
                     
                     <div class="d-flex align-items-center justify-content-between">
                         <div class="d-flex align-items-center">
-                            {% if course.instructor.avatar %}
-                            <img src="{{ course.instructor.avatar_url }}" alt="" class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;">
-                            {% else %}
-                            <div class="bg-primary bg-opacity-10 rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                <i class="fas fa-user text-primary"></i>
-                            </div>
-                            {% endif %}
+                            <img src="{{ course.instructor.public_avatar_url }}" alt="" class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;">
                             <div>
-                                <h6 class="mb-0">{{ course.instructor.get_full_name|default:course.instructor.username }}</h6>
+                                <h6 class="mb-0">{{ course.instructor.public_display_name }}</h6>
                                 <small class="text-muted">Преподаватель</small>
                             </div>
                         </div>
@@ -117,15 +111,9 @@
                             <div class="border rounded p-3 h-100">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <div class="d-flex align-items-center">
-                                        {% if review.user.avatar %}
-                                        <img src="{{ review.user.avatar_url }}" alt="" class="rounded-circle me-2" style="width: 35px; height: 35px; object-fit: cover;">
-                                        {% else %}
-                                        <div class="bg-secondary bg-opacity-10 rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
-                                            <i class="fas fa-user text-secondary small"></i>
-                                        </div>
-                                        {% endif %}
+                                        <img src="{{ review.user.public_avatar_url }}" alt="" class="rounded-circle me-2" style="width: 35px; height: 35px; object-fit: cover;">
                                         <div>
-                                            <h6 class="mb-0">{{ review.user.get_full_name|default:review.user.username }}</h6>
+                                            <h6 class="mb-0">{{ review.user.public_display_name }}</h6>
                                             <small class="text-muted">{{ review.created_at|timesince }} назад</small>
                                         </div>
                                     </div>

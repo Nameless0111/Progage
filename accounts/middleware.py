@@ -5,26 +5,27 @@ from django.utils.functional import SimpleLazyObject
 import time
 
 class BruteForceProtectionMiddleware(MiddlewareMixin):
-    """Защита от brute-force атак с rate limiting"""
+    """Мягкое ограничение для восстановления пароля.
+
+    Логин считает только неудачные попытки внутри view. Если middleware тоже
+    записывает каждый POST, пользователь получает блокировку после пары ошибок.
+    """
     
     def __init__(self, get_response):
         self.get_response = get_response
         super().__init__(get_response)
     
     def __call__(self, request):
-        # Применяем только к формам входа и восстановления пароля
-        if request.path in ['/accounts/login/', '/accounts/password-reset/']:
+        if request.path == '/accounts/password-reset/' and request.method == 'POST':
             client_ip = self.get_client_ip(request)
-            username = request.POST.get('username', '') if request.method == 'POST' else ''
             
-            if self.is_blocked(client_ip, username):
+            if self.is_blocked(client_ip):
                 return HttpResponse(
-                    "Слишком много попыток. Попробуйте через 5 минут.",
+                    "Слишком много запросов на восстановление пароля. Попробуйте через 10 минут.",
                     status=429
                 )
             
-            if request.method == 'POST':
-                self.record_attempt(client_ip, username)
+            self.record_attempt(client_ip)
         
         response = self.get_response(request)
         return response
@@ -37,33 +38,16 @@ class BruteForceProtectionMiddleware(MiddlewareMixin):
             ip = request.META.get('REMOTE_ADDR')
         return ip
     
-    def is_blocked(self, ip, username=''):
-        # Проверяем блокировку по IP и по username+IP
-        ip_key = f'login_attempts_ip_{ip}'
-        user_key = f'login_attempts_user_{username}_{ip}' if username else None
-        
-        ip_attempts = cache.get(ip_key, 0)
-        user_attempts = cache.get(user_key, 0) if user_key else 0
-        
-        # Блокировка если больше 5 попыток за 5 минут
-        return ip_attempts >= 5 or user_attempts >= 3
-    
-    def record_attempt(self, ip, username):
-        # Записываем попытку с TTL 5 минут
-        ip_key = f'login_attempts_ip_{ip}'
-        user_key = f'login_attempts_user_{username}_{ip}' if username else None
-        
-        # Безопасный инкремент с инициализацией
+    def is_blocked(self, ip):
+        attempts = cache.get(f'password_reset_attempts_ip_{ip}', 0)
+        return attempts >= 10
+
+    def record_attempt(self, ip):
+        ip_key = f'password_reset_attempts_ip_{ip}'
         if cache.get(ip_key) is None:
-            cache.set(ip_key, 1, 300)
+            cache.set(ip_key, 1, 600)
         else:
             cache.incr(ip_key)
-        
-        if user_key:
-            if cache.get(user_key) is None:
-                cache.set(user_key, 1, 300)
-            else:
-                cache.incr(user_key)
 
 
 def get_unread_notifications_count(request):

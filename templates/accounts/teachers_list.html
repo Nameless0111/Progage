@@ -50,6 +50,7 @@
     border: none;
     box-shadow: 0 2px 10px rgba(0,0,0,0.08);
     overflow: hidden;
+    border-radius: 12px;
 }
 
 .teacher-card:hover {
@@ -58,10 +59,22 @@
 }
 
 .teacher-avatar {
-    width: 60px;
-    height: 60px;
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
     object-fit: cover;
+}
+
+.course-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #334155;
+    font-size: 0.82rem;
+    margin: 0 6px 6px 0;
 }
 
 .teacher-info {
@@ -171,17 +184,33 @@
             <div class="card teacher-card h-100">
                 <div class="card-body p-4">
                     <div class="d-flex align-items-start mb-3">
-                        <div class="teacher-avatar bg-primary d-flex align-items-center justify-content-center me-3">
-                            <i class="fas fa-user text-white fa-2x"></i>
-                        </div>
+                        <img src="{{ teacher.public_avatar_url }}" alt="" class="teacher-avatar me-3">
                         
                         <div class="teacher-info flex-grow-1">
-                            <h5 class="card-title mb-1">{{ teacher.get_full_name|default:teacher.username }}</h5>
-                            <span class="specialization-badge">IT-специалист</span>
+                            <h5 class="card-title mb-1">
+                                {% if teacher.is_anonymous_public %}Анонимный преподаватель{% else %}{{ teacher.public_display_name }}{% endif %}
+                            </h5>
+                            <span class="specialization-badge">
+                                {% if teacher.is_anonymous_public %}Преподаватель{% else %}IT-специалист{% endif %}
+                            </span>
                         </div>
                     </div>
                     
-                    <p class="text-muted mb-3">Профессиональный преподаватель с опытом работы в IT-индустрии</p>
+                    <p class="text-muted mb-3">
+                        {% if teacher.is_anonymous_public %}
+                            Преподаватель предпочел скрыть личные данные. Доступны курсы и учебная статистика.
+                        {% else %}
+                            {{ teacher.bio|default:"Профессиональный преподаватель с опытом работы в IT-индустрии"|truncatewords:18 }}
+                        {% endif %}
+                    </p>
+
+                    <div class="mb-3">
+                        {% for course in courses|slice:":3" %}
+                        <span class="course-chip"><i class="fas fa-book-open"></i>{{ course.title|truncatechars:22 }}</span>
+                        {% empty %}
+                        <span class="text-muted small">Курсы пока не опубликованы</span>
+                        {% endfor %}
+                    </div>
                     
                     <div class="d-flex justify-content-between align-items-center">
                         <div class="teacher-stats">
@@ -221,7 +250,7 @@
 </div>
 
 <!-- CTA Section -->
-{% if teachers %}
+{% if teachers_data %}
 <div class="bg-light py-5">
     <div class="container text-center">
         <h3 class="mb-4">Не нашли нужного преподавателя?</h3>

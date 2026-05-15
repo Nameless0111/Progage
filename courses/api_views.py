@@ -1,10 +1,25 @@
 """
 API views для курсов
 """
-from django.http import JsonResponse
+from django.conf import settings
+from django.http import Http404, JsonResponse
+from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 import json
+
+
+def api_test_page(request):
+    """
+    Debug-only page for taking a browser screenshot of the code test API.
+    """
+    host = request.get_host().split(':', 1)[0].lower()
+    is_localhost = host in {'localhost', '127.0.0.1', '::1'}
+
+    if not settings.DEBUG and not is_localhost:
+        raise Http404
+
+    return render(request, 'courses/api_test_page.html')
 
 
 @csrf_exempt

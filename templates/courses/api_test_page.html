@@ -1,0 +1,280 @@
+{% extends 'base.html' %}
+
+{% block title %}Тестирование API - Progage{% endblock %}
+
+{% block extra_css %}
+<style>
+    .api-test-page {
+        max-width: 1180px;
+        margin: 0 auto;
+    }
+
+    .api-test-header {
+        margin-bottom: 24px;
+    }
+
+    .api-test-header h1 {
+        margin-bottom: 8px;
+        font-size: 28px;
+        font-weight: 700;
+        color: #1f2937;
+    }
+
+    .api-test-header p {
+        margin: 0;
+        color: #4b5563;
+        font-size: 15px;
+    }
+
+    .api-test-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 20px;
+    }
+
+    .api-test-card {
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        background: #fff;
+        box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+        overflow: hidden;
+    }
+
+    .api-test-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 16px;
+        border-bottom: 1px solid #e5e7eb;
+        background: #f9fafb;
+    }
+
+    .api-test-card-header h2 {
+        margin: 0;
+        font-size: 17px;
+        font-weight: 700;
+        color: #111827;
+    }
+
+    .api-test-card-body {
+        padding: 16px;
+    }
+
+    .api-test-label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 600;
+        color: #374151;
+    }
+
+    .api-test-row {
+        margin-bottom: 14px;
+    }
+
+    .api-test-code {
+        width: 100%;
+        min-height: 220px;
+        padding: 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        resize: vertical;
+        font-family: Consolas, Monaco, monospace;
+        font-size: 14px;
+        line-height: 1.45;
+        color: #111827;
+        background: #f8fafc;
+    }
+
+    .api-test-result {
+        min-height: 356px;
+        margin: 0;
+        padding: 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        overflow: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-family: Consolas, Monaco, monospace;
+        font-size: 14px;
+        line-height: 1.45;
+        color: #111827;
+        background: #f8fafc;
+    }
+
+    .api-test-url {
+        padding: 10px 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        font-family: Consolas, Monaco, monospace;
+        font-size: 14px;
+        color: #111827;
+        background: #f8fafc;
+    }
+
+    .api-status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        padding: 4px 10px;
+        border: 1px solid #9ca3af;
+        border-radius: 6px;
+        font-weight: 700;
+        color: #374151;
+        background: #fff;
+    }
+
+    .api-status.success {
+        border-color: #15803d;
+        color: #166534;
+        background: #f0fdf4;
+    }
+
+    .api-status.error {
+        border-color: #b91c1c;
+        color: #991b1b;
+        background: #fef2f2;
+    }
+
+    .api-test-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    @media (max-width: 900px) {
+        .api-test-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="api-test-page">
+    <div class="api-test-header">
+        <h1>Тестирование API проверки кода</h1>
+        <p>Страница предназначена для локальной проверки API и подготовки скриншота с HTTP-кодом ответа.</p>
+    </div>
+
+    <div class="api-test-grid">
+        <section class="api-test-card">
+            <div class="api-test-card-header">
+                <h2>Запрос</h2>
+            </div>
+            <div class="api-test-card-body">
+                <div class="api-test-row">
+                    <span class="api-test-label">Метод и адрес</span>
+                    <div class="api-test-url">POST /courses/api/test-code/</div>
+                </div>
+
+                <div class="api-test-row">
+                    <label class="api-test-label" for="language">Язык</label>
+                    <select class="form-select" id="language">
+                        <option value="python" selected>python</option>
+                        <option value="javascript">javascript</option>
+                        <option value="java">java</option>
+                        <option value="cpp">cpp</option>
+                        <option value="c">c</option>
+                    </select>
+                </div>
+
+                <div class="api-test-row">
+                    <label class="api-test-label" for="code">Код программы</label>
+                    <textarea class="api-test-code" id="code" spellcheck="false">print('Progage API test')</textarea>
+                </div>
+
+                <div class="api-test-actions">
+                    <button class="btn btn-primary" type="button" id="sendRequest">
+                        <i class="fas fa-paper-plane me-1"></i>Отправить запрос
+                    </button>
+                    <button class="btn btn-outline-secondary" type="button" id="emptyRequest">
+                        Пустой код
+                    </button>
+                    <button class="btn btn-outline-secondary" type="button" id="syntaxRequest">
+                        Ошибка синтаксиса
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="api-test-card">
+            <div class="api-test-card-header">
+                <h2>Ответ сервера</h2>
+                <span class="api-status" id="httpStatus">HTTP -</span>
+            </div>
+            <div class="api-test-card-body">
+                <pre class="api-test-result" id="responseBody">Нажмите «Отправить запрос», чтобы увидеть HTTP-код и JSON-ответ API.</pre>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const statusElement = document.getElementById('httpStatus');
+    const responseBodyElement = document.getElementById('responseBody');
+    const codeElement = document.getElementById('code');
+    const languageElement = document.getElementById('language');
+    const sendButton = document.getElementById('sendRequest');
+    const emptyButton = document.getElementById('emptyRequest');
+    const syntaxButton = document.getElementById('syntaxRequest');
+
+    function setStatus(text, isSuccess) {
+        statusElement.textContent = text;
+        statusElement.classList.remove('success', 'error');
+        statusElement.classList.add(isSuccess ? 'success' : 'error');
+    }
+
+    async function sendApiRequest() {
+        const payload = {
+            language: languageElement.value,
+            code: codeElement.value
+        };
+
+        responseBodyElement.textContent = 'Запрос выполняется...';
+        statusElement.textContent = 'HTTP ...';
+        statusElement.classList.remove('success', 'error');
+
+        try {
+            const response = await fetch('/courses/api/test-code/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const text = await response.text();
+            let formattedBody = text;
+
+            try {
+                formattedBody = JSON.stringify(JSON.parse(text), null, 2);
+            } catch (error) {
+                formattedBody = text || 'Пустой ответ сервера';
+            }
+
+            setStatus(`HTTP ${response.status} ${response.statusText}`, response.ok);
+            responseBodyElement.textContent = formattedBody;
+        } catch (error) {
+            setStatus('Ошибка запроса', false);
+            responseBodyElement.textContent = error.message;
+        }
+    }
+
+    sendButton.addEventListener('click', sendApiRequest);
+
+    emptyButton.addEventListener('click', () => {
+        codeElement.value = '';
+        sendApiRequest();
+    });
+
+    syntaxButton.addEventListener('click', () => {
+        languageElement.value = 'python';
+        codeElement.value = "print('Progage API test'";
+        sendApiRequest();
+    });
+</script>
+{% endblock %}

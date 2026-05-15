@@ -2,7 +2,7 @@
 {% load static %}
 {% load custom_filters %}
 
-{% block title %}{{ teacher.get_full_name|default:teacher.username }} - Преподаватель - Progage{% endblock %}
+{% block title %}{{ teacher_public_name }} - Преподаватель - Progage{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -710,11 +710,17 @@
 <div class="profile-header">
     <div class="container">
         <div class="profile-avatar">
-            <i class="fas fa-user text-white fa-4x"></i>
+            <img src="{{ teacher_public_avatar_url }}" alt="" class="w-100 h-100 rounded-circle" style="object-fit: cover;">
         </div>
-        <h1 class="profile-name">{{ teacher.get_full_name|default:teacher.username }}</h1>
-        <p class="profile-specialization">IT-специалист</p>
-        <p class="lead mb-4">Профессиональный преподаватель с опытом работы в IT-индустрии</p>
+        <h1 class="profile-name">{% if teacher_is_anonymous %}Анонимный преподаватель{% else %}{{ teacher_public_name }}{% endif %}</h1>
+        <p class="profile-specialization">{% if teacher_is_anonymous %}Преподаватель курсов{% else %}{{ teacher.profile.specialization|default:"IT-специалист" }}{% endif %}</p>
+        <p class="lead mb-4">
+            {% if teacher_is_anonymous %}
+                Преподаватель скрывает персональные данные. На странице доступны его курсы, рейтинг и учебная статистика.
+            {% else %}
+                {{ teacher.bio|default:teacher.profile.bio|default:"Профессиональный преподаватель с опытом работы в IT-индустрии" }}
+            {% endif %}
+        </p>
     </div>
 </div>
 
@@ -783,35 +789,35 @@
                     <h3><i class="fas fa-star me-2"></i>Распределение оценок</h3>
                     <div class="rating-chart">
                         <div class="rating-bar">
-                            <div class="rating-label">5 ⭐</div>
+                            <div class="rating-label">5</div>
                             <div class="rating-progress">
                                 <div class="rating-fill" style="width: {{ rating_distribution.5|mul:100|div:total_teacher_ratings|default:0 }}%"></div>
                             </div>
                             <div class="rating-count">{{ rating_distribution.5|default:0 }}</div>
                         </div>
                         <div class="rating-bar">
-                            <div class="rating-label">4 ⭐</div>
+                            <div class="rating-label">4</div>
                             <div class="rating-progress">
                                 <div class="rating-fill" style="width: {{ rating_distribution.4|mul:100|div:total_teacher_ratings|default:0 }}%"></div>
                             </div>
                             <div class="rating-count">{{ rating_distribution.4|default:0 }}</div>
                         </div>
                         <div class="rating-bar">
-                            <div class="rating-label">3 ⭐</div>
+                            <div class="rating-label">3</div>
                             <div class="rating-progress">
                                 <div class="rating-fill" style="width: {{ rating_distribution.3|mul:100|div:total_teacher_ratings|default:0 }}%"></div>
                             </div>
                             <div class="rating-count">{{ rating_distribution.3|default:0 }}</div>
                         </div>
                         <div class="rating-bar">
-                            <div class="rating-label">2 ⭐</div>
+                            <div class="rating-label">2</div>
                             <div class="rating-progress">
                                 <div class="rating-fill" style="width: {{ rating_distribution.2|mul:100|div:total_teacher_ratings|default:0 }}%"></div>
                             </div>
                             <div class="rating-count">{{ rating_distribution.2|default:0 }}</div>
                         </div>
                         <div class="rating-bar">
-                            <div class="rating-label">1 ⭐</div>
+                            <div class="rating-label">1</div>
                             <div class="rating-progress">
                                 <div class="rating-fill" style="width: {{ rating_distribution.1|mul:100|div:total_teacher_ratings|default:0 }}%"></div>
                             </div>
@@ -841,22 +847,25 @@
                     {% endfor %}
                 </div>
 
-                <!-- Certificates Card -->
+                <!-- Profile Card -->
                 <div class="certificates-card">
-                    <h3><i class="fas fa-certificate me-2"></i>Сертификаты</h3>
-                    <p class="certificates-description">Просмотрите доступные сертификаты и ваши достижения</p>
-                    <a href="{% url 'accounts:certificates' %}" class="certificates-link">
+                    <h3><i class="fas fa-id-card me-2"></i>Профиль преподавателя</h3>
+                    <p class="certificates-description">
+                        {% if teacher_is_anonymous %}
+                            Личные данные скрыты настройками приватности.
+                        {% else %}
+                            {{ teacher.profile.bio|default:teacher.bio|default:"Преподаватель пока не заполнил подробное описание профиля." }}
+                        {% endif %}
+                    </p>
+                    <div class="certificates-link">
                         <div class="certificates-icon">
-                            <i class="fas fa-award"></i>
+                            <i class="fas fa-user-shield"></i>
                         </div>
                         <div class="certificates-text">
-                            <div class="certificates-count">6 сертификатов</div>
-                            <div class="certificates-subtitle">2 завершенных, 2 в процессе, 2 доступных</div>
+                            <div class="certificates-count">{% if teacher_is_anonymous %}Анонимный режим{% else %}Открытый профиль{% endif %}</div>
+                            <div class="certificates-subtitle">{{ total_courses }} курсов, {{ total_students }} студентов</div>
                         </div>
-                        <div class="certificates-arrow">
-                            <i class="fas fa-arrow-right"></i>
-                        </div>
-                    </a>
+                    </div>
                 </div>
 
                 <!-- Recent Ratings -->
@@ -869,7 +878,7 @@
                         </div>
                         <div class="rating-content">
                             <div class="rating-header">
-                                <div class="rating-student">{{ rating.student.get_full_name|default:rating.student.username }}</div>
+                                <div class="rating-student">{{ rating.student.public_display_name }}</div>
                                 <div class="rating-number-small">
                                     {{ rating.rating }}/5.0
                                 </div>
@@ -1011,15 +1020,4 @@
     </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const certificatesLink = document.querySelector('.certificates-link');
-    if (certificatesLink) {
-        certificatesLink.addEventListener('click', function(e) {
-            e.preventDefault();
-            window.location.href = '{% url "accounts:certificates" %}';
-        });
-    }
-});
-</script>
 {% endblock %}

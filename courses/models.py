@@ -5,6 +5,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from urllib.parse import quote
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.urls import reverse
 
 User = get_user_model()
 
@@ -35,7 +36,7 @@ class Course(models.Model):
     programming_language = models.CharField(max_length=50, blank=True, default='', verbose_name='Язык программирования')
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name='Цена')
     thumbnail = models.ImageField(upload_to='course_thumbnails/', null=True, blank=True, verbose_name='Превью')
-    is_published = models.BooleanField(default=False, verbose_name='Опубликован')
+    is_published = models.BooleanField(default=True, verbose_name='Опубликован')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Создан')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Обновлен')
     
@@ -46,6 +47,14 @@ class Course(models.Model):
     
     def __str__(self):
         return self.title
+
+    def get_absolute_url(self):
+        return reverse('courses:course_detail', kwargs={'course_id': self.id})
+
+    def save(self, *args, **kwargs):
+        self.price = 0
+        self.is_published = True
+        super().save(*args, **kwargs)
 
     @property
     def thumbnail_url(self):
@@ -94,7 +103,7 @@ class Lesson(models.Model):
     attachment = models.FileField(upload_to='lesson_attachments/', null=True, blank=True, verbose_name='Прикрепленный файл', help_text='Видео, презентация, PDF, Word и другие файлы')
     attachment_name = models.CharField(max_length=255, blank=True, verbose_name='Название файла')
     order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
-    is_free = models.BooleanField(default=False, verbose_name='Бесплатный')
+    is_free = models.BooleanField(default=True, verbose_name='Бесплатный')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Создан')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Обновлен')
     
@@ -105,7 +114,7 @@ class Lesson(models.Model):
     
     def __str__(self):
         return f"{self.course.title} - {self.title}"
-    
+
     @property
     def file_extension(self):
         """Возвращает расширение файла"""
@@ -156,6 +165,7 @@ class Lesson(models.Model):
     
     def save(self, *args, **kwargs):
         """При сохранении устанавливает название файла"""
+        self.is_free = True
         if self.attachment and not self.attachment_name:
             self.attachment_name = self.attachment.name.split('/')[-1]
         super().save(*args, **kwargs)
@@ -275,7 +285,7 @@ class PracticeAssignment(models.Model):
     max_grade = models.PositiveIntegerField(default=100, verbose_name='Максимальная оценка')
     deadline = models.DateTimeField(null=True, blank=True, verbose_name='Дедлайн')
     require_manual_review = models.BooleanField(default=False, verbose_name='Требуется ручная проверка')
-    is_published = models.BooleanField(default=False, verbose_name='Опубликовано')
+    is_published = models.BooleanField(default=True, verbose_name='Опубликовано')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Создано')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Обновлено')
     
@@ -285,6 +295,10 @@ class PracticeAssignment(models.Model):
     
     def __str__(self):
         return f"{self.lesson.title} - {self.title}"
+
+    def save(self, *args, **kwargs):
+        self.is_published = True
+        super().save(*args, **kwargs)
 
 class CodeSubmission(models.Model):
     """Отправка кода на проверку"""
@@ -433,7 +447,3 @@ class LessonComment(models.Model):
     
     def __str__(self):
         return f"Комментарий {self.user.username} к уроку {self.lesson.title}"
-
-
-
-

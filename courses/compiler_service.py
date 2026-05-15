@@ -9,6 +9,7 @@ import tempfile
 import shutil
 import time
 import re
+import shlex
 
 from typing import Dict, List, Tuple
 from .models import SecurityConfig
@@ -193,7 +194,7 @@ class CodeCompiler:
             try:
                 shutil.rmtree(self.temp_dir)
             except Exception as error:
-                print(f"Sandbox cleanup error: {error}")
+                pass
 
     def _validate_code(
         self,
@@ -248,11 +249,14 @@ class CodeCompiler:
         command: str,
         work_dir: str,
         timeout: int,
-        memory_limit: int
+        memory_limit: int,
+        input_data: str = ''
     ) -> Dict:
         """Запуск команды"""
 
         try:
+            command_args = shlex.split(command, posix=os.name != 'nt')
+
             resource_limits = {
                 'RLIMIT_CPU': timeout,
                 'RLIMIT_AS': memory_limit * 1024 * 1024,
@@ -263,11 +267,12 @@ class CodeCompiler:
             if os.name == 'nt':
 
                 process = subprocess.Popen(
-                    command,
-                    shell=True,
+                    command_args,
+                    shell=False,
                     cwd=work_dir,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
+                    stdin=subprocess.PIPE,
                     text=True,
                     encoding='utf-8',
                     errors='replace'
@@ -276,11 +281,12 @@ class CodeCompiler:
             else:
 
                 process = subprocess.Popen(
-                    command,
-                    shell=True,
+                    command_args,
+                    shell=False,
                     cwd=work_dir,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
+                    stdin=subprocess.PIPE,
                     text=True,
                     encoding='utf-8',
                     errors='replace',
@@ -293,6 +299,7 @@ class CodeCompiler:
 
             try:
                 stdout, stderr = process.communicate(
+                    input=input_data,
                     timeout=timeout
                 )
 
@@ -360,10 +367,10 @@ class CodeCompiler:
                 'TypeError' in clean_line or
                 'Error:' in clean_line
             ):
-                formatted.append(f'❌ {clean_line}')
+                formatted.append(f'Ошибка: {clean_line}')
 
             elif 'at ' in clean_line and '.js:' in clean_line:
-                formatted.append(f'📍 {clean_line}')
+                formatted.append(f'Строка: {clean_line}')
 
         return '\n'.join(formatted) if formatted else stderr
 
@@ -385,10 +392,10 @@ class CodeCompiler:
                 continue
 
             if clean_line.startswith('Traceback'):
-                formatted.append(f'🔍 {clean_line}')
+                formatted.append(clean_line)
 
             elif 'File "' in clean_line:
-                formatted.append(f'📍 {clean_line}')
+                formatted.append(f'Строка: {clean_line}')
 
             elif (
                 'SyntaxError' in clean_line or
@@ -396,7 +403,7 @@ class CodeCompiler:
                 'TypeError' in clean_line or
                 'ValueError' in clean_line
             ):
-                formatted.append(f'❌ {clean_line}')
+                formatted.append(f'Ошибка: {clean_line}')
 
         return '\n'.join(formatted) if formatted else stderr
 
@@ -418,13 +425,13 @@ class CodeCompiler:
                 continue
 
             if '.java:' in clean_line:
-                formatted.append(f'📍 {clean_line}')
+                formatted.append(f'Строка: {clean_line}')
 
             elif (
                 'error:' in clean_line or
                 'Exception' in clean_line
             ):
-                formatted.append(f'❌ {clean_line}')
+                formatted.append(f'Ошибка: {clean_line}')
 
         return '\n'.join(formatted) if formatted else stderr
 
@@ -446,13 +453,13 @@ class CodeCompiler:
                 continue
 
             if '.cpp:' in clean_line or '.c:' in clean_line:
-                formatted.append(f'📍 {clean_line}')
+                formatted.append(f'Строка: {clean_line}')
 
             elif 'error:' in clean_line:
-                formatted.append(f'❌ {clean_line}')
+                formatted.append(f'Ошибка: {clean_line}')
 
             elif 'warning:' in clean_line:
-                formatted.append(f'⚠️ {clean_line}')
+                formatted.append(f'Предупреждение: {clean_line}')
 
         return '\n'.join(formatted) if formatted else stderr
 
@@ -586,34 +593,12 @@ class CodeCompiler:
                 )
             )
 
-            if input_data:
-
-                input_file = os.path.join(
-                    work_dir,
-                    'input.txt'
-                )
-
-                with open(
-                    input_file,
-                    'w',
-                    encoding='utf-8'
-                ) as file:
-                    file.write(input_data)
-
-                if os.name == 'nt':
-                    run_command = (
-                        f'type "{input_file}" | {run_command}'
-                    )
-                else:
-                    run_command = (
-                        f'cat "{input_file}" | {run_command}'
-                    )
-
             result = self._execute_in_sandbox(
                 run_command,
                 work_dir,
                 timeout,
-                memory_limit
+                memory_limit,
+                input_data=input_data
             )
 
             status = 'success'

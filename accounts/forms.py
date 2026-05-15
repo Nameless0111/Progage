@@ -14,6 +14,15 @@ class UserRegistrationForm(UserCreationForm):
     bio = forms.CharField(widget=forms.Textarea, required=False)
     role = forms.ChoiceField(choices=User.ROLE_CHOICES, required=True)
     avatar = forms.ImageField(required=False)
+    anonymous_mode = forms.BooleanField(
+        required=False,
+        label='Показывать меня как анонимного пользователя'
+    )
+    show_in_teachers_list = forms.BooleanField(
+        required=False,
+        initial=True,
+        label='Показываться на странице преподавателей'
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

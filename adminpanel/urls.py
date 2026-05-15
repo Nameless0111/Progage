@@ -24,6 +24,7 @@ urlpatterns = [
     
     # Statistics
     path('statistics/', views.statistics, name='statistics'),
+    path('statistics/export/<str:file_format>/', views.export_data, name='export_data'),
     
     # Users CRUD
     path('users/', views.user_list, name='user_list'),

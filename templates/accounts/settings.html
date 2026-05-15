@@ -183,7 +183,12 @@
                         <div class="row">
                             <div class="col-md-4 mb-3">
                                 <label for="current_password" class="form-label">Текущий пароль</label>
-                                <input type="password" class="form-control" id="current_password" name="current_password" required>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="current_password" name="current_password" required>
+                                    <button class="btn btn-outline-secondary" type="button" id="toggle-current" title="Показать пароль">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label for="new_password" class="form-label">Новый пароль</label>
@@ -196,7 +201,12 @@
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label for="confirm_password" class="form-label">Подтвердите новый пароль</label>
-                                <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                                    <button class="btn btn-outline-secondary" type="button" id="toggle-confirm" title="Показать пароль">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <button type="submit" class="btn btn-primary">
@@ -252,24 +262,40 @@
                         <div class="form-check form-switch mb-2">
                             <input class="form-check-input" type="checkbox" id="public_profile" name="public_profile" {% if user.privacy_settings.public_profile %}checked{% endif %}>
                             <label class="form-check-label" for="public_profile">
-                                Публичный профиль
+                                Я согласен показывать профиль публично
                             </label>
-                            <small class="form-text text-muted d-block">Ваш профиль будет виден другим пользователям</small>
+                            <small class="form-text text-muted d-block">Работает только если не включен анонимный режим.</small>
                         </div>
                         <div class="form-check form-switch mb-2">
                             <input class="form-check-input" type="checkbox" id="show_email" name="show_email" {% if user.privacy_settings.show_email %}checked{% endif %}>
                             <label class="form-check-label" for="show_email">
                                 Показывать email
                             </label>
-                            <small class="form-text text-muted d-block">Ваш email будет виден в профиле</small>
+                            <small class="form-text text-muted d-block">Email можно показывать только в публичном профиле без анонимности.</small>
                         </div>
                         <div class="form-check form-switch mb-2">
                             <input class="form-check-input" type="checkbox" id="show_progress" name="show_progress" {% if user.privacy_settings.show_progress %}checked{% endif %}>
                             <label class="form-check-label" for="show_progress">
                                 Показывать прогресс обучения
                             </label>
-                            <small class="form-text text-muted d-block">Ваш прогресс по курсам будет виден другим</small>
+                            <small class="form-text text-muted d-block">Прогресс можно показывать только в публичном профиле без анонимности.</small>
                         </div>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="anonymous_mode" name="anonymous_mode" {% if user.privacy_settings.anonymous_mode %}checked{% endif %}>
+                            <label class="form-check-label" for="anonymous_mode">
+                                Я выбираю анонимный режим
+                            </label>
+                            <small class="form-text text-muted d-block">Имя, аватар, email, прогресс и ссылка на профиль скрываются; другим пользователям показывается "Аноним".</small>
+                        </div>
+                        {% if user.role == 'teacher' %}
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="show_in_teachers_list" name="show_in_teachers_list" {% if user.privacy_settings.show_in_teachers_list %}checked{% endif %}>
+                            <label class="form-check-label" for="show_in_teachers_list">
+                                Показываться на странице преподавателей
+                            </label>
+                            <small class="form-text text-muted d-block">Если выключить, преподаватель не появится в общем списке. Анонимность имени настраивается отдельной галочкой выше.</small>
+                        </div>
+                        {% endif %}
                     </div>
                     
                     <button type="submit" class="btn btn-primary">
@@ -358,15 +384,20 @@ function togglePassword(inputId, buttonId) {
 
 // Добавляем обработчики для кнопок показа пароля
 document.addEventListener('DOMContentLoaded', function() {
-    // Кнопка для нового пароля
-    const newPasswordInput = document.getElementById('new_password');
-    const toggleButton = document.getElementById('toggle-new');
-    
-    if (newPasswordInput && toggleButton) {
-        toggleButton.addEventListener('click', function() {
-            togglePassword('new_password', 'toggle-new');
-        });
-    }
+    [
+        ['current_password', 'toggle-current'],
+        ['new_password', 'toggle-new'],
+        ['confirm_password', 'toggle-confirm']
+    ].forEach(function(pair) {
+        const input = document.getElementById(pair[0]);
+        const button = document.getElementById(pair[1]);
+
+        if (input && button) {
+            button.addEventListener('click', function() {
+                togglePassword(pair[0], pair[1]);
+            });
+        }
+    });
     
     // Обработчик формы смены пароля
     const passwordForm = document.getElementById('change-password-form');
@@ -460,10 +491,35 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
-});
 
 // Обработчик формы приватности
     const privacyForm = document.querySelector('form[action="/accounts/update-privacy/"]');
+    const anonymousMode = document.getElementById('anonymous_mode');
+    const publicProfile = document.getElementById('public_profile');
+    const showEmail = document.getElementById('show_email');
+    const showProgress = document.getElementById('show_progress');
+
+    function syncPrivacyControls() {
+        const isAnonymous = anonymousMode && anonymousMode.checked;
+        const isPublic = publicProfile && publicProfile.checked;
+        if (publicProfile) {
+            publicProfile.disabled = isAnonymous;
+            if (isAnonymous) publicProfile.checked = false;
+        }
+        [showEmail, showProgress].forEach(function(input) {
+            if (!input) return;
+            input.disabled = isAnonymous || !isPublic;
+            if (isAnonymous || !isPublic) input.checked = false;
+        });
+    }
+
+    if (anonymousMode) {
+        anonymousMode.addEventListener('change', syncPrivacyControls);
+        syncPrivacyControls();
+    }
+    if (publicProfile) {
+        publicProfile.addEventListener('change', syncPrivacyControls);
+    }
     if (privacyForm) {
         privacyForm.addEventListener('submit', function(e) {
             e.preventDefault();
@@ -519,7 +575,7 @@ function showAlert(message, type) {
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
     
-    const container = document.querySelector('.settings-section.active');
+    const container = Array.from(document.querySelectorAll('.settings-section')).find(section => section.style.display !== 'none') || document.querySelector('.settings-section');
     if (container) {
         container.insertBefore(alertDiv, container.firstChild);
     }

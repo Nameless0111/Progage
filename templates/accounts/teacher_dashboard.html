@@ -196,16 +196,10 @@
                             <div class="list-group-item px-0">
                                 <div class="d-flex align-items-center">
                                     <div class="flex-shrink-0">
-                                        {% if student.avatar %}
-                                        <img src="{{ student.avatar_url }}" alt="" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
-                                        {% else %}
-                                        <div class="bg-secondary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                            <i class="fas fa-user text-secondary"></i>
-                                        </div>
-                                        {% endif %}
+                                        <img src="{{ student.public_avatar_url }}" alt="" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
                                     </div>
                                     <div class="flex-grow-1 ms-3">
-                                        <h6 class="mb-0">{{ student.get_full_name|default:student.username }}</h6>
+                                        <h6 class="mb-0">{{ student.public_display_name }}</h6>
                                         <small class="text-muted">{{ student.last_activity|timesince }} назад</small>
                                     </div>
                                 </div>
@@ -228,7 +222,7 @@
                             {% for review in recent_reviews %}
                             <div class="list-group-item px-0">
                                 <div class="d-flex justify-content-between align-items-start mb-1">
-                                    <h6 class="mb-0">{{ review.user.get_full_name|default:review.user.username }}</h6>
+                                    <h6 class="mb-0">{{ review.user.public_display_name }}</h6>
                                     <span class="badge bg-warning text-dark">{{ review.rating }} <i class="fas fa-star"></i></span>
                                 </div>
                                 <p class="mb-1 small">{{ review.course.title }}</p>

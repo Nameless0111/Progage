@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block title %}Проверка работы - {{ assignment.title }} - Progage{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Главная</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'courses:teacher_dashboard' %}">Панель преподавателя</a></li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'courses:teacher_course_lessons' assignment.lesson.course.id %}">
+                    {{ assignment.lesson.course.title }}
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">Проверка работы</li>
+        </ol>
+    </nav>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <h1 class="h4 mb-1">Проверка работы</h1>
+                            <div class="text-muted">{{ assignment.title }}</div>
+                        </div>
+                        <span class="badge bg-secondary">{{ submission.get_status_display }}</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="text-muted small">Студент</div>
+                        <div class="fw-semibold">{{ submission.user.public_display_name }}</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="text-muted small">Код решения</div>
+                        <pre class="bg-light border rounded p-3 mb-0" style="white-space: pre-wrap;"><code>{{ submission.code }}</code></pre>
+                    </div>
+
+                    {% if submission.output %}
+                    <div class="mb-3">
+                        <div class="text-muted small">Результат выполнения</div>
+                        <pre class="bg-light border rounded p-3 mb-0" style="white-space: pre-wrap;"><code>{{ submission.output }}</code></pre>
+                    </div>
+                    {% endif %}
+
+                    {% if submission.error_message %}
+                    <div class="alert alert-warning">
+                        {{ submission.error_message }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h2 class="h5 mb-0">Оценивание</h2>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="grade" class="form-label">Оценка</label>
+                            <input type="number" class="form-control" id="grade" name="grade"
+                                   min="0" max="{{ assignment.max_grade }}"
+                                   value="{{ submission.grade|default:'' }}"
+                                   placeholder="0-{{ assignment.max_grade }}">
+                            <div class="form-text">Максимум: {{ assignment.max_grade }}</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="feedback" class="form-label">Комментарий</label>
+                            <textarea class="form-control" id="feedback" name="feedback" rows="5">{{ submission.feedback }}</textarea>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" name="action" value="approve" class="btn btn-success">
+                                <i class="fas fa-check me-2"></i>Принять
+                            </button>
+                            <button type="submit" name="action" value="reject" class="btn btn-outline-danger">
+                                <i class="fas fa-times me-2"></i>Отклонить
+                            </button>
+                            <button type="submit" name="action" value="save" class="btn btn-outline-secondary">
+                                <i class="fas fa-save me-2"></i>Сохранить без решения
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

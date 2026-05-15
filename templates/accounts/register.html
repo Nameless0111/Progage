@@ -176,12 +176,24 @@
 
                         <div class="mb-3" id="profile_visibility_section" style="display: none;">
                             <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="profile_public" name="profile_public">
-                                <label class="form-check-label" for="profile_public">
-                                    Я согласен(на) на публичное отображение моего профиля на странице преподавателей
+                                <input type="checkbox" class="form-check-input" id="show_in_teachers_list" name="show_in_teachers_list" checked>
+                                <label class="form-check-label" for="show_in_teachers_list">
+                                    Показываться на странице преподавателей
                                 </label>
                                 <div class="form-text text-muted">
-                                    Необязательно. Если не отметить, ваш профиль будет анонимным и не будет отображаться в общем списке преподавателей.
+                                    Если выключить, ваш профиль преподавателя не появится в общем списке.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="anonymous_mode" name="anonymous_mode">
+                                <label class="form-check-label" for="anonymous_mode">
+                                    Показывать меня как анонимного пользователя
+                                </label>
+                                <div class="form-text text-muted">
+                                    Другие пользователи увидят имя "Аноним" вместо ваших ФИО, аватара и профиля.
                                 </div>
                             </div>
                         </div>
@@ -814,7 +826,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             password2.setCustomValidity('');
             password2.classList.remove('is-invalid');
-            matchIndicator.innerHTML = '<span class="text-success">Пароли совпадают ✓</span>';
+            matchIndicator.innerHTML = '<span class="text-success">Пароли совпадают</span>';
             matchIndicator.className = 'password-match-indicator match';
         }
         

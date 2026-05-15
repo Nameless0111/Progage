@@ -1,0 +1,15 @@
+.git
+.env
+.env.local
+venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.log
+db.sqlite3
+staticfiles
+media_backup_*
+temp_restore
+backups/*.zip
+progage_site*.tar.gz

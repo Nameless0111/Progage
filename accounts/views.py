@@ -22,16 +22,32 @@ from .forms import (
     UserRegistrationForm, UserUpdateForm, ProfileUpdateForm,
     CustomAuthenticationForm, CustomPasswordResetForm, TwoFactorForm, TwoFactorSetupForm, TeacherRatingForm
 )
-from .models import Profile, TeacherRating
+from .models import Profile, TeacherRating, UserNotifications, UserPrivacy
 
 User = get_user_model()
+
+LOGIN_RATE_LIMIT_SECONDS = 120
+LOGIN_RATE_LIMIT_IP_ATTEMPTS = 20
+LOGIN_RATE_LIMIT_USER_ATTEMPTS = 10
 
 def register(request):
     if request.method == 'POST':
         form = UserRegistrationForm(request.POST, request.FILES)
         if form.is_valid():
             user = form.save()
-            Profile.objects.create(user=user)
+            Profile.objects.get_or_create(user=user)
+            UserNotifications.objects.get_or_create(user=user)
+            UserPrivacy.objects.get_or_create(
+                user=user,
+                defaults={
+                    'anonymous_mode': form.cleaned_data.get('anonymous_mode', False),
+                    'show_in_teachers_list': (
+                        form.cleaned_data.get('show_in_teachers_list', True)
+                        if user.role == 'teacher'
+                        else True
+                    )
+                }
+            )
             username = form.cleaned_data.get('username')
             messages.success(request, f'Аккаунт создан для {username}!')
             login(request, user)
@@ -46,17 +62,18 @@ def login_view(request):
     if request.method == 'POST':
         # Проверяем rate limiting перед обработкой формы
         client_ip = get_client_ip(request)
-        username = request.POST.get('username', '')
+        identifier = request.POST.get('username', '').strip()
         
-        if is_rate_limited(client_ip, username):
+        if is_rate_limited(client_ip, identifier):
             return HttpResponse(
-                "Слишком много попыток. Попробуйте через 5 минут.",
+                "Слишком много неудачных попыток. Попробуйте через 2 минуты.",
                 status=429
             )
         
         # Сначала проверяем пользователя
+        user_obj = None
         try:
-            user_obj = User.objects.get(username__iexact=username)
+            user_obj = User.objects.get(Q(username__iexact=identifier) | Q(email__iexact=identifier))
             
             # ЕСЛИ НЕАКТИВЕН
             if not user_obj.is_active:
@@ -75,8 +92,8 @@ def login_view(request):
         except User.DoesNotExist:
             pass
         
-        # Только теперь authenticate
-        user = authenticate(request, username=username, password=request.POST.get('password'))
+        auth_username = user_obj.username if user_obj else identifier
+        user = authenticate(request, username=auth_username, password=request.POST.get('password'))
         
         if user is not None:
             # Проверяем включена ли 2FA
@@ -90,9 +107,9 @@ def login_view(request):
                 pass
             
             # Сбрасываем счетчик попыток при успешном входе
-            reset_login_attempts(client_ip, username)
+            reset_login_attempts(client_ip, identifier)
             login(request, user)
-            messages.info(request, f'Вы вошли как {username}')
+            messages.info(request, f'Вы вошли как {user.public_display_name}')
             return redirect('home')
         
         # УБИРАЕМ ОШИБКИ ФОРМЫ
@@ -104,7 +121,7 @@ def login_view(request):
         )
         
         # Записываем неудачную попытку
-        record_failed_attempt(client_ip, username)
+        record_failed_attempt(client_ip, identifier)
     
     return render(request, 'accounts/login.html', {
         'form': form
@@ -145,7 +162,7 @@ def is_rate_limited(ip, username=''):
     ip_attempts = cache.get(ip_key, 0)
     user_attempts = cache.get(user_key, 0) if user_key else 0
     
-    return ip_attempts >= 5 or user_attempts >= 3
+    return ip_attempts >= LOGIN_RATE_LIMIT_IP_ATTEMPTS or user_attempts >= LOGIN_RATE_LIMIT_USER_ATTEMPTS
 
 def record_failed_attempt(ip, username=''):
     """Записываем неудачную попытку"""
@@ -154,13 +171,13 @@ def record_failed_attempt(ip, username=''):
     
     # Безопасный инкремент с инициализацией
     if cache.get(ip_key) is None:
-        cache.set(ip_key, 1, 300)
+        cache.set(ip_key, 1, LOGIN_RATE_LIMIT_SECONDS)
     else:
         cache.incr(ip_key)
     
     if user_key:
         if cache.get(user_key) is None:
-            cache.set(user_key, 1, 300)
+            cache.set(user_key, 1, LOGIN_RATE_LIMIT_SECONDS)
         else:
             cache.incr(user_key)
 
@@ -203,8 +220,12 @@ def mark_notification_read(request, notification_id):
         notification = Notification.objects.get(id=notification_id, user=request.user)
         notification.is_read = True
         notification.save()
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': True})
         messages.success(request, 'Уведомление отмечено как прочитанное')
     except Notification.DoesNotExist:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'error': 'Уведомление не найдено'}, status=404)
         messages.error(request, 'Уведомление не найдено')
     
     return redirect('accounts:notifications')
@@ -333,7 +354,7 @@ def two_factor_verify(request):
         return redirect('accounts:login')
     
     user = get_object_or_404(User, id=user_id)
-    profile = user.profile
+    profile, _ = Profile.objects.get_or_create(user=user)
     
     if request.method == 'POST':
         form = TwoFactorForm(request.POST)
@@ -377,36 +398,27 @@ def two_factor_verify(request):
 @login_required
 def two_factor_setup(request):
     """Настройка двухфакторной аутентификации"""
-    profile = request.user.profile
+    profile, _ = Profile.objects.get_or_create(user=request.user)
     
     if request.method == 'POST':
         action = request.POST.get('action')
-        print(f"DEBUG: two_factor_setup POST action = {action}")
-        print(f"DEBUG: POST data = {request.POST}")
-        print(f"DEBUG: profile.two_factor_enabled (before) = {profile.two_factor_enabled}")
         
         if action == 'enable':
             # Ensure TOTP device is created before enabling 2FA
             device = profile.get_totp_device()
-            print(f"DEBUG: TOTP device created/verified: {device}")
             
             # Enable 2FA
             profile.two_factor_enabled = True
             profile.backup_codes = profile.generate_backup_codes()
             profile.save()
             
-            print(f"DEBUG: 2FA enabled, backup_codes: {profile.backup_codes}")
-            print(f"DEBUG: profile.two_factor_enabled = {profile.two_factor_enabled}")
-            
             messages.success(request, 'Двухфакторная аутентификация включена. Сохраните резервные коды в надежном месте!')
             
         elif action == 'disable':
             # Turn off 2FA
-            print(f"DEBUG: DISABLING 2FA - was {profile.two_factor_enabled}")
             profile.two_factor_enabled = False
             profile.backup_codes = []
             profile.save()
-            print(f"DEBUG: 2FA disabled, now = {profile.two_factor_enabled}")
             messages.success(request, 'Двухфакторная аутентификация отключена.')
             
         elif action == 'regenerate_codes':
@@ -433,15 +445,31 @@ def teachers_list(request):
     """
     search_query = request.GET.get('search', '')
     
-    # Базовый запрос для преподавателей (только с курсами)
-    teachers = User.objects.filter(role='teacher', course__isnull=False).distinct().select_related('profile')
+    # Базовый запрос для преподавателей (только с курсами и с учетом видимости)
+    teachers = User.objects.filter(
+        role='teacher',
+        course__isnull=False,
+    ).filter(
+        Q(privacy_settings__show_in_teachers_list=True) |
+        Q(privacy_settings__isnull=True)
+    ).distinct().select_related('profile', 'privacy_settings')
     
     # Применяем поиск если есть запрос
     if search_query:
         teachers = teachers.filter(
-            Q(first_name__icontains=search_query) |
-            Q(last_name__icontains=search_query) |
-            Q(username__icontains=search_query)
+            Q(course__title__icontains=search_query) |
+            Q(course__category__name__icontains=search_query) |
+            (
+                (
+                    Q(privacy_settings__anonymous_mode=False) |
+                    Q(privacy_settings__isnull=True)
+                ) &
+                (
+                    Q(first_name__icontains=search_query) |
+                    Q(last_name__icontains=search_query) |
+                    Q(username__icontains=search_query)
+                )
+            )
         )
     
     # Добавляем статистику по курсам
@@ -484,6 +512,9 @@ def teacher_profile(request, teacher_id):
         teacher = User.objects.get(id=teacher_id, role='teacher')
     except User.DoesNotExist:
         raise Http404("Преподаватель не найден")
+
+    teacher_privacy, _ = UserPrivacy.objects.get_or_create(user=teacher)
+    teacher_is_anonymous = teacher_privacy.anonymous_mode
     
     # Получаем курсы преподавателя
     courses = Course.objects.filter(instructor=teacher).select_related('category')
@@ -625,6 +656,9 @@ def teacher_profile(request, teacher_id):
     
     context = {
         'teacher': teacher,
+        'teacher_is_anonymous': teacher_is_anonymous,
+        'teacher_public_name': teacher.public_display_name,
+        'teacher_public_avatar_url': teacher.public_avatar_url,
         'courses': courses,
         'courses_with_stats': courses_with_stats,
         'teacher_ratings': teacher_ratings,
@@ -657,6 +691,10 @@ def certificates(request):
 @login_required
 def settings(request):
     """Страница настроек профиля"""
+    Profile.objects.get_or_create(user=request.user)
+    UserNotifications.objects.get_or_create(user=request.user)
+    UserPrivacy.objects.get_or_create(user=request.user)
+
     if request.method == 'POST':
         # Обработка обновления профиля
         user = request.user
@@ -679,40 +717,30 @@ def settings(request):
 def generate_2fa_secret(request):
     """Генерация секретного ключа для 2FA"""
     if request.method == 'POST':
-        import pyotp
-        import qrcode
-        from io import BytesIO
-        import base64
+        from base64 import b32encode
+        from django_otp.plugins.otp_totp.models import TOTPDevice, default_key
         
         user = request.user
-        profile = user.profile
+        Profile.objects.get_or_create(user=user)
         
-        # Генерируем секретный ключ
-        secret = pyotp.random_base32()
+        # Генерируем временный ключ django-otp. Он попадет в устройство
+        # только после проверки кода и явного включения 2FA.
+        secret = default_key()
         
         # Сохраняем временно в сессии
         request.session['2fa_secret'] = secret
         
-        # Создаем provisioning URI
-        totp_uri = pyotp.totp.TOTP(secret).provisioning_uri(
-            name=user.email,
-            issuer_name='Progage'
+        temp_device = TOTPDevice(
+            user=user,
+            name='Progage 2FA',
+            key=secret,
+            confirmed=True,
         )
-        
-        # Генерируем QR код
-        qr = qrcode.QRCode(version=1, box_size=10, border=5)
-        qr.add_data(totp_uri)
-        qr.make(fit=True)
-        
-        img = qr.make_image(fill_color="black", back_color="white")
-        buffer = BytesIO()
-        img.save(buffer, format='PNG')
-        qr_base64 = base64.b64encode(buffer.getvalue()).decode()
         
         return JsonResponse({
             'success': True,
-            'secret': secret,
-            'qr_code_url': f'data:image/png;base64,{qr_base64}'
+            'secret': b32encode(temp_device.bin_key).decode('ascii'),
+            'qr_code_url': temp_device.config_url,
         })
     
     return JsonResponse({'success': False})
@@ -721,7 +749,8 @@ def generate_2fa_secret(request):
 def verify_2fa_setup(request):
     """Проверка кода при настройке 2FA"""
     if request.method == 'POST':
-        import pyotp
+        from binascii import Error as BinasciiError, unhexlify
+        from django_otp.oath import TOTP
         
         try:
             data = json.loads(request.body)
@@ -731,11 +760,16 @@ def verify_2fa_setup(request):
             if not secret:
                 return JsonResponse({'success': False, 'error': 'Секретный ключ не найден'})
             
-            # Проверяем код
-            totp = pyotp.TOTP(secret)
-            if totp.verify(code):
+            try:
+                token = int(code)
+                key = unhexlify(secret)
+            except (TypeError, ValueError, BinasciiError):
+                return JsonResponse({'success': False, 'error': 'Неверный код'})
+            
+            totp = TOTP(key)
+            if totp.verify(token, tolerance=1):
                 # Генерируем резервные коды
-                profile = request.user.profile
+                profile, _ = Profile.objects.get_or_create(user=request.user)
                 backup_codes = profile.generate_backup_codes()
                 
                 return JsonResponse({
@@ -754,7 +788,7 @@ def verify_2fa_setup(request):
 def enable_2fa(request):
     """Включение 2FA"""
     if request.method == 'POST':
-        profile = request.user.profile
+        profile, _ = Profile.objects.get_or_create(user=request.user)
         secret = request.session.get('2fa_secret')
         
         if not secret:
@@ -782,7 +816,7 @@ def enable_2fa(request):
 def disable_2fa(request):
     """Отключение 2FA"""
     if request.method == 'POST':
-        profile = request.user.profile
+        profile, _ = Profile.objects.get_or_create(user=request.user)
         
         # Отключаем 2FA
         profile.two_factor_enabled = False
@@ -793,15 +827,20 @@ def disable_2fa(request):
         from django_otp.plugins.otp_totp.models import TOTPDevice
         TOTPDevice.objects.filter(user=request.user).delete()
         
-        return JsonResponse({'success': True})
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': True})
+        messages.success(request, 'Двухфакторная аутентификация отключена')
+        return redirect('accounts:settings')
     
-    return JsonResponse({'success': False})
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({'success': False})
+    return redirect('accounts:settings')
 
 @login_required
 def regenerate_backup_codes(request):
     """Перегенерация резервных кодов"""
     if request.method == 'POST':
-        profile = request.user.profile
+        profile, _ = Profile.objects.get_or_create(user=request.user)
         backup_codes = profile.generate_backup_codes()
         
         return JsonResponse({
@@ -815,7 +854,7 @@ def regenerate_backup_codes(request):
 def reset_2fa(request):
     """Полный сброс 2FA"""
     if request.method == 'POST':
-        profile = request.user.profile
+        profile, _ = Profile.objects.get_or_create(user=request.user)
         
         # Отключаем 2FA
         profile.two_factor_enabled = False
@@ -904,7 +943,6 @@ def update_notifications(request):
         
         # Получаем или создаем настройки уведомлений
         if not hasattr(user, 'notification_settings'):
-            from .models import UserNotifications
             UserNotifications.objects.create(user=user)
             user.refresh_from_db()
         
@@ -924,20 +962,6 @@ def update_notifications(request):
 
 
 @login_required
-def disable_2fa(request):
-    """Отключение двухфакторной аутентификации"""
-    if request.method == 'POST':
-        profile = request.user.profile
-        profile.two_factor_enabled = False
-        profile.two_factor_secret = ''
-        profile.save()
-        
-        messages.success(request, 'Двухфакторная аутентификация отключена')
-        return redirect('accounts:settings')
-    
-    return redirect('accounts:settings')
-
-@login_required
 def update_privacy(request):
     """Обновление настроек приватности"""
     if request.method == 'POST':
@@ -945,15 +969,17 @@ def update_privacy(request):
         
         # Получаем или создаем настройки приватности
         if not hasattr(user, 'privacy_settings'):
-            from .models import UserPrivacy
             UserPrivacy.objects.create(user=user)
             user.refresh_from_db()
         
         # Обновляем настройки
         privacy = user.privacy_settings
-        privacy.public_profile = 'public_profile' in request.POST
-        privacy.show_email = 'show_email' in request.POST
-        privacy.show_progress = 'show_progress' in request.POST
+        privacy.anonymous_mode = 'anonymous_mode' in request.POST
+        privacy.public_profile = False if privacy.anonymous_mode else 'public_profile' in request.POST
+        privacy.show_email = bool(privacy.public_profile and 'show_email' in request.POST)
+        privacy.show_progress = bool(privacy.public_profile and 'show_progress' in request.POST)
+        if user.role == 'teacher':
+            privacy.show_in_teachers_list = 'show_in_teachers_list' in request.POST
         privacy.save()
         
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':

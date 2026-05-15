@@ -104,7 +104,7 @@
                                                 {{ enrollment.course.get_level_display }}
                                             </span>
                                         </div>
-                                        <p class="text-muted mb-2 small">{{ enrollment.course.instructor.get_full_name|default:enrollment.course.instructor.username }}</p>
+                                        <p class="text-muted mb-2 small">{{ enrollment.course.instructor.public_display_name }}</p>
                                         <div class="d-flex align-items-center">
                                             <div class="progress flex-grow-1 me-3" style="height: 8px;">
                                                 <div class="progress-bar bg-success" role="progressbar" style="width: {{ enrollment.progress|default:0 }}%"></div>

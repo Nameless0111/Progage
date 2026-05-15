@@ -88,7 +88,7 @@
                                         </div>
                                         <h6 class="card-title small mb-1">{{ course.title|truncatechars:40 }}</h6>
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <small class="text-muted">{{ course.instructor.get_full_name|default:course.instructor.username|truncatechars:15 }}</small>
+                                            <small class="text-muted">{{ course.instructor.public_display_name|truncatechars:15 }}</small>
                                             <a href="{% url 'courses:course_detail' course.id %}" class="btn btn-sm btn-outline-primary">
                                                 Подробнее
                                             </a>
@@ -129,14 +129,8 @@
                                     <p class="card-text text-muted">{{ course.description|truncatechars:150 }}</p>
                                     <div class="d-flex justify-content-between align-items-center mt-3">
                                         <div class="d-flex align-items-center">
-                                            {% if course.instructor.avatar %}
-                                            <img src="{{ course.instructor.avatar_url }}" alt="" class="rounded-circle me-2" style="width: 30px; height: 30px; object-fit: cover;">
-                                            {% else %}
-                                            <div class="bg-secondary bg-opacity-10 rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 30px; height: 30px;">
-                                                <i class="fas fa-user text-secondary small"></i>
-                                            </div>
-                                            {% endif %}
-                                            <span class="text-muted small">{{ course.instructor.get_full_name|default:course.instructor.username }}</span>
+                                            <img src="{{ course.instructor.public_avatar_url }}" alt="" class="rounded-circle me-2" style="width: 30px; height: 30px; object-fit: cover;">
+                                            <span class="text-muted small">{{ course.instructor.public_display_name }}</span>
                                         </div>
                                         <a href="{% url 'courses:course_detail' course.id %}" class="btn btn-outline-primary">
                                             <i class="fas fa-info-circle me-2"></i>Подробнее

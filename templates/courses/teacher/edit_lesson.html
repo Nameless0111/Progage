@@ -71,17 +71,9 @@
                                 {% endif %}
                             </div>
                             <div class="col-md-6 mb-3">
-                                <div class="form-check mt-4">
-                                    {{ form.is_free }}
-                                    <label class="form-check-label" for="{{ form.is_free.id_for_label }}">
-                                        Бесплатный урок
-                                    </label>
+                                <div class="alert alert-info mt-4 mb-0">
+                                    Уроки на платформе всегда бесплатные.
                                 </div>
-                                {% if form.is_free.errors %}
-                                    <div class="text-danger small mt-1">
-                                        {{ form.is_free.errors.0 }}
-                                    </div>
-                                {% endif %}
                             </div>
                         </div>
 
