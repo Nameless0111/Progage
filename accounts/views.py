@@ -4,6 +4,7 @@ from django.db.models import Count, Q
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm, PasswordResetForm, SetPasswordForm
+from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -11,7 +12,11 @@ from django.db import models
 from django.http import HttpResponse, Http404, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
+from django.utils.encoding import force_str
+from django.utils.http import urlsafe_base64_decode
 from django.utils import timezone
+from django.views.decorators.cache import never_cache
+from django.views.decorators.debug import sensitive_post_parameters
 from django.contrib.auth import get_user_model
 from django.contrib.auth.views import PasswordResetConfirmView, PasswordResetDoneView, PasswordResetCompleteView
 from django.urls import reverse_lazy
@@ -145,6 +150,42 @@ def password_reset_request(request):
     else:
         form = CustomPasswordResetForm()
     return render(request, 'accounts/password_reset.html', {'form': form})
+
+
+def get_password_reset_user(uidb64):
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        return User._default_manager.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist, ValidationError):
+        return None
+
+
+@sensitive_post_parameters()
+@never_cache
+def password_reset_confirm(request, uidb64, token):
+    """Установка нового пароля по ссылке из письма без session-зависимого редиректа."""
+    user = get_password_reset_user(uidb64)
+    validlink = user is not None and default_token_generator.check_token(user, token)
+
+    if not validlink:
+        return render(request, 'accounts/password_reset_confirm.html', {
+            'validlink': False,
+            'form': None,
+        })
+
+    if request.method == 'POST':
+        form = SetPasswordForm(user, request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Пароль успешно изменен. Теперь вы можете войти с новым паролем.')
+            return redirect('accounts:password_reset_complete')
+    else:
+        form = SetPasswordForm(user)
+
+    return render(request, 'accounts/password_reset_confirm.html', {
+        'validlink': True,
+        'form': form,
+    })
 
 def get_client_ip(request):
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
