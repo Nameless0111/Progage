@@ -104,3 +104,5 @@ class CourseForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # Ограничить выбор преподавателей только авторами
         self.fields['instructor'].queryset = User.objects.filter(role='teacher')
+        self.fields['category'].required = False
+        self.fields['category'].empty_label = "Без категории"

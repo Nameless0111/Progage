@@ -1,3 +1,5 @@
+import re
+
 from django import forms
 from .models import CourseReview, Course, Lesson, Category, TestQuestion, TestAnswer, PracticeAssignment, SecurityConfig, CodeSubmission
 
@@ -27,20 +29,32 @@ class CourseReviewForm(forms.ModelForm):
 class CourseForm(forms.ModelForm):
     class Meta:
         model = Course
-        fields = ['title', 'description', 'category', 'level', 'programming_language', 'thumbnail']
+        fields = ['title', 'description', 'level', 'programming_language', 'thumbnail']
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
-            'category': forms.Select(attrs={'class': 'form-select'}),
             'level': forms.Select(attrs={'class': 'form-select'}),
-            'programming_language': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Например: Python, JavaScript, C++'}),
+            'programming_language': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Например: Python, JavaScript, C++',
+                'maxlength': 50,
+            }),
             'thumbnail': forms.FileInput(attrs={'class': 'form-control'}),
         }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['category'].queryset = Category.objects.all()
-        self.fields['category'].empty_label = "Выберите категорию"
+        self.fields['programming_language'].required = False
+
+    def clean_programming_language(self):
+        value = (self.cleaned_data.get('programming_language') or '').strip()
+        if not value:
+            return ''
+
+        if not re.fullmatch(r"[A-Za-zА-Яа-яЁё0-9+#.\s-]{1,50}", value):
+            raise forms.ValidationError('Укажите язык буквами, например Python, JavaScript или C++.')
+
+        return value
 
 
 class LessonForm(forms.ModelForm):
