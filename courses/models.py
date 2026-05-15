@@ -264,10 +264,6 @@ class PracticeAssignment(models.Model):
         ('java', 'Java'),
         ('cpp', 'C++'),
         ('c', 'C'),
-        ('go', 'Go'),
-        ('rust', 'Rust'),
-        ('php', 'PHP'),
-        ('ruby', 'Ruby'),
     ]
     
     lesson = models.OneToOneField(Lesson, on_delete=models.CASCADE, related_name='practice_assignment', verbose_name='Урок')
@@ -355,10 +351,6 @@ class SecurityConfig(models.Model):
         ('java', 'Java'),
         ('cpp', 'C++'),
         ('c', 'C'),
-        ('go', 'Go'),
-        ('rust', 'Rust'),
-        ('php', 'PHP'),
-        ('ruby', 'Ruby'),
     ]
     
     programming_language = models.CharField(max_length=20, choices=LANGUAGE_CHOICES, unique=True, verbose_name='Язык программирования')

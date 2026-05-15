@@ -66,6 +66,7 @@ def dashboard(request):
         'total_likes': CourseLike.objects.count(),
 
         'total_reviews': CourseReview.objects.count(),
+        'total_comments': LessonComment.objects.count(),
         'total_lessons': Lesson.objects.count(),
         'published_courses': Course.objects.filter(is_published=True).count(),
         'free_courses': Course.objects.filter(price=0).count(),
@@ -101,6 +102,7 @@ def dashboard(request):
         'error_count': ErrorLog.objects.filter(timestamp__gte=timezone.now() - timedelta(hours=24)).count(),  # ИСПРАВЛЕНО: правильный ключ
         'new_messages': Message.objects.filter(created_at__gte=week_ago).count(),
         'new_reviews': CourseReview.objects.filter(created_at__gte=week_ago).count(),
+        'new_comments': LessonComment.objects.filter(created_at__gte=week_ago).count(),
 
     }
 
@@ -128,6 +130,7 @@ def dashboard(request):
         'publication_rate': round(stats['published_courses'] / stats['total_courses'] * 100, 1) if stats['total_courses'] else 0,
         'free_rate': round(stats['free_courses'] / stats['total_courses'] * 100, 1) if stats['total_courses'] else 0,
         'review_activity': recent_stats['new_reviews'],
+        'comment_activity': recent_stats['new_comments'],
         'message_activity': recent_stats['new_messages'],
     }
 

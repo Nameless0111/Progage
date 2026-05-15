@@ -346,21 +346,52 @@ class CodeCompiler:
             }
 
     def _normalize_command_for_runtime(self, command: str, language: str) -> str:
-        if language != 'python':
-            return command
-
         try:
             command_args = shlex.split(command, posix=os.name != 'nt')
         except ValueError:
             return command
 
-        if command_args and command_args[0].lower() in {'python', 'python3', 'py'}:
+        if language == 'python' and command_args and command_args[0].lower() in {'python', 'python3', 'py'}:
             command_args[0] = sys.executable
             if os.name == 'nt':
                 return subprocess.list2cmdline(command_args)
             return ' '.join(shlex.quote(part) for part in command_args)
 
+        if os.name == 'nt' and language in {'cpp', 'c'} and command_args:
+            executable = command_args[0]
+            if executable.startswith('./') or executable.startswith('.\\'):
+                executable = executable[2:]
+            if not executable.lower().endswith('.exe'):
+                executable = f'{executable}.exe'
+            command_args[0] = executable
+            return subprocess.list2cmdline(command_args)
+
         return command
+
+    def _source_filename_for_language(
+        self,
+        code: str,
+        language: str,
+        file_extension: str
+    ) -> str:
+        if language != 'java':
+            return f'solution.{file_extension}'
+
+        public_class = re.search(
+            r'\bpublic\s+class\s+([A-Za-z_][A-Za-z0-9_]*)',
+            code
+        )
+        if public_class:
+            return f'{public_class.group(1)}.{file_extension}'
+
+        main_class = re.search(
+            r'\bclass\s+Main\b',
+            code
+        )
+        if main_class:
+            return f'Main.{file_extension}'
+
+        return f'Solution.{file_extension}'
 
     def _parse_javascript_error(self, stderr: str) -> str:
         """Красивый вывод ошибок JavaScript"""
@@ -548,7 +579,11 @@ class CodeCompiler:
                 'txt'
             )
 
-            filename = f'solution.{file_extension}'
+            filename = self._source_filename_for_language(
+                code,
+                language,
+                file_extension
+            )
 
             filepath = os.path.join(
                 work_dir,
@@ -581,14 +616,18 @@ class CodeCompiler:
                 )
 
                 if compile_result['return_code'] != 0:
+                    compile_error = (
+                        compile_result['stderr'] or
+                        f"Компилятор завершился с кодом {compile_result['return_code']}"
+                    )
 
                     return {
                         'success': False,
                         'error': 'Ошибка компиляции',
-                        'compile_output': compile_result['stderr'],
+                        'compile_output': compile_error,
                         'status': 'error',
                         'stdout': '',
-                        'stderr': compile_result['stderr'],
+                        'stderr': compile_error,
                         'return_code': compile_result['return_code'],
                         'execution_time': compile_result['execution_time'],
                         'timeout': compile_result['timeout'],
