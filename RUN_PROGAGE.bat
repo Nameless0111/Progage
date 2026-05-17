@@ -1,5 +1,8 @@
 @echo off
+chcp 65001 >nul
 setlocal EnableExtensions
+set "PYTHONUTF8=1"
+set "PYTHONIOENCODING=utf-8"
 
 set "START_DIR=%~dp0"
 cd /d "%START_DIR%"
