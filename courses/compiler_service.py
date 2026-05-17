@@ -24,13 +24,13 @@ class CodeCompiler:
     MIN_RUNTIME_MEMORY_MB = {
         'python': 128,
         'javascript': 4096,
-        'java': 2048,
+        'java': 4096,
         'cpp': 256,
         'c': 256,
     }
 
     MIN_COMPILE_MEMORY_MB = {
-        'java': 2048,
+        'java': 4096,
         'cpp': 512,
         'c': 512,
     }
@@ -89,8 +89,14 @@ class CodeCompiler:
         },
 
         'java': {
-            'compile_command': 'javac {file}',
-            'run_command': 'java {filename}',
+            'compile_command': (
+                'javac -J-Xmx256m -J-XX:ReservedCodeCacheSize=32m '
+                '-J-XX:MaxMetaspaceSize=128m {file}'
+            ),
+            'run_command': (
+                'java -Xmx256m -XX:ReservedCodeCacheSize=32m '
+                '-XX:MaxMetaspaceSize=128m {filename}'
+            ),
             'file_extension': 'java',
             'max_execution_time': 10,
             'max_memory': 512,
@@ -659,6 +665,7 @@ class CodeCompiler:
                 if compile_result['return_code'] != 0:
                     compile_error = (
                         compile_result['stderr'] or
+                        compile_result['stdout'] or
                         f"Компилятор завершился с кодом {compile_result['return_code']}"
                     )
 
