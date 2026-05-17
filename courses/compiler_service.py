@@ -19,6 +19,22 @@ from .models import SecurityConfig
 class CodeCompiler:
     """Безопасный компилятор кода с песочницей"""
 
+    NOFILE_LIMIT = 256
+
+    MIN_RUNTIME_MEMORY_MB = {
+        'python': 128,
+        'javascript': 512,
+        'java': 1024,
+        'cpp': 256,
+        'c': 256,
+    }
+
+    MIN_COMPILE_MEMORY_MB = {
+        'java': 1024,
+        'cpp': 512,
+        'c': 512,
+    }
+
     DEFAULT_CONFIGS = {
         'python': {
             'compile_command': '',
@@ -251,7 +267,8 @@ class CodeCompiler:
         work_dir: str,
         timeout: int,
         memory_limit: int,
-        input_data: str = ''
+        input_data: str = '',
+        nofile_limit: int = None
     ) -> Dict:
         """Запуск команды"""
 
@@ -262,7 +279,7 @@ class CodeCompiler:
                 'RLIMIT_CPU': timeout,
                 'RLIMIT_AS': memory_limit * 1024 * 1024,
                 'RLIMIT_FSIZE': 10 * 1024 * 1024,
-                'RLIMIT_NOFILE': 10,
+                'RLIMIT_NOFILE': nofile_limit or self.NOFILE_LIMIT,
             }
 
             if os.name == 'nt':
@@ -392,6 +409,19 @@ class CodeCompiler:
             return f'Main.{file_extension}'
 
         return f'Solution.{file_extension}'
+
+    def _effective_memory_limit(
+        self,
+        language: str,
+        memory_limit: int,
+        is_compile: bool = False
+    ) -> int:
+        minimums = (
+            self.MIN_COMPILE_MEMORY_MB
+            if is_compile
+            else self.MIN_RUNTIME_MEMORY_MB
+        )
+        return max(memory_limit, minimums.get(language, memory_limit))
 
     def _parse_javascript_error(self, stderr: str) -> str:
         """Красивый вывод ошибок JavaScript"""
@@ -573,6 +603,16 @@ class CodeCompiler:
                 'max_memory',
                 256
             )
+            runtime_memory_limit = self._effective_memory_limit(
+                language,
+                memory_limit,
+                is_compile=False
+            )
+            compile_memory_limit = self._effective_memory_limit(
+                language,
+                runtime_memory_limit,
+                is_compile=True
+            )
 
             file_extension = config.get(
                 'file_extension',
@@ -612,7 +652,8 @@ class CodeCompiler:
                     compile_command,
                     work_dir,
                     timeout,
-                    memory_limit
+                    compile_memory_limit,
+                    nofile_limit=self.NOFILE_LIMIT
                 )
 
                 if compile_result['return_code'] != 0:
@@ -658,8 +699,9 @@ class CodeCompiler:
                 run_command,
                 work_dir,
                 timeout,
-                memory_limit,
-                input_data=input_data
+                runtime_memory_limit,
+                input_data=input_data,
+                nofile_limit=self.NOFILE_LIMIT
             )
 
             status = 'success'
