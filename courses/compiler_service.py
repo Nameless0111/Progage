@@ -23,14 +23,14 @@ class CodeCompiler:
 
     MIN_RUNTIME_MEMORY_MB = {
         'python': 128,
-        'javascript': 512,
-        'java': 1024,
+        'javascript': 4096,
+        'java': 2048,
         'cpp': 256,
         'c': 256,
     }
 
     MIN_COMPILE_MEMORY_MB = {
-        'java': 1024,
+        'java': 2048,
         'cpp': 512,
         'c': 512,
     }
