@@ -1,5 +1,5 @@
 @echo off
-setlocal EnableExtensions EnableDelayedExpansion
+setlocal EnableExtensions
 
 set "START_DIR=%~dp0"
 cd /d "%START_DIR%"
@@ -10,7 +10,7 @@ if not exist manage.py (
         set "MANAGE_FILE=%%F"
         goto found_manage
     )
-    echo Could not find manage.py. Put this file into the Progage project folder.
+    echo Не удалось найти manage.py. Положите этот файл в папку проекта Progage.
     pause
     exit /b 1
 )
@@ -28,16 +28,16 @@ if "%PY_CMD%"=="" (
     if not errorlevel 1 set "PY_CMD=python"
 )
 if "%PY_CMD%"=="" (
-    echo Python 3 was not found. Install Python 3.12+ and run this file again.
+    echo Python 3 не найден. Установите Python 3.12 или новее и запустите файл снова.
     pause
     exit /b 1
 )
 
 if not exist venv\Scripts\python.exe (
-    echo Creating virtual environment...
+    echo Создание виртуального окружения...
     %PY_CMD% -m venv venv
     if errorlevel 1 (
-        echo Could not create virtual environment.
+        echo Не удалось создать виртуальное окружение.
         pause
         exit /b 1
     )
@@ -45,12 +45,12 @@ if not exist venv\Scripts\python.exe (
 
 call venv\Scripts\activate.bat
 if errorlevel 1 (
-    echo Could not activate virtual environment.
+    echo Не удалось активировать виртуальное окружение.
     pause
     exit /b 1
 )
 
-echo Installing dependencies...
+echo Установка зависимостей...
 python -m pip install --upgrade pip
 set "REQ_FILE=requirements.txt"
 if exist requirements-local.txt set "REQ_FILE=requirements-local.txt"
@@ -60,7 +60,7 @@ if exist wheelhouse (
     pip install -r "%REQ_FILE%"
 )
 if errorlevel 1 (
-    echo Dependency installation failed. Check internet access or add wheelhouse to the package.
+    echo Не удалось установить зависимости. Проверьте интернет или добавьте папку wheelhouse в пакет.
     pause
     exit /b 1
 )
@@ -75,10 +75,10 @@ set "DATABASE_URL=sqlite:///db.sqlite3"
 set "EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend"
 set "RATE_LIMIT_ENABLED=False"
 
-echo Preparing database...
+echo Подготовка базы данных...
 python manage.py migrate
 if errorlevel 1 (
-    echo Database migration failed.
+    echo Не удалось применить миграции базы данных.
     pause
     exit /b 1
 )
@@ -91,11 +91,11 @@ powershell -NoProfile -Command "if (Get-NetTCPConnection -LocalPort 8000 -ErrorA
 if errorlevel 1 set "PORT=8001"
 
 echo.
-echo Progage is starting at http://127.0.0.1:%PORT%/
-echo Demo accounts:
-echo   admin   / Admin12345!
-echo   teacher / Teacher12345!
-echo   student / Student12345!
+echo Progage запускается по адресу http://127.0.0.1:%PORT%/
+echo Демо-аккаунты:
+echo   admin   / Admin12345
+echo   teacher / Teacher12345
+echo   student / Student12345
 echo.
 
 start "" cmd /c "timeout /t 3 >nul && start http://127.0.0.1:%PORT%/"

@@ -29,7 +29,7 @@ def main() -> int:
     compiler = CodeCompiler()
     failed = []
 
-    print("Checking declared code execution languages...")
+    print("Проверка заявленных языков выполнения кода...")
 
     for language, code in SAMPLES.items():
         result = compiler.compile_and_run(code, language)
@@ -53,11 +53,11 @@ def main() -> int:
                 print(f"  return_code={result.get('return_code')}")
 
     if failed:
-        print("\nMissing or broken runtimes:", ", ".join(failed))
-        print("Ubuntu packages usually needed: python3 nodejs default-jdk gcc g++")
+        print("\nНе найдены или не работают рантаймы:", ", ".join(failed))
+        print("Обычно на Ubuntu нужны пакеты: python3 nodejs default-jdk gcc g++")
         return 1
 
-    print("\nAll declared languages work.")
+    print("\nВсе заявленные языки работают.")
     return 0
 
 

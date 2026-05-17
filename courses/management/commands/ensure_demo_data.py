@@ -6,13 +6,13 @@ from courses.models import Category, Course, Lesson, PracticeAssignment, TestAns
 
 
 class Command(BaseCommand):
-    help = "Create a small local demo dataset for the flash-drive launch package."
+    help = "Создать локальные демо-данные для запуска проекта с флешки."
 
     def add_arguments(self, parser):
         parser.add_argument(
             "--reset-passwords",
             action="store_true",
-            help="Reset demo account passwords to the documented values.",
+            help="Сбросить пароли демо-аккаунтов к значениям из инструкции.",
         )
 
     def handle(self, *args, **options):
@@ -21,7 +21,7 @@ class Command(BaseCommand):
             {
                 "username": "admin",
                 "email": "admin@progage.local",
-                "password": "Admin12345!",
+                "password": "Admin12345",
                 "role": "admin",
                 "first_name": "Администратор",
                 "last_name": "Progage",
@@ -31,7 +31,7 @@ class Command(BaseCommand):
             {
                 "username": "teacher",
                 "email": "teacher@progage.local",
-                "password": "Teacher12345!",
+                "password": "Teacher12345",
                 "role": "teacher",
                 "first_name": "Преподаватель",
                 "last_name": "Progage",
@@ -41,7 +41,7 @@ class Command(BaseCommand):
             {
                 "username": "student",
                 "email": "student@progage.local",
-                "password": "Student12345!",
+                "password": "Student12345",
                 "role": "student",
                 "first_name": "Студент",
                 "last_name": "Progage",
@@ -145,4 +145,4 @@ class Command(BaseCommand):
             },
         )
 
-        self.stdout.write(self.style.SUCCESS("Demo data is ready."))
+        self.stdout.write(self.style.SUCCESS("Демо-данные готовы."))
