@@ -7,7 +7,6 @@ from django.db import models
 from django.db.models import Count, Q, F, Avg, Sum
 
 from django.contrib.auth import get_user_model, update_session_auth_hash
-import os
 
 from django.urls import reverse
 
@@ -16,7 +15,6 @@ from django.utils import timezone
 from datetime import timedelta, datetime
 
 from django.http import JsonResponse, HttpResponse
-from django.conf import settings
 
 from django.core.paginator import Paginator
 import csv
@@ -1026,40 +1024,32 @@ def _admin_export_payload():
 
 @admin_required
 def export_data(request, file_format):
+    if file_format not in {'json', 'csv'}:
+        raise Http404("Формат экспорта не найден")
+
     payload = _admin_export_payload()
-    export_dir = os.path.join(settings.BASE_DIR, 'exports', 'adminpanel')
-    os.makedirs(export_dir, exist_ok=True)
     timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
 
     if file_format == 'json':
         filename = f'admin_export_{timestamp}.json'
-        path = os.path.join(export_dir, filename)
         data = json.dumps(payload, ensure_ascii=False, default=str, indent=2)
-        with open(path, 'w', encoding='utf-8') as export_file:
-            export_file.write(data)
         response = HttpResponse(data, content_type='application/json; charset=utf-8')
-    elif file_format == 'csv':
+    else:
         filename = f'admin_export_{timestamp}.csv'
-        path = os.path.join(export_dir, filename)
         rows = [{'section': 'stats', 'key': key, 'value': value} for key, value in payload['stats'].items()]
         for course in payload['courses']:
             rows.append({'section': 'course', 'key': course['title'], 'value': json.dumps(course, ensure_ascii=False, default=str)})
         for user in payload['users']:
             rows.append({'section': 'user', 'key': user['username'], 'value': json.dumps(user, ensure_ascii=False, default=str)})
 
-        with open(path, 'w', encoding='utf-8-sig', newline='') as export_file:
-            writer = csv.DictWriter(export_file, fieldnames=['section', 'key', 'value'])
-            writer.writeheader()
-            writer.writerows(rows)
-
-        with open(path, 'r', encoding='utf-8-sig') as export_file:
-            data = export_file.read()
-        response = HttpResponse(data, content_type='text/csv; charset=utf-8')
-    else:
-        raise Http404("Формат экспорта не найден")
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response.write('\ufeff')
+        writer = csv.DictWriter(response, fieldnames=['section', 'key', 'value'])
+        writer.writeheader()
+        writer.writerows(rows)
 
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
-    messages.success(request, f'Экспорт сохранен: exports/adminpanel/{filename}')
+    messages.success(request, f'Экспорт подготовлен: {filename}')
     return response
 
 
